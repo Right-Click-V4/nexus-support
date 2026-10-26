@@ -111,10 +111,10 @@ export default function NotFoundScreen({
         .maint-content {
           position: relative; z-index: 2;
           height: 100%; width: 100%;
-          max-width: 1500px; margin: 0 auto;
-          padding: clamp(6px, 1.2vh, 14px) clamp(6px, 1.5vw, 16px);
+          max-width: 1200px; margin: 0 auto;
+          padding: clamp(8px, 1.5vh, 16px) clamp(10px, 2vw, 20px);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: clamp(6px, 1vh, 12px); box-sizing: border-box;
+          gap: clamp(8px, 1.2vh, 14px); box-sizing: border-box;
         }
         .maint-badge {
           display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
@@ -126,29 +126,24 @@ export default function NotFoundScreen({
           width: 7px; height: 7px; border-radius: 50%; background: #fb7185;
           animation: maint-pulse 1.6s ease-out infinite;
         }
-        /* Clip gray/silver border baked into the PNG */
         .maint-frame {
-          width: 100%;
-          flex: 1 1 auto;
-          min-height: 0;
+          width: min(92vw, 720px);
+          height: min(68vh, 680px);
+          flex: 0 1 auto;
           display: flex; align-items: center; justify-content: center;
           overflow: hidden;
           background: transparent;
           border: none;
           box-shadow: none;
           padding: 0;
-          max-width: min(96vw, 1280px);
-          max-height: min(86vh, 980px);
         }
         .maint-art {
           display: block;
           width: 100%;
           height: 100%;
-          max-width: none;
-          max-height: none;
           object-fit: cover;
-          /* Scale up so outer gray + silver frame are cropped away */
-          transform: scale(1.14);
+          /* Mild scale crops gray/silver border without blowing past the viewport */
+          transform: scale(1.1);
           transform-origin: center center;
           border: none;
           border-radius: 0;
@@ -191,10 +186,10 @@ export default function NotFoundScreen({
         }
         @media (max-width: 640px) {
           .maint-frame {
-            max-width: 98vw;
-            max-height: min(75vh, 620px);
+            width: min(94vw, 420px);
+            height: min(58vh, 480px);
           }
-          .maint-art { transform: scale(1.16); }
+          .maint-art { transform: scale(1.12); }
         }
       `}</style>
     </div>
