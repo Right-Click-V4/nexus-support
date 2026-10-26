@@ -182,8 +182,8 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   }
 
   return (
-    <div className="app-cosmos flex min-h-screen relative">
-      <aside className="portal-sidebar hidden md:flex w-60 shrink-0 flex-col relative z-30">
+    <div className="app-cosmos flex h-screen max-h-screen overflow-hidden relative">
+      <aside className="portal-sidebar hidden md:flex w-60 shrink-0 flex-col h-full max-h-screen overflow-hidden relative z-30">
         <div className="portal-sidebar-header px-4 py-5 flex items-center gap-3">
           <BrandMark />
           <div>
@@ -236,7 +236,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
         </div>
       </aside>
 
-      <div className="portal-shell flex-1 flex flex-col min-w-0 min-h-screen relative z-10">
+      <div className="portal-shell flex-1 flex flex-col min-w-0 h-full max-h-full overflow-hidden relative z-10">
         <PortalSpaceLoungeBg />
         <header className="relative z-20 min-h-[3.75rem] shrink-0 nexus-topbar flex items-center gap-3 px-4 lg:px-6 py-2.5">
           <div className="md:hidden shrink-0"><BrandMark className="w-8 h-8" /></div>
