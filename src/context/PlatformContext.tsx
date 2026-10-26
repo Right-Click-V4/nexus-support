@@ -241,6 +241,87 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);
 
+  // Lightweight announcements/releases refresh — works across normal + incognito tabs
+  const refreshAnnouncementsLight = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const [ann, rel] = await Promise.all([
+        supabase.from('announcements').select('*').order('created_at', { ascending: false }),
+        supabase.from('releases').select('*').order('released_at', { ascending: false }),
+      ]);
+      if (ann.data) {
+        const fromDb = mergeAnnouncementChannels(ann.data as Announcement[]);
+        setAnnouncements((prev) => {
+          const temps = prev.filter(
+            (x) =>
+              String(x.id).startsWith('an-') &&
+              !fromDb.some((d) => stripAllMeta(d.body) === stripAllMeta(x.body)),
+          );
+          const merged = [...temps, ...fromDb];
+          const seen = new Set<string>();
+          const out: Announcement[] = [];
+          for (const a of merged) {
+            if (seen.has(a.id)) continue;
+            seen.add(a.id);
+            out.push(a);
+          }
+          try { save(LS.announce, out); } catch { /* ignore */ }
+          return out;
+        });
+      } else if (!ann.error) {
+        setAnnouncements((prev) => {
+          const temps = prev.filter((x) => String(x.id).startsWith('an-'));
+          try { save(LS.announce, temps); } catch { /* ignore */ }
+          return temps;
+        });
+      }
+      if (rel.data) {
+        setReleases(rel.data as Release[]);
+        try { save(LS.releases, rel.data); } catch { /* ignore */ }
+      }
+    } catch (err) {
+      console.error('refreshAnnouncementsLight', err);
+    }
+  }, []);
+
+  // Supabase Realtime + 2s poll so every browser context (incl. incognito) stays in sync
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    void refreshAnnouncementsLight();
+
+    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    try {
+      channel = supabase
+        .channel('nexus-announcements-rt')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'announcements' },
+          () => { void refreshAnnouncementsLight(); },
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'releases' },
+          () => { void refreshAnnouncementsLight(); },
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn('announcements realtime unavailable', err);
+    }
+
+    const poll = window.setInterval(() => {
+      void refreshAnnouncementsLight();
+    }, 2000);
+
+    return () => {
+      window.clearInterval(poll);
+      try {
+        if (channel && supabase) void supabase.removeChannel(channel);
+      } catch { /* ignore */ }
+    };
+  }, [refreshAnnouncementsLight]);
+
+
   useEffect(() => {
     const pull = () => {
       try {
@@ -267,6 +348,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       try { bc?.close(); } catch { /* ignore */ }
     };
   }, []);
+
 
 
 
