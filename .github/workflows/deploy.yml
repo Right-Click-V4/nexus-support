@@ -22,6 +22,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
 
+      - name: Boot UI (loader + post-login ceremony)
+        run: |
+          set -e
+          if ! grep -q notifRef src/SystemApp.tsx 2>/dev/null; then
+            echo "Restoring full SystemApp..."
+            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/1b72983c13f2e5104682cc41c7fca903a53c452d/src/SystemApp.tsx" -o src/SystemApp.tsx
+          fi
+          python3 scripts/patch_postlogin_boot.py || true
+          python3 scripts/patch_boot_ui.py || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/PostLoginLoader.tsx src/SystemApp.tsx src/components/PortalAuthGate.tsx || true
+          git commit -m "feat(ui): enhanced loader; ceremony-only after login" || true
+          git push || true
+
       - name: Restore full CustomerPortal if needed
         run: |
           set -e
