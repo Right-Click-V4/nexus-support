@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import LoginPage from './LoginPage';
-import { PostLoginShell, BootLoader } from './PostLoginLoader';
+import PostLoginLoader, { PostLoginShell, BootLoader, hasJustLoggedIn } from './PostLoginLoader';
 
 interface Props {
   children: ReactNode;
@@ -15,7 +15,6 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
   const goAgent = onOpenAgent || onBackToAgent;
   const isAgentSide = accountRole === 'agent' || accountRole === 'admin';
 
-  // Only bounce approved agents away after validation has finished
   useEffect(() => {
     if (loading || authBusy || !requiresAuth || !user || !isAgentSide) return;
     if (goAgent) goAgent();
@@ -23,6 +22,9 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
   }, [loading, authBusy, requiresAuth, user, isAgentSide, goAgent]);
 
   if (requiresAuth && loading && !authBusy) {
+    if (hasJustLoggedIn()) {
+      return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;
+    }
     return <BootLoader label="Loading portal…" />;
   }
 
@@ -39,7 +41,6 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
     );
   }
 
-  // Keep login form mounted while validating so wrong-tab / pending errors can show
   if (requiresAuth && (!user || authBusy)) {
     return <LoginPage audience="customer" onOpenAgent={goAgent} />;
   }
