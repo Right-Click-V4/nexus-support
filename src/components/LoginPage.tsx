@@ -9,6 +9,18 @@ interface Props {
   onOpenAgent?: () => void;
 }
 
+const AGENT_CAPS = [
+  { title: 'Omnichannel inbox', blurb: 'Portal, chat, and email land in one queue.' },
+  { title: 'Branch-aware routing', blurb: 'Tickets stay with the right team automatically.' },
+  { title: 'SLA + automations', blurb: 'Rules fire on create, priority, and breach.' },
+];
+
+const CUSTOMER_CAPS = [
+  { title: 'Submit & track', blurb: 'Open a request and follow status anytime.' },
+  { title: 'Live chat', blurb: 'Reach an agent when you need a quick answer.' },
+  { title: 'Community', blurb: 'Ask other customers before opening a ticket.' },
+];
+
 export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenAgent }: Props) {
   const { signIn, signUp, resetPassword, configError } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -39,8 +51,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
         markJustLoggedIn();
         await signIn(email.trim(), password, isAgent ? 'agent' : 'customer');
         window.location.hash = isAgent ? '' : 'portal';
-      }
-      else {
+      } else {
         await signUp(email.trim(), password, name.trim() || undefined, isAgent ? 'agent' : 'customer');
         setInfo('Account created. You can sign in now.');
         setMode('signin');
@@ -76,96 +87,338 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
     }
   };
 
+  const leftTitle = isAgent ? 'Resolve faster.' : 'Get help, fast.';
+  const leftSub = isAgent ? 'Stay organized across every branch.' : 'Submit requests, chat live, and track every ticket.';
+  const leftBlurb = isAgent
+    ? 'Nexus Ops connects your customer portal, live chat, and agent desk. Route by branch, track SLA, and keep every conversation in one place.'
+    : 'Open a request, talk to an agent in real time, or check the status of an existing ticket — all from one place.';
+  const caps = isAgent ? AGENT_CAPS : CUSTOMER_CAPS;
   const cardSub = isAgent ? 'Sign in to Agent Workspace' : 'Sign in to Customer Portal';
+  const footerCredit = isAgent
+    ? 'NexusOps Agent Workspace · © 2026 Lizer & Kirzhian'
+    : 'NexusOps Customer Portal · © 2026 Lizer & Kirzhian';
 
   return (
     <div className="relative min-h-screen overflow-hidden">
       <CosmicFallBackground />
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-5 sm:px-8 py-10">
-          <div className="flex items-center justify-center w-full">
+      <div className="relative z-10 min-h-screen flex items-center">
+        <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-8 lg:gap-12 xl:gap-16 2xl:gap-24 px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-8 lg:py-12 items-center">
+          <div className="flex flex-col relative z-10 order-2 lg:order-1 lg:pr-4 xl:pr-8 min-w-0">
+            <div className="flex items-center gap-3">
+              <div className="login-brand-badge">
+                <NexusLogoMark size={20} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white tracking-tight">Nexus Ops</div>
+                <div className="text-[11px] text-fuchsia-200/70">
+                  {isAgent ? 'Support operations platform' : 'Customer support portal'}
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 lg:mt-10 max-w-lg xl:max-w-xl">
+              <div className="login-status-pill mb-4">
+                <span className="login-status-dot" /> Desk online
+              </div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fuchsia-300/80 mb-3">
+                {isAgent ? 'Built for agent teams' : 'Built for customers'}
+              </p>
+              <h1 className="login-hero-title text-3xl sm:text-4xl xl:text-[2.75rem] font-semibold leading-[1.08] tracking-tight">
+                {leftTitle}
+                <span
+                  className="block text-fuchsia-200/90 font-normal mt-1"
+                  style={{ WebkitTextFillColor: 'rgba(245, 208, 254, 0.92)', background: 'none' }}
+                >
+                  {leftSub}
+                </span>
+              </h1>
+              <p className="mt-4 text-sm sm:text-[15px] text-fuchsia-100/75 leading-relaxed max-w-md">
+                {leftBlurb}
+              </p>
+              <ul className="mt-6 space-y-2.5 max-w-md">
+                {caps.map((c, i) => (
+                  <li key={c.title} className="login-cap">
+                    <span className="login-cap-index">{String(i + 1).padStart(2, '0')}</span>
+                    <div>
+                      <div className="text-sm font-medium text-white">{c.title}</div>
+                      <div className="text-xs text-fuchsia-100/65 mt-0.5">{c.blurb}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mt-10 lg:mt-14 text-[11px] text-fuchsia-200/35 hidden lg:block tracking-wide">
+              {footerCredit}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center lg:justify-end order-1 lg:order-2 w-full lg:w-auto">
             {mode === 'signin' ? (
-            <div className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] rounded-[22px] px-6 py-7 sm:px-7">
-              <div className="flex flex-col items-center text-center mb-5">
-                <div className="login-card-logo"><NexusLogoMark size={28} /></div>
-                <div className="mt-3 text-[22px] font-semibold text-white tracking-tight">Nexus Ops</div>
-                <div className="text-[13px] text-violet-200/75 mt-1">{cardSub}</div>
-              </div>
-              <div className="flex gap-2 mb-4 text-sm">
-                <button type="button" onClick={() => setAudienceTab('customer')} className={`login-tab ${audienceTab === 'customer' ? 'login-tab-on' : ''}`}>Customer</button>
-                <button type="button" onClick={() => setAudienceTab('agent')} className={`login-tab ${audienceTab === 'agent' ? 'login-tab-on' : ''}`}>Agent</button>
-              </div>
-              {configError && <div className="mb-3 text-sm text-amber-200 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">{configError}</div>}
-              {error && <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">{error}</div>}
-              {info && <div className="mb-3 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2">{info}</div>}
-              <form onSubmit={submit} className="space-y-3.5">
-                <div>
-                  <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
-                  <input type="email" required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="nexus_email_manual" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label>
-                  <div className="relative">
-                    <input type={showPassword ? 'text' : 'password'} required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="new-password" name="nexus_password_manual" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
-                    <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition" onClick={() => setShowPassword((v) => !v)}>{showPassword ? 'Hide' : 'Show'}</button>
+              <div className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] lg:max-w-none rounded-[22px] px-6 py-7 sm:px-7">
+                <div className="flex flex-col items-center text-center mb-5">
+                  <div className="login-card-logo">
+                    <NexusLogoMark size={28} />
                   </div>
+                  <div className="mt-3 text-[22px] font-semibold text-white tracking-tight">Nexus Ops</div>
+                  <div className="text-[13px] text-violet-200/75 mt-1">{cardSub}</div>
                 </div>
-                <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 hover:from-violet-400 hover:via-fuchsia-400 hover:to-violet-400 disabled:opacity-60 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30">
-                  {loading ? 'Signing in…' : 'Sign in'}
-                </button>
-                <p className="text-center text-xs text-violet-200/70 pt-1">
-                  New here?{' '}
-                  <button type="button" onClick={() => { setMode('signup'); setError(''); setInfo(''); }} className="text-white font-semibold hover:text-fuchsia-100">{isAgent ? 'Create an agent account' : 'Create a customer account'}</button>
-                </p>
-                <div className="text-center">
-                  <button type="button" onClick={() => void handleForgotPassword()} className="text-xs font-medium text-violet-100/80 hover:text-white">Forgot Password?</button>
+                <div className="flex gap-2 mb-4 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setAudienceTab('customer')}
+                    className={`login-tab ${audienceTab === 'customer' ? 'login-tab-on' : ''}`}
+                  >
+                    Customer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAudienceTab('agent')}
+                    className={`login-tab ${audienceTab === 'agent' ? 'login-tab-on' : ''}`}
+                  >
+                    Agent
+                  </button>
                 </div>
-              </form>
-            </div>
+                {configError && (
+                  <div className="mb-3 text-sm text-amber-200 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">
+                    {configError}
+                  </div>
+                )}
+                {error && (
+                  <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">
+                    {error}
+                  </div>
+                )}
+                {info && (
+                  <div className="mb-3 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2">
+                    {info}
+                  </div>
+                )}
+                <form onSubmit={submit} className="space-y-3.5">
+                  <div>
+                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com"
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      name="nexus_email_manual"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                        name="nexus_password_manual"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-bwignore="true"
+                        data-form-type="other"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition"
+                        onClick={() => setShowPassword((v) => !v)}
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 hover:from-violet-400 hover:via-fuchsia-400 hover:to-violet-400 disabled:opacity-60 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30"
+                  >
+                    {loading ? 'Signing in…' : 'Sign in'}
+                  </button>
+                  <p className="text-center text-xs text-violet-200/70 pt-1">
+                    New here?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('signup');
+                        setError('');
+                        setInfo('');
+                      }}
+                      className="text-white font-semibold hover:text-fuchsia-100"
+                    >
+                      {isAgent ? 'Create an agent account' : 'Create a customer account'}
+                    </button>
+                  </p>
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => void handleForgotPassword()}
+                      className="text-xs font-medium text-violet-100/80 hover:text-white"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                </form>
+              </div>
             ) : (
-            <div className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] rounded-[22px] px-6 py-7 sm:px-7">
-              <div className="flex flex-col items-center text-center mb-4">
-                <div className="login-card-logo"><NexusLogoMark size={28} /></div>
-                <div className="mt-3 text-[22px] font-semibold text-white tracking-tight">Create your account</div>
-                <div className="text-[13px] text-violet-200/75 mt-1">{isAgent ? 'Register for Agent Workspace' : 'Register for Customer Portal'}</div>
-                <div className="login-role-chip mt-3"><span className="login-status-dot" style={{ width: 6, height: 6 }} />{isAgent ? 'Agent registration' : 'Customer registration'}</div>
+              <div className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] lg:max-w-none rounded-[22px] px-6 py-7 sm:px-7">
+                <div className="flex flex-col items-center text-center mb-4">
+                  <div className="login-card-logo">
+                    <NexusLogoMark size={28} />
+                  </div>
+                  <div className="mt-3 text-[22px] font-semibold text-white tracking-tight">Create your account</div>
+                  <div className="text-[13px] text-violet-200/75 mt-1">
+                    {isAgent ? 'Register for Agent Workspace' : 'Register for Customer Portal'}
+                  </div>
+                  <div className="login-role-chip mt-3">
+                    <span className="login-status-dot" style={{ width: 6, height: 6 }} />
+                    {isAgent ? 'Agent registration' : 'Customer registration'}
+                  </div>
+                </div>
+                {configError && (
+                  <div className="mb-3 text-sm text-amber-200 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">
+                    {configError}
+                  </div>
+                )}
+                {error && (
+                  <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">
+                    {error}
+                  </div>
+                )}
+                {info && (
+                  <div className="mb-3 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2">
+                    {info}
+                  </div>
+                )}
+                <form onSubmit={submit} className="space-y-3.5">
+                  <div>
+                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Full name</label>
+                    <input
+                      required
+                      className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Jane Doe"
+                      autoComplete="off"
+                      name="nexus_name_manual"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-form-type="other"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com"
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      name="nexus_email_manual"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                        autoComplete="new-password"
+                        name="nexus_password_manual"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-bwignore="true"
+                        data-form-type="other"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition"
+                        onClick={() => setShowPassword((v) => !v)}
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Confirm password</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirm ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter password"
+                        autoComplete="new-password"
+                        name="nexus_confirm_manual"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-bwignore="true"
+                        data-form-type="other"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition"
+                        onClick={() => setShowConfirm((v) => !v)}
+                      >
+                        {showConfirm ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-[length:160%_100%] hover:from-violet-500 hover:via-fuchsia-500 hover:to-violet-500 disabled:opacity-60 text-white font-medium text-sm py-2.5 shadow-lg shadow-violet-600/40 mt-1"
+                  >
+                    {loading ? 'Creating account…' : 'Create account'}
+                  </button>
+                  <p className="text-center text-xs text-fuchsia-200/70 pt-1">
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('signin');
+                        setError('');
+                        setInfo('');
+                        setConfirmPassword('');
+                      }}
+                      className="text-fuchsia-100 hover:text-white font-semibold underline-offset-2 hover:underline"
+                    >
+                      {isAgent ? 'Back to agent sign in' : 'Back to customer sign in'}
+                    </button>
+                  </p>
+                </form>
               </div>
-              {configError && <div className="mb-3 text-sm text-amber-200 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">{configError}</div>}
-              {error && <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">{error}</div>}
-              {info && <div className="mb-3 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2">{info}</div>}
-              <form onSubmit={submit} className="space-y-3.5">
-                <div>
-                  <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Full name</label>
-                  <input required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" autoComplete="off" name="nexus_name_manual" data-lpignore="true" data-1p-ignore="true" data-form-type="other" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
-                  <input type="email" required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="nexus_email_manual" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label>
-                  <div className="relative">
-                    <input type={showPassword ? 'text' : 'password'} required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" autoComplete="new-password" name="nexus_password_manual" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
-                    <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition" onClick={() => setShowPassword((v) => !v)}>{showPassword ? 'Hide' : 'Show'}</button>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Confirm password</label>
-                  <div className="relative">
-                    <input type={showConfirm ? 'text' : 'password'} required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" autoComplete="new-password" name="nexus_confirm_manual" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
-                    <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition" onClick={() => setShowConfirm((v) => !v)}>{showConfirm ? 'Hide' : 'Show'}</button>
-                  </div>
-                </div>
-                <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-[length:160%_100%] hover:from-violet-500 hover:via-fuchsia-500 hover:to-violet-500 disabled:opacity-60 text-white font-medium text-sm py-2.5 shadow-lg shadow-violet-600/40 mt-1">
-                  {loading ? 'Creating account…' : 'Create account'}
-                </button>
-                <p className="text-center text-xs text-fuchsia-200/70 pt-1">
-                  Already have an account?{' '}
-                  <button type="button" onClick={() => { setMode('signin'); setError(''); setInfo(''); setConfirmPassword(''); }} className="text-fuchsia-100 hover:text-white font-semibold underline-offset-2 hover:underline">{isAgent ? 'Back to agent sign in' : 'Back to customer sign in'}</button>
-                </p>
-              </form>
-            </div>
             )}
           </div>
+        </div>
       </div>
     </div>
   );
