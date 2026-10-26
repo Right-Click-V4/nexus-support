@@ -55,7 +55,7 @@ const DEFAULT_RELEASES: Release[] = [
   { id: 'r1', version: '1.3.0', title: 'P1 macros & portal KB', notes: 'Macros, published KB, CSAT.', released_at: new Date().toISOString() },
 ];
 const DEFAULT_ANNOUNCE: Announcement[] = [
-  { id: 'an1', title: 'Welcome', body: 'Share #/portal with customers.', severity: 'info', active: true, created_at: new Date().toISOString() },
+  { id: 'an1', title: 'Welcome', body: 'Share #/portal with customers.', severity: 'info', active: true, channel: 'both', created_at: new Date().toISOString() },
 ];
 
 export type CreateChatMeta = { branch?: string; ticket_id?: string };
@@ -293,10 +293,17 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   };
   const saveAnnouncement = async (a: Partial<Announcement> & { title: string; body: string }) => {
     if (supabase) {
-      if (a.id) await supabase.from('announcements').update(a).eq('id', a.id);
-      else await supabase.from('announcements').insert({ title: a.title, body: a.body, severity: a.severity || 'info', active: a.active ?? true });
+      const row = {
+        title: a.title,
+        body: a.body,
+        severity: a.severity || 'info',
+        active: a.active ?? true,
+        channel: a.channel || 'both',
+      };
+      if (a.id) await supabase.from('announcements').update({ ...row, ...a }).eq('id', a.id);
+      else await supabase.from('announcements').insert(row);
       await refreshPlatform();
-    } else setAnnouncements((prev) => a.id ? prev.map((x) => (x.id === a.id ? { ...x, ...a } as Announcement : x)) : [{ id: `an-${Date.now()}`, severity: 'info', active: true, created_at: new Date().toISOString(), ...a } as Announcement, ...prev]);
+    } else setAnnouncements((prev) => a.id ? prev.map((x) => (x.id === a.id ? { ...x, ...a } as Announcement : x)) : [{ id: `an-${Date.now()}`, severity: 'info', active: true, channel: a.channel || 'both', created_at: new Date().toISOString(), ...a } as Announcement, ...prev]);
   };
   const deleteAnnouncement = async (id: string) => {
     if (supabase) { await supabase.from('announcements').delete().eq('id', id); await refreshPlatform(); }

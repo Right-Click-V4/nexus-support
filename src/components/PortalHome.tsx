@@ -78,7 +78,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
   const first = displayName?.split(' ')[0] || 'there';
 
   const activeAnnouncements = useMemo(
-    () => (announcements || []).filter((a) => a.active !== false).slice(0, 4),
+    () => (announcements || []).filter((a) => a.active !== false && (a.channel === 'portal' || a.channel === 'both' || !a.channel)).slice(0, 4),
     [announcements],
   );
 
