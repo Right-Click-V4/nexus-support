@@ -1,7 +1,6 @@
 const BASE = import.meta.env.BASE_URL || '/';
-// Filename matches the file you uploaded in /public
 const ART = '404_ Monsters Overran the Station.png';
-const src = `${BASE}${encodeURIComponent(ART).replace(/%2F/g, '/')}`;
+const src = `${BASE}${encodeURIComponent(ART)}`;
 
 export default function NotFoundScreen({
   onAdminSignIn,
@@ -110,27 +109,40 @@ export default function NotFoundScreen({
           animation: maint-twinkle 5s ease-in-out infinite alternate;
         }
         .maint-content {
-          position: relative; z-index: 2; height: 100%; width: 100%; max-width: 1100px; margin: 0 auto;
-          padding: clamp(12px, 2.5vh, 28px) clamp(12px, 3vw, 32px);
+          position: relative; z-index: 2;
+          height: 100%; width: 100%;
+          max-width: 1400px; margin: 0 auto;
+          padding: clamp(8px, 1.5vh, 16px) clamp(8px, 2vw, 20px);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: clamp(10px, 1.8vh, 18px); box-sizing: border-box;
+          gap: clamp(6px, 1vh, 12px); box-sizing: border-box;
         }
         .maint-badge {
           display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
           font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
           color: #ffe4e6; background: rgba(244, 63, 94, 0.18); border: 1px solid rgba(251, 113, 133, 0.35);
+          flex-shrink: 0;
         }
         .maint-badge-dot {
           width: 7px; height: 7px; border-radius: 50%; background: #fb7185;
           animation: maint-pulse 1.6s ease-out infinite;
         }
-        .maint-frame { width: 100%; display: flex; align-items: center; justify-content: center; }
+        .maint-frame {
+          width: 100%;
+          flex: 1 1 auto;
+          min-height: 0;
+          display: flex; align-items: center; justify-content: center;
+        }
         .maint-art {
-          display: block; width: auto; height: auto;
-          max-width: min(96vw, 920px); max-height: min(68vh, 640px); object-fit: contain;
-          border-radius: 18px; border: 1px solid rgba(251, 113, 133, 0.28);
+          display: block;
+          width: 100%;
+          height: 100%;
+          max-width: min(98vw, 1200px);
+          max-height: min(82vh, 900px);
+          object-fit: contain;
+          border-radius: 16px;
+          border: 1px solid rgba(251, 113, 133, 0.28);
           box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 50px rgba(244, 63, 94, 0.22);
-          background: rgba(10, 6, 28, 0.4);
+          background: rgba(10, 6, 28, 0.35);
         }
         .maint-missing {
           text-align: center; padding: 2rem 1.5rem;
@@ -144,10 +156,11 @@ export default function NotFoundScreen({
         }
         .maint-missing-sub { margin-top: 0.5rem; color: #fecdd3; font-size: 0.95rem; }
         .maint-copy {
-          margin: 0; text-align: center; font-size: clamp(0.9rem, 2.2vw, 1.05rem); line-height: 1.45;
+          margin: 0; text-align: center; font-size: clamp(0.85rem, 2vw, 1rem); line-height: 1.4;
           color: rgba(255, 228, 230, 0.92); max-width: 36rem;
+          flex-shrink: 0;
         }
-        .maint-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .maint-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; flex-shrink: 0; }
         .maint-admin-btn {
           padding: 0.55rem 1.1rem; border-radius: 0.75rem;
           border: 1px solid rgba(251, 113, 133, 0.4);
@@ -165,7 +178,11 @@ export default function NotFoundScreen({
           100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0); }
         }
         @media (max-width: 640px) {
-          .maint-art { max-width: 96vw; max-height: min(55vh, 420px); border-radius: 14px; }
+          .maint-art {
+            max-width: 98vw;
+            max-height: min(72vh, 560px);
+            border-radius: 12px;
+          }
         }
       `}</style>
     </div>
