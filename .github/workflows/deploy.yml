@@ -53,24 +53,34 @@ jobs:
       - name: Remove Back links from portal tabs
         run: |
           set -e
-          python3 scripts/patch_remove_back.py
+          python3 scripts/patch_remove_back.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/CustomerPortal.tsx src/components/PortalLiveChat.tsx
           git commit -m "fix(portal): remove Back links from tabs" || true
           git push || true
 
-      - name: Fix light-mode sidebar (white glass)
+      - name: Add portal footer
+        run: |
+          set -e
+          python3 scripts/patch_footer.py
+          if grep -q portal-footer src/components/CustomerPortal.tsx; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src/components/CustomerPortal.tsx
+            git commit -m "feat(portal): add footer on all tabs" || true
+            git push || true
+          fi
+
+      - name: Fix light-mode sidebar (purple glass)
         run: |
           set -e
           python3 scripts/fix_sidebar_light.py || true
-          if grep -q 'rgba(255, 255, 255, 0.88)' src/index.css; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add src/index.css
-            git commit -m "fix: light mode sidebar white glass" || true
-            git push || true
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/index.css
+          git commit -m "fix: light mode sidebar purple gradient" || true
+          git push || true
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
