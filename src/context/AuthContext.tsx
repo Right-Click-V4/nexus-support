@@ -58,13 +58,13 @@ function friendlyAuthError(err: unknown): Error {
 }
 
 function roleFromMetadata(user: User): AccountRole {
-  const meta = user.user_metadata || {};
-  const r = (meta.role || meta.account_role || '') as string;
+  const meta = (user.user_metadata || {}) as Record<string, unknown>;
+  const r = String(meta.role || meta.account_role || '');
   if (r === 'admin' || r === 'customer' || r === 'agent') return r;
   return 'agent';
 }
 
-async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Promise<AccountRole> {
+async function resolveRole(user: User, _expectedRole?: 'agent' | 'customer'): Promise<AccountRole> {
   const fromMeta = roleFromMetadata(user);
   if (!supabase) return fromMeta;
   try {
@@ -83,7 +83,7 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
   return fromMeta;
 }
 
-async function assertApproved(user: User, role: AccountRole) {
+async function assertApproved(user: User, role: AccountRole): Promise<void> {
   if (!supabase || role === 'customer') return;
   try {
     const { data } = await supabase
@@ -135,7 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setLoading(false);
     };
 
-    // Tab-lifetime sessions: if every tab was closed, drop persisted auth before hydrate
     const tabCtl = startTabSession({
       onLastTabClose: () => {
         try {
