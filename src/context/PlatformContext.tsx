@@ -206,7 +206,25 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     if (can.data) setCanned(can.data as CannedResponse[]);
     if (surv.data) setSurveys(surv.data as SurveyResponse[]);
     if (qual.data) setReviews(qual.data as QualityReview[]);
-    if (ann.data) setAnnouncements(mergeAnnouncementChannels(ann.data as Announcement[]));
+    if (ann.data) {
+      const fromDb = mergeAnnouncementChannels(ann.data as Announcement[]);
+      setAnnouncements((prev) => {
+        const temps = prev.filter(
+          (x) =>
+            String(x.id).startsWith('an-') &&
+            !fromDb.some((d) => stripChannelMeta(d.body) === stripChannelMeta(x.body)),
+        );
+        const merged = [...temps, ...fromDb];
+        const seen = new Set<string>();
+        const out: Announcement[] = [];
+        for (const a of merged) {
+          if (seen.has(a.id)) continue;
+          seen.add(a.id);
+          out.push(a);
+        }
+        return out;
+      });
+    }
     if (frm.data) setForms(frm.data as FormDef[]);
     if (rel.data) setReleases(rel.data as Release[]);
   }, [user?.id]);
@@ -231,7 +249,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       bc = new BroadcastChannel('nexus-announce');
       bc.onmessage = () => pull();
     } catch { /* ignore */ }
-    const tick = window.setInterval(pull, 1000);
+    const tick = window.setInterval(pull, 500);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('nexus-announce-updated', onCustom as EventListener);
@@ -374,6 +392,16 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     else setReviews((p) => [{ id: `qr-${Date.now()}`, created_at: new Date().toISOString(), ...r }, ...p]);
   };
 
+  const notifyAnnounceSync = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('nexus-announce-updated'));
+      const bc = new BroadcastChannel('nexus-announce');
+      bc.postMessage({ type: 'updated', t: Date.now() });
+      bc.close();
+    } catch { /* ignore */ }
+  };
+
+
   const saveAnnouncement = async (a: Partial<Announcement> & { body: string; title?: string }) => {
     const channel = a.channel || 'both';
     const severity = a.severity || 'info';
@@ -454,8 +482,17 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteAnnouncement = async (id: string) => {
-    if (supabase) { await supabase.from('announcements').delete().eq('id', id); await refreshPlatform(); }
-    else setAnnouncements((p) => p.filter((x) => x.id !== id));
+    const next = announcements.filter((x) => x.id !== id);
+    setAnnouncements(next);
+    save(LS.announce, next);
+    notifyAnnounceSync();
+    if (!supabase) return;
+    try {
+      await supabase.from('announcements').delete().eq('id', id);
+      void refreshPlatform();
+    } catch (err) {
+      console.error('deleteAnnouncement failed', err);
+    }
   };
   const saveForm = async (f: Partial<FormDef> & { name: string }) => {
     if (supabase) {
