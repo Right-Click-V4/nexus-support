@@ -1,3 +1,6 @@
+import { useBranding } from '../context/BrandingContext';
+import { DEFAULT_BRANDING } from '../lib/branding';
+
 const src = `${import.meta.env.BASE_URL}maintenance.jpg`;
 
 export default function MaintenanceScreen({
@@ -5,6 +8,10 @@ export default function MaintenanceScreen({
 }: {
   onAdminSignIn?: () => void;
 }) {
+  const { branding } = useBranding();
+  const message =
+    (branding.maintenanceMessage || '').trim() || DEFAULT_BRANDING.maintenanceMessage;
+
   return (
     <div className="maint-shell">
       <div className="maint-bg" aria-hidden>
@@ -27,12 +34,12 @@ export default function MaintenanceScreen({
         <div className="maint-frame">
           <img
             src={src}
-            alt="System under maintenance. We'll be right back!"
+            alt={message}
             className="maint-art"
           />
         </div>
 
-        <p className="maint-copy">Nexus Ops is under maintenance. We'll be right back!</p>
+        <p className="maint-copy">{message}</p>
 
         {onAdminSignIn ? (
           <button type="button" onClick={onAdminSignIn} className="maint-admin-btn">
@@ -215,6 +222,7 @@ export default function MaintenanceScreen({
           color: rgba(237, 233, 254, 0.92);
           max-width: 36rem;
           text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+          white-space: pre-wrap;
         }
         .maint-admin-btn {
           margin-top: 2px;
