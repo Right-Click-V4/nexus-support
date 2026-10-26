@@ -34,6 +34,8 @@ export default function AnnouncementsPage() {
   const [version, setVersion] = useState('');
   const [relTitle, setRelTitle] = useState('');
   const [notes, setNotes] = useState('');
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const marqueeList = useMemo(
     () => (announcements || []).filter((a) => matchesChannel(a, 'marquee')),
@@ -46,31 +48,51 @@ export default function AnnouncementsPage() {
 
   const submitAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !body.trim()) return;
-    await saveAnnouncement({
-      title: title.trim(),
-      body: body.trim(),
-      severity,
-      active: true,
-      channel,
-    });
-    setTitle('');
-    setBody('');
-    setSeverity('info');
-    setChannel('both');
+    if (!title.trim() || !body.trim() || busy) return;
+    setBusy(true);
+    setStatusMsg(null);
+    try {
+      await saveAnnouncement({
+        title: title.trim(),
+        body: body.trim(),
+        severity,
+        active: true,
+        channel,
+      });
+      setTitle('');
+      setBody('');
+      setSeverity('info');
+      setChannel('both');
+      setStatusMsg('Announcement published — visible on the Customer Portal now.');
+    } catch (err) {
+      console.error(err);
+      setStatusMsg('Could not publish. Check the console or try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitRelease = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!version.trim() || !relTitle.trim() || !notes.trim()) return;
-    await saveRelease({
-      version: version.trim(),
-      title: relTitle.trim(),
-      notes: notes.trim(),
-    });
-    setVersion('');
-    setRelTitle('');
-    setNotes('');
+    if (!version.trim() || !relTitle.trim() || !notes.trim() || busy) return;
+    setBusy(true);
+    setStatusMsg(null);
+    try {
+      await saveRelease({
+        version: version.trim(),
+        title: relTitle.trim(),
+        notes: notes.trim(),
+      });
+      setVersion('');
+      setRelTitle('');
+      setNotes('');
+      setStatusMsg('Patch notes published — visible on the Customer Portal Overview.');
+    } catch (err) {
+      console.error(err);
+      setStatusMsg('Could not publish patch notes. Try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const renderAnnouncementList = (list: Announcement[], empty: string) => (
@@ -118,6 +140,11 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {statusMsg && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm px-4 py-2.5">
+          {statusMsg}
+        </div>
+      )}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-card p-6">
         <div className="flex items-center gap-2 mb-1">
           <Megaphone className="text-brand-600" size={20} />
@@ -164,9 +191,10 @@ export default function AnnouncementsPage() {
             </select>
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700"
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-60"
             >
-              <Plus size={16} /> Publish
+              <Plus size={16} /> {busy ? 'Publishing…' : 'Publish'}
             </button>
           </div>
         </form>
@@ -232,9 +260,10 @@ export default function AnnouncementsPage() {
           />
           <button
             type="submit"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700"
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-60"
           >
-            <Plus size={16} /> Publish patch notes
+            <Plus size={16} /> {busy ? 'Publishing…' : 'Publish patch notes'}
           </button>
         </form>
       </div>
