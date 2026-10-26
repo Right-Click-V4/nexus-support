@@ -1,5 +1,7 @@
 const BASE = import.meta.env.BASE_URL || '/';
-const src = `${BASE}404.jpg`;
+// Filename matches the file you uploaded in /public
+const ART = '404_ Monsters Overran the Station.png';
+const src = `${BASE}${encodeURIComponent(ART).replace(/%2F/g, '/')}`;
 
 export default function NotFoundScreen({
   onAdminSignIn,
