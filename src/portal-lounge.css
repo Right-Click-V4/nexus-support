@@ -496,8 +496,8 @@ html.nexus-dark .portal-marquee--critical .portal-marquee-icon {
   padding-right: 3rem;
 }
 @keyframes portal-marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
 }
 .portal-marquee-toggle {
   flex-shrink: 0;
