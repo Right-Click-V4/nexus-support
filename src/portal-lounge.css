@@ -298,38 +298,39 @@ html.nexus-light .app-cosmos aside .text-zinc-600 {
   color: #52525b !important;
 }
 
-/* Portal footer lives inside main content scroll */
+/* Portal footer — transparent glass, picks up background */
 .portal-footer {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(226, 232, 240, 0.45);
-  backdrop-filter: blur(12px) saturate(1.05);
-  -webkit-backdrop-filter: blur(12px) saturate(1.05);
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  box-shadow: none;
   transition: background 0.9s ease, border-color 0.9s ease, color 0.9s ease;
 }
 html.nexus-dark .portal-footer {
-  background: rgba(15, 12, 40, 0.55);
-  border-color: rgba(139, 92, 246, 0.2);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+  background: rgba(12, 10, 28, 0.35);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 html.nexus-light .portal-footer {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border: 1px solid rgba(167, 139, 250, 0.35) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(18px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
 }
 .portal-footer-brand {
-  color: #4c1d95;
+  color: #1e1b4b;
   font-weight: 600;
 }
 html.nexus-light .portal-footer-brand {
-  color: #4c1d95 !important;
+  color: #1e1b4b !important;
 }
 html.nexus-dark .portal-footer-brand {
-  color: #c4b5fd;
+  color: #e9d5ff;
 }
 
-/* Light mode: readable text on purple content panel */
+/* Light mode: high-contrast slate text (not pale blue) on purple panel */
 html.nexus-light .portal-shell main {
-  color: #1e1b4b;
+  color: #0f172a;
 }
 html.nexus-light .portal-shell main h1,
 html.nexus-light .portal-shell main h2,
@@ -337,65 +338,66 @@ html.nexus-light .portal-shell main h3,
 html.nexus-light .portal-shell main .font-semibold,
 html.nexus-light .portal-shell main .font-medium,
 html.nexus-light .portal-shell main .font-bold {
-  color: #1e1b4b !important;
+  color: #0f172a !important;
 }
 html.nexus-light .portal-shell main .text-zinc-900,
 html.nexus-light .portal-shell main .text-zinc-800,
 html.nexus-light .portal-shell main .text-zinc-700 {
-  color: #1e1b4b !important;
+  color: #0f172a !important;
 }
 html.nexus-light .portal-shell main .text-zinc-600,
 html.nexus-light .portal-shell main .text-zinc-500 {
-  color: #4338ca !important;
+  color: #1e293b !important;
 }
 html.nexus-light .portal-shell main .text-zinc-400,
 html.nexus-light .portal-shell main .text-zinc-300 {
-  color: #5b21b6 !important;
+  color: #334155 !important;
 }
 html.nexus-light .portal-shell main .text-violet-600,
 html.nexus-light .portal-shell main .text-violet-500 {
-  color: #5b21b6 !important;
+  color: #4c1d95 !important;
 }
 html.nexus-light .portal-shell main a,
-html.nexus-light .portal-shell main button.bg-brand-600,
-html.nexus-light .portal-shell main .bg-brand-600 {
-  color: #ffffff !important;
+html.nexus-light .portal-shell main button.text-violet-600 {
+  color: #4c1d95 !important;
 }
 html.nexus-light .portal-shell main button.bg-brand-600,
 html.nexus-light .portal-shell main .bg-brand-600 {
-  background-color: #6d28d9 !important;
+  background-color: #5b21b6 !important;
+  color: #ffffff !important;
 }
 html.nexus-light .portal-shell main button.bg-brand-600:hover,
 html.nexus-light .portal-shell main .hover\:bg-brand-700:hover {
-  background-color: #5b21b6 !important;
+  background-color: #4c1d95 !important;
+  color: #ffffff !important;
 }
 html.nexus-light .portal-shell main .portal-glass-card,
 html.nexus-light .portal-shell main .bg-white\/80,
 html.nexus-light .portal-shell main .bg-white\/50 {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border-color: rgba(109, 40, 217, 0.2) !important;
-  color: #1e1b4b !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
 }
 html.nexus-light .portal-shell main input,
 html.nexus-light .portal-shell main select,
 html.nexus-light .portal-shell main textarea {
-  color: #1e1b4b !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-color: rgba(109, 40, 217, 0.25) !important;
+  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
 }
 html.nexus-light .portal-shell main input::placeholder,
 html.nexus-light .portal-shell main textarea::placeholder {
-  color: #7c3aed !important;
-  opacity: 0.65;
+  color: #64748b !important;
+  opacity: 0.9;
 }
 html.nexus-light .portal-shell main label {
-  color: #4c1d95 !important;
+  color: #1e293b !important;
 }
 html.nexus-light .nexus-topbar .text-zinc-900,
 html.nexus-light .nexus-topbar .text-zinc-800 {
-  color: #1e1b4b !important;
+  color: #0f172a !important;
 }
 html.nexus-light .nexus-topbar .text-zinc-500,
 html.nexus-light .nexus-topbar .text-zinc-400 {
-  color: #5b21b6 !important;
+  color: #334155 !important;
 }
