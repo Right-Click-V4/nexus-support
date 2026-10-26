@@ -73,6 +73,16 @@ jobs:
             git push || true
           fi
 
+      - name: Lock scroll to main content only
+        run: |
+          set -e
+          python3 scripts/patch_scroll_lock.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/CustomerPortal.tsx
+          git commit -m "feat(portal): freeze sidebar and topbar; main scrolls only" || true
+          git push || true
+
       - name: Fix light-mode sidebar (purple glass)
         run: |
           set -e
