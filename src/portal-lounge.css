@@ -387,27 +387,30 @@ html.nexus-light .app-cosmos aside .text-zinc-600 {
   color: #52525b !important;
 }
 
-/* Portal footer */
+/* Portal footer — light: soft white glass card; dark: muted glass */
 .portal-footer {
-  background: linear-gradient(105deg, rgba(237, 233, 254, 0.88) 0%, rgba(221, 214, 254, 0.82) 50%, rgba(245, 243, 255, 0.9) 100%);
-  border-top: 1px solid rgba(167, 139, 250, 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: background 0.9s ease, border-color 0.9s ease, color 0.9s ease;
+  background: rgba(255, 255, 255, 0.72);
+  border-top: 1px solid rgba(226, 232, 240, 0.55);
+  backdrop-filter: blur(14px) saturate(1.05);
+  -webkit-backdrop-filter: blur(14px) saturate(1.05);
+  box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.04);
+  transition: background 0.9s ease, border-color 0.9s ease, color 0.9s ease, box-shadow 0.9s ease;
 }
 html.nexus-dark .portal-footer {
-  background: rgba(12, 10, 28, 0.55);
-  border-top-color: rgba(63, 63, 70, 0.35);
+  background: rgba(12, 10, 28, 0.6);
+  border-top-color: rgba(63, 63, 70, 0.4);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+}
+html.nexus-light .portal-footer {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-top: 1px solid rgba(203, 213, 225, 0.5) !important;
 }
 .portal-footer-brand {
-  color: #4c1d95;
+  color: #64748b;
+}
+html.nexus-light .portal-footer-brand {
+  color: #64748b;
 }
 html.nexus-dark .portal-footer-brand {
-  color: #c4b5fd;
-}
-.portal-footer-links {
-  color: #6d28d9;
-}
-html.nexus-dark .portal-footer-links {
   color: #a1a1aa;
 }
