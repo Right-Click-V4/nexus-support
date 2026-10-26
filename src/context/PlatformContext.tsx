@@ -65,6 +65,13 @@ function saveAnnounceChannel(id: string, channel: 'marquee' | 'portal' | 'both')
 }
 
 function stripChannelMeta(body?: string): string {
+  // Channel only — never strip color meta
+  return (body || '')
+    .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
+    .trim();
+}
+
+function stripAllMeta(body?: string): string {
   return (body || '')
     .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
     .replace(/<!--\s*nexus:color=[^>]+\s*-->/gi, '')
@@ -87,7 +94,7 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
       fromBody ||
       map[a.id] ||
       (a.title && map[`title:${a.title}`]) ||
-      map[`body:${stripChannelMeta(a.body).slice(0, 40)}`] ||
+      map[`body:${stripAllMeta(a.body).slice(0, 40)}`] ||
       'both';
     return { ...a, channel, body: a.body };
   });
@@ -265,6 +272,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
 
 
+
   useEffect(() => {
     const isCustomerPortal = () => {
       try {
@@ -279,31 +287,29 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         return false;
       }
     };
-
     const pull = () => {
       try {
         const next = mergeAnnouncementChannels(load(LS.announce, [] as Announcement[]));
         if (Array.isArray(next)) setAnnouncements(next);
       } catch { /* ignore */ }
     };
-
     let reloadTimer: number | undefined;
+    let lastTick = '';
+    try { lastTick = localStorage.getItem('nexus-announce-tick') || ''; } catch { /* ignore */ }
+    let lastSnap = '';
+    try { lastSnap = localStorage.getItem(LS.announce) || ''; } catch { /* ignore */ }
     const schedulePortalReload = () => {
-      if (!isCustomerPortal()) {
-        pull();
-        return;
-      }
+      if (!isCustomerPortal()) { pull(); return; }
       pull();
       window.clearTimeout(reloadTimer);
       reloadTimer = window.setTimeout(() => {
-        try {
-          window.location.reload();
-        } catch { /* ignore */ }
-      }, 400);
+        try { window.location.reload(); } catch { /* ignore */ }
+      }, 350);
     };
-
     const onStorage = (e: StorageEvent) => {
-      if (e.key === LS.announce || e.key === LS.announceChannels) schedulePortalReload();
+      if (e.key === LS.announce || e.key === LS.announceChannels || e.key === 'nexus-announce-tick') {
+        schedulePortalReload();
+      }
     };
     const onCustom = () => schedulePortalReload();
     window.addEventListener('storage', onStorage);
@@ -313,7 +319,18 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       bc = new BroadcastChannel('nexus-announce');
       bc.onmessage = () => schedulePortalReload();
     } catch { /* ignore */ }
-    const tick = window.setInterval(pull, 800);
+    const tick = window.setInterval(() => {
+      try {
+        const tnow = localStorage.getItem('nexus-announce-tick') || '';
+        const snap = localStorage.getItem(LS.announce) || '';
+        if (tnow && tnow !== lastTick) { lastTick = tnow; schedulePortalReload(); return; }
+        if (snap && snap !== lastSnap) {
+          lastSnap = snap;
+          if (isCustomerPortal()) schedulePortalReload();
+          else pull();
+        } else { pull(); }
+      } catch { pull(); }
+    }, 700);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('nexus-announce-updated', onCustom as EventListener);
@@ -461,6 +478,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   const notifyAnnounceSync = () => {
     try {
+      localStorage.setItem('nexus-announce-tick', String(Date.now()));
       window.dispatchEvent(new CustomEvent('nexus-announce-updated'));
       const bc = new BroadcastChannel('nexus-announce');
       bc.postMessage({ type: 'updated', t: Date.now() });
