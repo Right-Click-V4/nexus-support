@@ -46,8 +46,7 @@ function LogoMark({ spinning }: { spinning: boolean }) {
 }
 
 /**
- * Line-art space scene (reference style): planet, ring, orbiting probe, stars.
- * Soft enter animation; continuous float/orbit while loading.
+ * Line-art space scene: planet, ring, orbiting probe, stars.
  */
 function SpaceScene() {
   return (
@@ -71,7 +70,6 @@ function SpaceScene() {
           </filter>
         </defs>
 
-        {/* background stars */}
         <g opacity="0.85">
           <circle cx="28" cy="24" r="1.2" fill="#f5d0fe" style={{ animation: 'pl-twinkle 2.8s ease-in-out infinite' }} />
           <circle cx="168" cy="30" r="1" fill="#e9d5ff" style={{ animation: 'pl-twinkle 3.2s ease-in-out 0.4s infinite' }} />
@@ -81,7 +79,6 @@ function SpaceScene() {
           <circle cx="150" cy="18" r="1.3" fill="#fae8ff" style={{ animation: 'pl-twinkle 3s ease-in-out 0.6s infinite' }} />
         </g>
 
-        {/* orbital path */}
         <ellipse
           cx="100"
           cy="88"
@@ -94,7 +91,6 @@ function SpaceScene() {
           style={{ animation: 'pl-orbit-dash 8s linear infinite' }}
         />
 
-        {/* planet body */}
         <g style={{ animation: 'pl-float 4.5s ease-in-out infinite alternate' }}>
           <circle cx="100" cy="88" r="28" fill="url(#pl-planet)" stroke="#e9d5ff" strokeWidth="2.2" filter="url(#pl-glow)" />
           <path d="M82 78c8-6 20-8 32-2" stroke="#f5d0fe" strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
@@ -103,13 +99,11 @@ function SpaceScene() {
           <circle cx="90" cy="78" r="5" fill="#faf5ff" opacity="0.35" />
         </g>
 
-        {/* planetary ring */}
         <g style={{ transformOrigin: '100px 88px', animation: 'pl-ring-tilt 6s ease-in-out infinite alternate' }}>
           <ellipse cx="100" cy="88" rx="44" ry="10" stroke="#d8b4fe" strokeWidth="2" fill="none" opacity="0.75" />
           <ellipse cx="100" cy="88" rx="44" ry="10" stroke="#a78bfa" strokeWidth="1" fill="none" opacity="0.35" strokeDasharray="2 6" />
         </g>
 
-        {/* orbiting probe / satellite */}
         <g style={{ transformOrigin: '100px 88px', animation: 'pl-probe-orbit 5.5s linear infinite' }}>
           <g transform="translate(162, 88)">
             <rect x="-6" y="-3.5" width="12" height="7" rx="1.5" stroke="#f0abfc" strokeWidth="1.6" fill="#2e1065" fillOpacity="0.5" />
@@ -119,7 +113,6 @@ function SpaceScene() {
           </g>
         </g>
 
-        {/* small comet */}
         <g style={{ animation: 'pl-comet 7s linear infinite' }} opacity="0.8">
           <line x1="20" y1="50" x2="38" y2="58" stroke="#e9d5ff" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
           <circle cx="38" cy="58" r="1.8" fill="#f5d0fe" />
@@ -240,7 +233,6 @@ export function BootLoader({ label = 'Loading…' }: { label?: string }) {
     </div>
   );
 }
-
 function FloatingParticles() {
   const dots = useMemo(
     () =>
