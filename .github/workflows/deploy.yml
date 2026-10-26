@@ -84,6 +84,16 @@ jobs:
           git commit -m "feat(portal): freeze sidebar and topbar; main scrolls only" || true
           git push || true
 
+      - name: Rename Home to Overview
+        run: |
+          set -e
+          python3 scripts/patch_overview_rename.py || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/CustomerPortal.tsx
+          git commit -m "feat(portal): rename Home tab to Overview" || true
+          git push || true
+
       - name: Fix light-mode sidebar (purple glass)
         run: |
           set -e

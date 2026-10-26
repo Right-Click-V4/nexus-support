@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
 import {
   BookOpen,
-  Users,
-  Megaphone,
   LifeBuoy,
   Ticket,
   MessageSquare,
   Search,
-  Sparkles,
+  Users,
+  ClipboardList,
+  CheckCircle2,
   ArrowRight,
+  Lightbulb,
 } from 'lucide-react';
 
 type Props = {
@@ -16,7 +16,34 @@ type Props = {
   onNavigate: (view: 'community' | 'help' | 'submit' | 'chat' | 'track' | 'mytickets') => void;
 };
 
-const HIGHLIGHTS = [
+const PROCESS = [
+  {
+    step: '1',
+    title: 'Describe the issue',
+    body: 'Open Submit request from the sidebar. Include your branch, a clear subject, and what you already tried.',
+    icon: ClipboardList,
+  },
+  {
+    step: '2',
+    title: 'We route it to the right team',
+    body: 'Your ticket is assigned using the branch and priority you set so the correct support queue picks it up.',
+    icon: Ticket,
+  },
+  {
+    step: '3',
+    title: 'Track progress anytime',
+    body: 'Use Track ticket with your ticket ID, or open My tickets to see everything linked to your email.',
+    icon: Search,
+  },
+  {
+    step: '4',
+    title: 'Need a faster path?',
+    body: 'For urgent account issues, start Live chat. For shared tips, use Community before opening a ticket.',
+    icon: MessageSquare,
+  },
+];
+
+const TIPS = [
   {
     title: 'Password & account access',
     body: 'Try Account settings first. Many login issues clear after a password reset.',
@@ -31,185 +58,131 @@ const HIGHLIGHTS = [
   },
 ];
 
-const QUICK = [
-  {
-    id: 'submit' as const,
-    label: 'Submit request',
-    hint: 'Open a ticket',
-    icon: Ticket,
-    accent: 'from-violet-500/20 to-fuchsia-500/10 text-violet-600',
-  },
-  {
-    id: 'chat' as const,
-    label: 'Live chat',
-    hint: 'Talk to an agent',
-    icon: MessageSquare,
-    accent: 'from-sky-500/20 to-cyan-500/10 text-sky-600',
-  },
-  {
-    id: 'track' as const,
-    label: 'Track ticket',
-    hint: 'Check status',
-    icon: Search,
-    accent: 'from-amber-500/20 to-orange-500/10 text-amber-600',
-  },
-  {
-    id: 'help' as const,
-    label: 'Help articles',
-    hint: 'Self-serve guides',
-    icon: BookOpen,
-    accent: 'from-emerald-500/20 to-teal-500/10 text-emerald-600',
-  },
-];
-
-function AmbientField() {
-  const dots = useMemo(
-    () =>
-      Array.from({ length: 18 }, (_, i) => ({
-        id: i,
-        left: `${(i * 37 + 9) % 100}%`,
-        top: `${(i * 53 + 17) % 100}%`,
-        size: i % 5 === 0 ? 3 : i % 3 === 0 ? 2 : 1.5,
-        delay: `${(i * 0.4) % 5}s`,
-        duration: `${9 + (i % 6) * 1.3}s`,
-      })),
-    [],
-  );
-
-  return (
-    <div className="portal-home-ambient" aria-hidden>
-      <div className="portal-home-nebula portal-home-nebula-a" />
-      <div className="portal-home-nebula portal-home-nebula-b" />
-      <div className="portal-home-stars">
-        {dots.map((d) => (
-          <span
-            key={d.id}
-            className="portal-home-star"
-            style={{
-              left: d.left,
-              top: d.top,
-              width: d.size,
-              height: d.size,
-              animationDelay: d.delay,
-              animationDuration: d.duration,
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function PortalHome({ displayName, onNavigate }: Props) {
-  const hour = new Date().getHours();
-  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const first = displayName?.split(' ')[0] || 'there';
 
   return (
-    <div className="portal-home relative">
-      <AmbientField />
-      <div className="relative z-10 space-y-4 max-w-4xl mx-auto w-full">
-        <div className="portal-home-hero rounded-2xl px-5 py-4 sm:px-6 sm:py-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-violet-600/90 mb-1.5">
-                <Sparkles size={12} /> Customer portal
-              </div>
-              <h1 className="text-xl sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
-                {greet}, {displayName}
-              </h1>
-              <p className="text-sm text-zinc-500 mt-1 max-w-xl leading-snug">
-                Self-serve help and peer support — open a ticket only when you need the desk.
-              </p>
-            </div>
+    <div className="max-w-3xl mx-auto space-y-8 pb-2">
+      {/* Intro */}
+      <section className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-600/80 dark:text-violet-300/90">
+          Customer portal overview
+        </p>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          Welcome back, {first}
+        </h1>
+        <p className="text-sm sm:text-[15px] text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-2xl">
+          This portal is your self-serve hub for Nexus Ops support. Use the sidebar to open a ticket,
+          chat with an agent, track status, read guides, or join the customer community — without
+          waiting for someone to email you first.
+        </p>
+      </section>
+
+      {/* How to submit / process */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-500/15 text-violet-600 dark:text-violet-300 flex items-center justify-center">
+            <CheckCircle2 size={16} />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">How support works</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">A simple path from issue to resolution</p>
+          </div>
+        </div>
+
+        <ol className="relative space-y-0 border-l border-violet-300/40 dark:border-violet-500/30 ml-3.5 pl-5">
+          {PROCESS.map((p) => {
+            const Icon = p.icon;
+            return (
+              <li key={p.step} className="relative pb-6 last:pb-0">
+                <span className="absolute -left-[1.55rem] top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-[11px] font-bold text-white shadow-sm shadow-violet-900/30">
+                  {p.step}
+                </span>
+                <div className="flex items-start gap-2.5">
+                  <Icon size={16} className="mt-0.5 shrink-0 text-violet-500 dark:text-violet-300" />
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{p.title}</div>
+                    <p className="text-xs sm:text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                      {p.body}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('submit')}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+        >
+          Start a request <ArrowRight size={16} />
+        </button>
+      </section>
+
+      {/* When to use what — plain text, not action cards */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <LifeBuoy size={16} className="text-zinc-400" />
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">When to use each channel</h2>
+        </div>
+        <div className="text-xs sm:text-[13px] text-zinc-600 dark:text-zinc-300 leading-relaxed space-y-2.5 border-t border-zinc-200/60 dark:border-white/10 pt-3">
+          <p>
+            <span className="font-semibold text-zinc-800 dark:text-zinc-100">Help articles</span>
+            {' — '}
+            Guides and FAQs you can use without waiting on an agent.
+            <button
+              type="button"
+              onClick={() => onNavigate('help')}
+              className="ml-1.5 text-violet-600 dark:text-violet-300 font-medium hover:underline"
+            >
+              Browse articles
+            </button>
+          </p>
+          <p>
+            <span className="font-semibold text-zinc-800 dark:text-zinc-100">When to contact support</span>
+            {' — '}
+            Use Submit request or Live chat for account-specific or urgent issues. Prefer Community for
+            tips and workarounds that other customers already solved.
+          </p>
+          <p>
+            <span className="font-semibold text-zinc-800 dark:text-zinc-100">Community</span>
+            {' — '}
+            Chat with other customers about issues, workarounds, and tips — without creating a ticket.
             <button
               type="button"
               onClick={() => onNavigate('community')}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 shadow-md shadow-violet-900/20 shrink-0"
+              className="ml-1.5 text-violet-600 dark:text-violet-300 font-medium hover:underline"
             >
-              <Users size={16} /> Community <ArrowRight size={14} />
+              Open community
             </button>
-          </div>
+          </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-          {QUICK.map((q) => {
-            const Icon = q.icon;
-            return (
-              <button
-                key={q.id}
-                type="button"
-                onClick={() => onNavigate(q.id)}
-                className="portal-home-card group text-left rounded-xl border border-zinc-200/80 bg-white/55 backdrop-blur-sm p-3.5 hover:border-violet-300/80 hover:shadow-md transition-all"
-              >
-                <div
-                  className={`w-9 h-9 rounded-lg bg-gradient-to-br ${q.accent} flex items-center justify-center mb-2.5`}
-                >
-                  <Icon size={18} />
-                </div>
-                <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{q.label}</div>
-                <div className="text-xs text-zinc-500 mt-0.5">{q.hint}</div>
-              </button>
-            );
-          })}
+      {/* Helpful to know — list, not heavy cards */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Lightbulb size={16} className="text-amber-500" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            Helpful to know
+          </h2>
         </div>
-
-        <div className="portal-home-card rounded-xl border border-violet-200/60 bg-gradient-to-br from-violet-50/50 via-white/45 to-white/40 backdrop-blur-sm p-4 sm:p-5">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
-              <Users size={20} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Customer community</div>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-                Chat with other customers about issues, workarounds, and tips — without creating a ticket.
-              </p>
-              <button
-                type="button"
-                onClick={() => onNavigate('community')}
-                className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700"
-              >
-                <Users size={14} /> Open community chat
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            onClick={() => onNavigate('help')}
-            className="portal-home-card text-left rounded-xl border border-zinc-200/80 bg-white/55 backdrop-blur-sm p-4 hover:border-violet-300 transition-colors"
-          >
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-600 flex items-center justify-center mb-2">
-              <BookOpen size={16} />
-            </div>
-            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Help articles</div>
-            <p className="text-xs text-zinc-500 mt-1">Guides and FAQs you can use without waiting on an agent.</p>
-          </button>
-          <div className="portal-home-card rounded-xl border border-zinc-200/80 bg-white/55 backdrop-blur-sm p-4">
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-600 flex items-center justify-center mb-2">
-              <LifeBuoy size={16} />
-            </div>
-            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">When to contact support</div>
-            <p className="text-xs text-zinc-500 mt-1">Use Submit request or Live chat for account-specific or urgent issues.</p>
-          </div>
-        </div>
-
-        <div className="portal-home-card rounded-xl border border-zinc-200/80 bg-white/55 backdrop-blur-sm overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-100/80">
-            <Megaphone size={14} className="text-zinc-400" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Helpful to know</span>
-          </div>
-          <ul className="divide-y divide-zinc-100/80">
-            {HIGHLIGHTS.map((h) => (
-              <li key={h.title} className="px-4 py-3">
-                <div className="text-sm font-medium text-zinc-800 dark:text-zinc-100">{h.title}</div>
-                <div className="text-xs text-zinc-500 mt-0.5 leading-relaxed">{h.body}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+        <ul className="space-y-3 border-t border-zinc-200/60 dark:border-white/10 pt-3">
+          {TIPS.map((t) => (
+            <li key={t.title} className="flex gap-3">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
+              <div>
+                <div className="text-sm font-medium text-zinc-800 dark:text-zinc-100">{t.title}</div>
+                <p className="text-xs sm:text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                  {t.body}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
