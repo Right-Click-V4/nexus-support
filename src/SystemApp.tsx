@@ -192,7 +192,7 @@ export function AgentShell() {
           isAdmin={admin}
         />
         <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-          <header className="nexus-topbar h-14 shrink-0 flex items-center gap-3 px-4 lg:px-6">
+          <header className="nexus-topbar relative z-40 h-14 shrink-0 flex items-center gap-3 px-4 lg:px-6">
             <div className="text-sm font-semibold text-zinc-800">{TITLES[activeNav] || activeNav}</div>
             <div className="flex-1 max-w-xl">
               <div className="relative">
@@ -217,7 +217,7 @@ export function AgentShell() {
                 <ExternalLink size={14} /> Portal
               </a>
               <ThemeToggle />
-              <div className="relative" ref={notifRef}>
+              <div className="relative z-[50]" ref={notifRef}>
                 <button
                   type="button"
                   onClick={() => setNotifOpen((v) => !v)}
@@ -231,8 +231,8 @@ export function AgentShell() {
                   )}
                 </button>
                 {notifOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-80 max-h-96 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-xl z-50">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
+                  <div className="absolute right-0 top-full mt-1 w-80 max-h-96 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-2xl z-[9999]">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 sticky top-0 bg-white">
                       <span className="text-xs font-semibold text-zinc-700">Notifications</span>
                       <div className="flex gap-2">
                         <button type="button" className="text-[11px] text-violet-600" onClick={() => void markAllNotificationsRead()}>
@@ -287,7 +287,7 @@ export function AgentShell() {
               )}
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <main className="flex-1 overflow-auto p-4 lg:p-6 relative z-0">
             {!usingSupabase && (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs px-3 py-2">
                 Running offline demo data — configure Supabase for live tickets.
