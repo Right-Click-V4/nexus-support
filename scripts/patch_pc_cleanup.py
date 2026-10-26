@@ -16,6 +16,13 @@ if not m or kb < 0:
 helpers = """
 
 function stripChannelMeta(body?: string): string {
+  // Channel only — never strip color meta
+  return (body || '')
+    .replace(/<!--\\s*nexus:channel=\\w+\\s*-->/gi, '')
+    .trim();
+}
+
+function stripAllMeta(body?: string): string {
   return (body || '')
     .replace(/<!--\\s*nexus:channel=\\w+\\s*-->/gi, '')
     .replace(/<!--\\s*nexus:color=[^>]+\\s*-->/gi, '')
@@ -38,7 +45,7 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
       fromBody ||
       map[a.id] ||
       (a.title && map[`title:${a.title}`]) ||
-      map[`body:${stripChannelMeta(a.body).slice(0, 40)}`] ||
+      map[`body:${stripAllMeta(a.body).slice(0, 40)}`] ||
       'both';
     return { ...a, channel, body: a.body };
   });
@@ -48,11 +55,16 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
 
 t = t[: m.end()] + helpers + t[kb:]
 
-if "schedulePortalReload" not in t:
+if "lastTick" not in t:
     m2 = re.search(
-        r"  useEffect\(\(\) => \{\n    const pull = \(\) => \{[\s\S]*?setInterval\(pull, \d+\)[\s\S]*?\}, \[\]\);",
+        r"  useEffect\(\(\) => \{\n    const isCustomerPortal = \(\) => \{[\s\S]*?\}, \[\]\);",
         t,
     )
+    if not m2:
+        m2 = re.search(
+            r"  useEffect\(\(\) => \{\n    const pull = \(\) => \{[\s\S]*?setInterval\(pull, \d+\)[\s\S]*?\}, \[\]\);",
+            t,
+        )
     if m2:
         new_sync = """  useEffect(() => {
     const isCustomerPortal = () => {
@@ -75,19 +87,22 @@ if "schedulePortalReload" not in t:
       } catch { /* ignore */ }
     };
     let reloadTimer: number | undefined;
+    let lastTick = '';
+    try { lastTick = localStorage.getItem('nexus-announce-tick') || ''; } catch { /* ignore */ }
+    let lastSnap = '';
+    try { lastSnap = localStorage.getItem(LS.announce) || ''; } catch { /* ignore */ }
     const schedulePortalReload = () => {
-      if (!isCustomerPortal()) {
-        pull();
-        return;
-      }
+      if (!isCustomerPortal()) { pull(); return; }
       pull();
       window.clearTimeout(reloadTimer);
       reloadTimer = window.setTimeout(() => {
         try { window.location.reload(); } catch { /* ignore */ }
-      }, 400);
+      }, 350);
     };
     const onStorage = (e: StorageEvent) => {
-      if (e.key === LS.announce || e.key === LS.announceChannels) schedulePortalReload();
+      if (e.key === LS.announce || e.key === LS.announceChannels || e.key === 'nexus-announce-tick') {
+        schedulePortalReload();
+      }
     };
     const onCustom = () => schedulePortalReload();
     window.addEventListener('storage', onStorage);
@@ -97,7 +112,18 @@ if "schedulePortalReload" not in t:
       bc = new BroadcastChannel('nexus-announce');
       bc.onmessage = () => schedulePortalReload();
     } catch { /* ignore */ }
-    const tick = window.setInterval(pull, 800);
+    const tick = window.setInterval(() => {
+      try {
+        const tnow = localStorage.getItem('nexus-announce-tick') || '';
+        const snap = localStorage.getItem(LS.announce) || '';
+        if (tnow && tnow !== lastTick) { lastTick = tnow; schedulePortalReload(); return; }
+        if (snap && snap !== lastSnap) {
+          lastSnap = snap;
+          if (isCustomerPortal()) schedulePortalReload();
+          else pull();
+        } else { pull(); }
+      } catch { pull(); }
+    }, 700);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('nexus-announce-updated', onCustom as EventListener);
@@ -109,9 +135,23 @@ if "schedulePortalReload" not in t:
         t = t[: m2.start()] + new_sync + t[m2.end() :]
         print("reload wired")
 
+if "nexus-announce-tick" not in t[t.find("const notifyAnnounceSync"):t.find("const notifyAnnounceSync")+400]:
+    t = t.replace(
+        """const notifyAnnounceSync = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('nexus-announce-updated'));""",
+        """const notifyAnnounceSync = () => {
+    try {
+      localStorage.setItem('nexus-announce-tick', String(Date.now()));
+      window.dispatchEvent(new CustomEvent('nexus-announce-updated'));""",
+        1,
+    )
+    print("notify tick added")
+
 assert t.count("function stripChannelMeta") == 1
+assert t.count("function stripAllMeta") == 1
 assert t.count("function parseChannelFromBody") == 1
 assert t.count("function mergeAnnouncementChannels") == 1
 
 p.write_text(t)
-print("cleaned", len(t), "reload", "schedulePortalReload" in t)
+print("cleaned", len(t), "tick", t.count("nexus-announce-tick"))
