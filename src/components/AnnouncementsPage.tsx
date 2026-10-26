@@ -1,7 +1,109 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Megaphone, Plus, Trash2, Sparkles, Radio, LayoutDashboard } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 import type { Announcement } from '../types';
+
+const EMOJIS = ['😀','😁','😂','🥳','😍','😎','👋','👍','👏','🔥','✨','🎉','✅','⚠️','❌','💡','📢','🚀','💜','⭐','🙌','💬','🛠️','📌'];
+const COLORS = [
+  { name: 'Default', value: '' },
+  { name: 'Rose', value: '#e11d48' },
+  { name: 'Orange', value: '#ea580c' },
+  { name: 'Amber', value: '#d97706' },
+  { name: 'Green', value: '#16a34a' },
+  { name: 'Teal', value: '#0d9488' },
+  { name: 'Blue', value: '#2563eb' },
+  { name: 'Violet', value: '#7c3aed' },
+  { name: 'Fuchsia', value: '#c026d3' },
+  { name: 'White', value: '#f8fafc' },
+];
+
+function MessageEditor({
+  value,
+  onChange,
+  color,
+  onColorChange,
+  placeholder,
+  rows = 3,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  color: string;
+  onColorChange: (c: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const [showEmoji, setShowEmoji] = useState(false);
+
+  const insertEmoji = (emoji: string) => {
+    const el = ref.current;
+    if (!el) {
+      onChange(value + emoji);
+      return;
+    }
+    const start = el.selectionStart ?? value.length;
+    const end = el.selectionEnd ?? value.length;
+    const next = value.slice(0, start) + emoji + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + emoji.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setShowEmoji((s) => !s)}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700"
+          title="Insert emoji"
+        >
+          😀 Emoji
+        </button>
+        <span className="text-[11px] text-slate-400 px-1">Color</span>
+        {COLORS.map((c) => (
+          <button
+            key={c.name}
+            type="button"
+            title={c.name}
+            onClick={() => onColorChange(c.value)}
+            className={`h-6 w-6 rounded-full border-2 transition ${
+              color === c.value ? 'border-zinc-900 scale-110' : 'border-zinc-200'
+            }`}
+            style={{ background: c.value || 'linear-gradient(135deg,#e2e8f0,#94a3b8)' }}
+          />
+        ))}
+      </div>
+      {showEmoji && (
+        <div className="flex flex-wrap gap-1 p-2 rounded-xl border border-zinc-200 bg-zinc-50 max-h-28 overflow-y-auto">
+          {EMOJIS.map((e) => (
+            <button
+              key={e}
+              type="button"
+              className="h-8 w-8 text-lg leading-none rounded-lg hover:bg-white"
+              onClick={() => insertEmoji(e)}
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      )}
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        required
+        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+        style={color ? { color } : undefined}
+      />
+    </div>
+  );
+}
 
 type Channel = 'marquee' | 'portal' | 'both';
 
@@ -30,6 +132,8 @@ export default function AnnouncementsPage() {
   const [body, setBody] = useState('');
   const [severity, setSeverity] = useState<'info' | 'warning' | 'critical'>('info');
   const [channel, setChannel] = useState<Channel>('both');
+  const [msgColor, setMsgColor] = useState('');
+  const [notesColor, setNotesColor] = useState('');
 
   const [version, setVersion] = useState('');
   const [relTitle, setRelTitle] = useState('');
@@ -48,14 +152,15 @@ export default function AnnouncementsPage() {
 
   const submitAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Title is optional (useful for marquee-only posts); body is required
     if (!body.trim() || busy) return;
     setBusy(true);
     setStatusMsg(null);
     try {
+      let msg = body.trim();
+      if (msgColor) msg = `<!--nexus:color=${msgColor}-->\n${msg}`;
       await saveAnnouncement({
         title: title.trim(),
-        body: body.trim(),
+        body: msg,
         severity,
         active: true,
         channel,
@@ -64,7 +169,8 @@ export default function AnnouncementsPage() {
       setBody('');
       setSeverity('info');
       setChannel('both');
-      setStatusMsg('Published — Customer Portal updates immediately (no refresh needed).');
+      setMsgColor('');
+      setStatusMsg('Published — Customer Portal updates within about a second (no refresh needed).');
     } catch (err) {
       console.error(err);
       setStatusMsg('Could not publish. Check the console or try again.');
@@ -79,14 +185,17 @@ export default function AnnouncementsPage() {
     setBusy(true);
     setStatusMsg(null);
     try {
+      let n = notes.trim();
+      if (notesColor) n = `<!--nexus:color=${notesColor}-->\n${n}`;
       await saveRelease({
         version: version.trim(),
         title: relTitle.trim(),
-        notes: notes.trim(),
+        notes: n,
       });
       setVersion('');
       setRelTitle('');
       setNotes('');
+      setNotesColor('');
       setStatusMsg('Patch notes published — visible on the Customer Portal Overview.');
     } catch (err) {
       console.error(err);
@@ -119,7 +228,19 @@ export default function AnnouncementsPage() {
                 {a.active === false ? 'Off' : 'Active'}
               </span>
             </div>
-            <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">{a.body}</p>
+            <p
+              className="text-sm text-slate-600 mt-1 whitespace-pre-wrap"
+              style={
+                (a.body || '').match(/<!--nexus:color=([^>]+)-->/)
+                  ? { color: (a.body || '').match(/<!--nexus:color=([^>]+)-->/)![1] }
+                  : undefined
+              }
+            >
+              {(a.body || '')
+                .replace(/^<!--nexus:channel=\w+-->\n?/, '')
+                .replace(/^<!--nexus:color=[^>]+-->\n?/, '')
+                .trim()}
+            </p>
             {a.created_at && (
               <div className="text-[11px] text-slate-400 mt-1.5">
                 {new Date(a.created_at).toLocaleString()}
@@ -162,13 +283,13 @@ export default function AnnouncementsPage() {
             placeholder="Title (optional — leave blank for marquee-only)"
             className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           />
-          <textarea
+          <MessageEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Message (required)"
+            onChange={setBody}
+            color={msgColor}
+            onColorChange={setMsgColor}
+            placeholder="Message (required) — use emoji & color tools above"
             rows={3}
-            className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-            required
           />
           <div className="flex flex-wrap items-center gap-3">
             <select
@@ -250,13 +371,13 @@ export default function AnnouncementsPage() {
               className="px-3 py-2 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             />
           </div>
-          <textarea
+          <MessageEditor
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="What changed in this release…"
+            onChange={setNotes}
+            color={notesColor}
+            onColorChange={setNotesColor}
+            placeholder="What changed in this release… — emoji & color supported"
             rows={3}
-            required
-            className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           />
           <button
             type="submit"
@@ -290,7 +411,16 @@ export default function AnnouncementsPage() {
                   </span>
                   <span className="font-semibold text-slate-900">{r.title}</span>
                 </div>
-                <p className="text-sm text-slate-600 mt-1.5 whitespace-pre-wrap">{r.notes}</p>
+                <p
+                  className="text-sm text-slate-600 mt-1.5 whitespace-pre-wrap"
+                  style={
+                    (r.notes || '').match(/<!--nexus:color=([^>]+)-->/)
+                      ? { color: (r.notes || '').match(/<!--nexus:color=([^>]+)-->/)![1] }
+                      : undefined
+                  }
+                >
+                  {(r.notes || '').replace(/^<!--nexus:color=[^>]+-->\n?/, '').trim()}
+                </p>
                 <div className="text-[11px] text-slate-400 mt-1.5">
                   {new Date(r.released_at).toLocaleString()}
                 </div>
