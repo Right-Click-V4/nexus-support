@@ -28,7 +28,7 @@ const HELP_ARTICLES = [
 const BRANCH_OPTIONS = INITIAL_BRANCHES.map((b) => b.name);
 
 const VIEW_META: Record<PortalView, { title: string; desc: string; iconColor: string }> = {
-  home: { title: 'Home', desc: 'Self-serve help and quick actions for your account.', iconColor: 'text-violet-500' },
+  home: { title: 'Overview', desc: 'How this portal works and how to get support.', iconColor: 'text-violet-500' },
   submit: { title: 'Submit a request', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-500' },
   track: { title: 'Track a ticket', desc: 'Look up status updates by ticket ID and email.', iconColor: 'text-emerald-500' },
   success: { title: 'Request received', desc: 'Your ticket was created successfully.', iconColor: 'text-violet-500' },
@@ -162,7 +162,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   };
 
   const navItems: { id: PortalView; label: string; icon: typeof Home }[] = [
-    { id: 'home', label: 'Home', icon: Home },
+    { id: 'home', label: 'Overview', icon: Home },
     { id: 'community', label: 'Community', icon: Users },
     { id: 'submit', label: 'Submit request', icon: Ticket },
     { id: 'chat', label: 'Live chat', icon: MessageSquare },
@@ -327,7 +327,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 <p className="text-zinc-500 text-sm">Your ticket ID is <span className="font-mono font-semibold text-violet-700">{created.id}</span>.</p>
                 <div className="flex gap-2 justify-center">
                   <button type="button" onClick={() => { setTrackId(created.id); setView('track'); }} className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700">Track ticket</button>
-                  <button type="button" onClick={() => setView('home')} className="px-4 py-2 border border-zinc-200 text-sm rounded-lg bg-white/80 hover:bg-white">Home</button>
+                  <button type="button" onClick={() => setView('home')} className="px-4 py-2 border border-zinc-200 text-sm rounded-lg bg-white/80 hover:bg-white">Overview</button>
                 </div>
               </div>
             )}
