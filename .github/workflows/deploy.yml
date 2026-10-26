@@ -114,6 +114,16 @@ jobs:
           git commit -m "feat(portal): announcement marquee under top bar" || true
           git push || true
 
+      - name: Wire announcement channel filters
+        run: |
+          set -e
+          python3 scripts/patch_channel.py || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/context/PlatformContext.tsx src/components/PortalHome.tsx || true
+          git commit -m "feat: announcement channel persistence and portal filters" || true
+          git push || true
+
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
