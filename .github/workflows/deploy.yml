@@ -108,10 +108,11 @@ jobs:
         run: |
           set -e
           python3 scripts/patch_marquee.py || true
+          python3 scripts/patch_marquee_css.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/CustomerPortal.tsx src/components/PortalAnnouncementMarquee.tsx || true
-          git commit -m "feat(portal): announcement marquee under top bar" || true
+          git add src/components/CustomerPortal.tsx src/components/PortalAnnouncementMarquee.tsx src/portal-lounge.css || true
+          git commit -m "feat(portal): seamless full-width marquee" || true
           git push || true
 
       - name: Wire announcement channel filters
