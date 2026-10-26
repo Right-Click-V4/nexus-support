@@ -502,6 +502,20 @@ html.nexus-dark .portal-marquee--critical .portal-marquee-icon {
   align-items: center;
   flex-shrink: 0;
   white-space: nowrap;
+  padding-right: 0.5rem;
+}
+.portal-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.portal-marquee-sep {
+  display: inline-block;
+  opacity: 0.55;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0 0.35rem;
+  user-select: none;
 }
 .portal-marquee-text {
   display: inline-block;
