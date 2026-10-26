@@ -93,18 +93,6 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
   });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 const DEFAULT_KB: KnowledgeArticle[] = [
   { id: 'kb-1', title: 'How to reset a customer password', category: 'Account', body: 'Open profile then Security, Reset password.', published: true },
   { id: 'kb-2', title: 'API rate limits', category: 'API', body: 'Free 60/min. Pro 600/min.', published: true },
@@ -272,6 +260,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       try { bc?.close(); } catch { /* ignore */ }
     };
   }, []);
+
 
 
 
