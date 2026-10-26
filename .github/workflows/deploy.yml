@@ -131,6 +131,7 @@ jobs:
           python3 scripts/patch_pc_cleanup.py || true
           python3 scripts/patch_dbtitle_color.py || true
           python3 scripts/patch_portal_hard_reload.py || true
+          python3 scripts/patch_display_strip_v2.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/context/PlatformContext.tsx src/components/PortalHome.tsx src/components/AnnouncementsPage.tsx src/components/CustomerPortal.tsx || true
