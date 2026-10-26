@@ -222,11 +222,185 @@
   background: rgba(76, 29, 149, 0.45) !important;
   border: 1px solid rgba(167, 139, 250, 0.35) !important;
 }
+.login-status-pill {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1px solid rgba(52, 211, 153, 0.35) !important;
+  color: #d1fae5 !important;
+  font-size: 11px;
+  padding: 5px 10px 5px 8px;
+  width: fit-content;
+}
 .login-status-dot {
   display: inline-block;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #34d399;
-  box-shadow: 0 0 6px #34d399;
+  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+  animation: login-status-pulse 1.8s ease-out infinite;
+}
+@keyframes login-status-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
+  70% { box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+/* Marketing left panel */
+.login-brand-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.55), rgba(76, 29, 149, 0.45));
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.45);
+}
+.login-hero-title {
+  background: linear-gradient(180deg, #ffffff 30%, #e9d5ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.login-cap {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(15, 6, 32, 0.42);
+  border: 1px solid rgba(192, 132, 252, 0.18);
+  backdrop-filter: blur(10px);
+}
+.login-cap-index {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #e9d5ff;
+  background: rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(196, 181, 253, 0.3);
+  border-radius: 8px;
+  padding: 4px 6px;
+  line-height: 1;
+}
+
+/* Flybys + chat bubbles */
+.login-flyby {
+  position: absolute;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  will-change: transform;
+}
+.login-flyby-ltr {
+  animation-name: login-flyby-ltr;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+.login-flyby-rtl {
+  animation-name: login-flyby-rtl;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes login-flyby-ltr {
+  from { transform: translateX(-12vw); }
+  to { transform: translateX(112vw); }
+}
+@keyframes login-flyby-rtl {
+  from { transform: translateX(112vw); }
+  to { transform: translateX(-12vw); }
+}
+.login-flyby-craft { position: relative; display: flex; align-items: center; }
+.login-flyby-rtl .login-flyby-craft { transform: scaleX(-1); }
+.login-flyby-ship { position: relative; }
+.login-flyby-chat {
+  position: relative;
+  z-index: 2;
+  background: rgba(20, 12, 40, 0.92);
+  border: 1.5px solid rgba(192, 132, 252, 0.55);
+  color: #fce7f3;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  border-radius: 12px;
+  white-space: nowrap;
+  line-height: 1.2;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.45),
+    0 0 16px rgba(139, 92, 246, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  margin-bottom: 6px;
+  transform: none !important;
+  direction: ltr;
+  unicode-bidi: plaintext;
+  animation: login-chat-pop 0.35s ease-out;
+}
+.login-flyby-chat::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(192, 132, 252, 0.55);
+}
+.login-flyby-chat::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(20, 12, 40, 0.92);
+  z-index: 1;
+}
+@keyframes login-chat-pop {
+  from { opacity: 0; transform: translateY(4px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.login-ship-svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+.login-ship-flame-core,
+.login-ship-flame-mid,
+.login-ship-flame-hot {
+  transform-box: fill-box;
+  transform-origin: 100% 50%;
+}
+.login-ship-flame-core { animation: login-flame-pulse 0.22s ease-in-out infinite alternate; }
+.login-ship-flame-mid { animation: login-flame-pulse 0.16s ease-in-out infinite alternate-reverse; }
+.login-ship-flame-hot { animation: login-flame-flicker 0.11s ease-in-out infinite alternate; }
+@keyframes login-flame-pulse {
+  from { opacity: 0.7; transform: scaleX(0.78) scaleY(0.88); }
+  to { opacity: 1; transform: scaleX(1.14) scaleY(1.08); }
+}
+@keyframes login-flame-flicker {
+  from { opacity: 0.55; transform: scaleX(0.65); }
+  to { opacity: 1; transform: scaleX(1.2); }
+}
+.login-ufo-beam {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: login-ufo-beam 0.65s ease-in-out infinite alternate;
+}
+@keyframes login-ufo-beam {
+  from { opacity: 0.4; transform: scaleY(0.8); }
+  to { opacity: 0.95; transform: scaleY(1.06); }
+}
+.login-ufo-light { animation: login-ufo-blink 0.85s ease-in-out infinite alternate; }
+.login-ufo-light-b { animation-delay: 0.28s; }
+.login-ufo-light-c { animation-delay: 0.5s; }
+@keyframes login-ufo-blink {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
 }
 
 /* Ensure form text stays readable */
