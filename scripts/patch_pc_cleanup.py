@@ -5,11 +5,16 @@ import re
 p = Path("src/context/PlatformContext.tsx")
 t = p.read_text()
 
-t = re.sub(r"\nfunction stripChannelMeta\(body\?: string\): string \{[\s\S]*?\n\}", "", t)
-t = re.sub(r"\nfunction parseChannelFromBody\(body\?: string\): 'marquee' \| 'portal' \| 'both' \| null \{[\s\S]*?\n\}", "", t)
-t = re.sub(r"\nfunction mergeAnnouncementChannels\(list: Announcement\[\]\): Announcement\[] \{[\s\S]*?\n\}", "", t)
+m = re.search(
+    r"function saveAnnounceChannel[\s\S]*?save\(LS\.announceChannels, map\);\n\}",
+    t,
+)
+kb = t.find("const DEFAULT_KB")
+if not m or kb < 0:
+    raise SystemExit(f"markers missing save={bool(m)} kb={kb}")
 
 helpers = """
+
 function stripChannelMeta(body?: string): string {
   return (body || '')
     .replace(/<!--\\s*nexus:channel=\\w+\\s*-->/gi, '')
@@ -38,14 +43,10 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
     return { ...a, channel, body: a.body };
   });
 }
+
 """
 
-marker = "  save(LS.announceChannels, map);\n}"
-pos = t.find(marker)
-if pos < 0:
-    raise SystemExit("saveAnnounceChannel marker not found")
-pos = pos + len(marker)
-t = t[:pos] + "\n" + helpers + t[pos:]
+t = t[: m.end()] + helpers + t[kb:]
 
 if "schedulePortalReload" not in t:
     m2 = re.search(
