@@ -1,0 +1,210 @@
+/* Restored previous Nexus Ops theme (pre-breakage) */
+
+/* Login essentials */
+.login-glass-card {
+  position: relative; z-index: 20; color: #f8fafc;
+  background: linear-gradient(160deg, rgba(30, 10, 60, 0.88) 0%, rgba(15, 5, 35, 0.92) 100%);
+  border: 1px solid rgba(192, 132, 252, 0.35); border-radius: 1rem; padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 24px 56px rgba(0,0,0,0.55), 0 0 70px rgba(139,92,246,0.28);
+}
+.login-glass-input {
+  display: block; width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 0.75rem; padding: 0.65rem 0.85rem; color: #f8fafc; font-size: 0.875rem;
+}
+.login-glass-input::placeholder { color: rgba(221,214,254,0.45); }
+.login-glass-input:focus {
+  border-color: rgba(167,139,250,0.75); box-shadow: 0 0 0 3px rgba(139,92,246,0.3);
+  background: rgba(255,255,255,0.12); outline: none;
+}
+.login-cosmos-sky {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 115%, rgba(109,40,217,0.55) 0%, transparent 62%),
+    linear-gradient(185deg, #040010 0%, #0a0122 32%, #140432 68%, #070014 100%);
+}
+.login-submit-btn {
+  display: block; width: 100%; border: none; border-radius: 0.75rem;
+  padding: 0.65rem 1rem; font-size: 0.875rem; font-weight: 600; color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+}
+.login-hero-title {
+  background: linear-gradient(180deg, #ffffff 30%, #e9d5ff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.login-status-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px;
+  border-radius: 999px; background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(52,211,153,0.35); color: #d1fae5; font-size: 11px; font-weight: 600;
+}
+.login-tab {
+  flex: 1; padding: 0.6rem 0.5rem; border-radius: 12px;
+  border: 1px solid rgba(167,139,250,0.28); background: rgba(15,8,32,0.35); color: #ddd6fe; font-weight: 600;
+}
+.login-tab-on {
+  background: linear-gradient(180deg, #8b5cf6, #7c3aed); border-color: transparent; color: #fff;
+}
+
+/* Signed-in shells. Dark/light is html.nexus-dark / html.nexus-light. */
+.app-cosmos { position: relative; min-height: 100vh; }
+
+html.nexus-dark { color-scheme: dark; background: #070014; }
+html.nexus-light { color-scheme: light; background: #f4f4f5; }
+
+html.nexus-dark .app-cosmos {
+  color: #f8fafc;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 115%, rgba(109, 40, 217, 0.45) 0%, transparent 62%),
+    radial-gradient(ellipse 32% 26% at 8% 10%, rgba(56, 189, 248, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 28% 24% at 92% 8%, rgba(244, 114, 182, 0.14) 0%, transparent 58%),
+    linear-gradient(185deg, #070014 0%, #12042c 46%, #0a011c 100%);
+}
+html.nexus-light .app-cosmos { color: #18181b; background: #f4f4f5; }
+
+html.nexus-dark .app-cosmos aside {
+  background: rgba(10, 4, 24, 0.92) !important;
+  border-color: rgba(167, 139, 250, 0.22) !important;
+  backdrop-filter: blur(16px); color: #f8fafc;
+}
+html.nexus-light .app-cosmos aside {
+  background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
+  border-color: rgba(167, 139, 250, 0.4) !important;
+  backdrop-filter: blur(18px) saturate(1.1); color: #0f0a1e;
+}
+
+html.nexus-dark .app-cosmos aside .text-zinc-600,
+html.nexus-dark .app-cosmos aside .text-zinc-500,
+html.nexus-dark .app-cosmos aside .text-zinc-400 { color: #e4e4e7 !important; }
+html.nexus-light .app-cosmos aside .text-zinc-600,
+html.nexus-light .app-cosmos aside .text-zinc-500,
+html.nexus-light .app-cosmos aside .text-zinc-400 { color: #52525b !important; }
+html.nexus-dark .app-cosmos aside .text-zinc-100 { color: #fafafa !important; }
+html.nexus-light .app-cosmos aside .text-zinc-100 { color: #18181b !important; }
+
+html.nexus-dark .nexus-topbar {
+  background: rgba(16, 6, 36, 0.88);
+  border-bottom: 1px solid rgba(192, 132, 252, 0.22);
+  backdrop-filter: blur(16px); color: #f8fafc;
+}
+html.nexus-light .nexus-topbar {
+  background: #ffffff; border-bottom: 1px solid #e4e4e7; color: #18181b; backdrop-filter: none;
+}
+
+html.nexus-dark .nexus-search {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(196, 181, 253, 0.35); color: #f8fafc;
+}
+html.nexus-dark .nexus-search::placeholder { color: rgba(237, 233, 254, 0.62); }
+html.nexus-dark .nexus-search:focus { border-color: rgba(192, 132, 252, 0.85); outline: none; }
+html.nexus-light .nexus-search {
+  background: #fafafa; border: 1px solid #d4d4d8; color: #18181b;
+}
+html.nexus-light .nexus-search::placeholder { color: #71717a; }
+html.nexus-light .nexus-search:focus { border-color: #7c3aed; outline: none; }
+
+html.nexus-dark .app-cosmos .bg-white {
+  background-color: rgba(28, 14, 56, 0.88) !important;
+  color: #f8fafc; backdrop-filter: blur(12px);
+}
+html.nexus-dark .app-cosmos .bg-zinc-50,
+html.nexus-dark .app-cosmos .bg-zinc-100,
+html.nexus-dark .app-cosmos .bg-slate-50,
+html.nexus-dark .app-cosmos .bg-slate-100,
+html.nexus-dark .app-cosmos .hover\:bg-zinc-50:hover,
+html.nexus-dark .app-cosmos .hover\:bg-zinc-100:hover,
+html.nexus-dark .app-cosmos .hover\:bg-slate-50:hover,
+html.nexus-dark .app-cosmos .hover\:bg-slate-100:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.nexus-dark .app-cosmos .bg-zinc-950 { background-color: rgba(8, 3, 20, 0.94) !important; }
+html.nexus-dark .app-cosmos .text-zinc-900,
+html.nexus-dark .app-cosmos .text-zinc-800,
+html.nexus-dark .app-cosmos .text-zinc-700,
+html.nexus-dark .app-cosmos .text-slate-900,
+html.nexus-dark .app-cosmos .text-slate-800,
+html.nexus-dark .app-cosmos .text-slate-700 { color: #f8fafc !important; }
+html.nexus-dark .app-cosmos .text-zinc-600,
+html.nexus-dark .app-cosmos .text-zinc-500,
+html.nexus-dark .app-cosmos .text-slate-600,
+html.nexus-dark .app-cosmos .text-slate-500 { color: rgba(237, 233, 254, 0.86) !important; }
+html.nexus-dark .app-cosmos .text-zinc-400,
+html.nexus-dark .app-cosmos .text-zinc-300,
+html.nexus-dark .app-cosmos .text-slate-400,
+html.nexus-dark .app-cosmos .text-slate-300 { color: rgba(237, 233, 254, 0.72) !important; }
+html.nexus-dark .app-cosmos .border-zinc-200,
+html.nexus-dark .app-cosmos .border-zinc-100,
+html.nexus-dark .app-cosmos .border-zinc-300,
+html.nexus-dark .app-cosmos .border-slate-200,
+html.nexus-dark .app-cosmos .border-slate-100,
+html.nexus-dark .app-cosmos .border-slate-300 { border-color: rgba(196, 181, 253, 0.28) !important; }
+html.nexus-dark .app-cosmos tr:hover { background-color: rgba(167, 139, 250, 0.14) !important; }
+html.nexus-dark .app-cosmos input,
+html.nexus-dark .app-cosmos textarea,
+html.nexus-dark .app-cosmos select {
+  background: rgba(255, 255, 255, 0.08); color: #f8fafc; border-color: rgba(196, 181, 253, 0.35);
+}
+html.nexus-dark .app-cosmos select option { background: #1a0b33; color: #f8fafc; }
+html.nexus-dark .app-cosmos input::placeholder,
+html.nexus-dark .app-cosmos textarea::placeholder { color: rgba(237, 233, 254, 0.55); }
+html.nexus-dark .app-cosmos .shadow-xl,
+html.nexus-dark .app-cosmos .shadow-lg,
+html.nexus-dark .app-cosmos .shadow-md { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35); }
+html.nexus-dark .app-cosmos .rounded-xl.bg-white,
+html.nexus-dark .app-cosmos .rounded-2xl.bg-white,
+html.nexus-dark .app-cosmos .rounded-lg.bg-white {
+  border: 1px solid rgba(196, 181, 253, 0.22);
+}
+html.nexus-dark .recharts-cartesian-axis-tick text { fill: #e9d5ff !important; }
+html.nexus-dark .recharts-cartesian-grid line { stroke: rgba(233, 213, 255, 0.22) !important; }
+html.nexus-dark .recharts-legend-item-text { color: #f5f3ff !important; }
+html.nexus-light .app-cosmos input,
+html.nexus-light .app-cosmos textarea,
+html.nexus-light .app-cosmos select {
+  background: #fff; color: #18181b; border-color: #d4d4d8;
+}
+html.nexus-light .app-cosmos input::placeholder,
+html.nexus-light .app-cosmos textarea::placeholder { color: #71717a; }
+
+.portal-home { position: relative; min-height: min(70vh, 640px); }
+.portal-home-ambient {
+  pointer-events: none; position: absolute; inset: -1rem -1.5rem auto -1.5rem;
+  height: min(100%, 520px); overflow: hidden; border-radius: 1.25rem; z-index: 0;
+}
+.portal-home-nebula {
+  position: absolute; border-radius: 50%; filter: blur(48px); opacity: 0.55;
+  animation: portal-home-drift 14s ease-in-out infinite alternate;
+}
+.portal-home-nebula-a {
+  width: 280px; height: 280px; left: 8%; top: 10%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.45), transparent 70%);
+}
+.portal-home-nebula-b {
+  width: 320px; height: 320px; right: 5%; top: 28%;
+  background: radial-gradient(circle, rgba(232, 121, 249, 0.28), transparent 70%);
+  animation-duration: 18s; animation-direction: alternate-reverse;
+}
+.portal-home-star {
+  position: absolute; border-radius: 999px; background: #c4b5fd; opacity: 0.35;
+  animation: portal-home-twinkle ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(196, 181, 253, 0.5);
+}
+.portal-home-hero {
+  background: linear-gradient(135deg, rgba(245, 243, 255, 0.92), rgba(255, 255, 255, 0.85));
+  border: 1px solid rgba(196, 181, 253, 0.35); backdrop-filter: blur(10px);
+}
+html.nexus-dark .portal-home-hero {
+  background: linear-gradient(135deg, rgba(46, 16, 101, 0.55), rgba(24, 10, 48, 0.72));
+  border-color: rgba(196, 181, 253, 0.22);
+}
+html.nexus-dark .portal-home-card {
+  background: rgba(30, 16, 60, 0.55) !important;
+  border-color: rgba(196, 181, 253, 0.18) !important;
+}
+@keyframes portal-home-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(2.5%, 1.5%, 0); }
+}
+@keyframes portal-home-twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.75; }
+}
