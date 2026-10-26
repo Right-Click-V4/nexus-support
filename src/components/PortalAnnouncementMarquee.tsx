@@ -11,21 +11,27 @@ function severityClass(severity?: Announcement['severity']) {
   return 'portal-marquee--info';
 }
 
-function stripMeta(body?: string) {
-  return (body || '')
-    .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
-    .replace(/<!--\s*nexus:color=[^>]+\s*-->/gi, '')
+/** Strip every nexus meta comment (channel + color), HTML-escaped or raw */
+function stripMeta(s?: string) {
+  return (s || '')
+    .replace(/&lt;!--\s*nexus:[^&]*--&gt;/gi, '')
+    .replace(/<!--\s*nexus:[^>]*-->/gi, '')
     .replace(/\\n/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
-function parseColor(body?: string): string | undefined {
-  const m = (body || '').match(/<!--\s*nexus:color=([#\w(),.\s%-]+)\s*-->/i);
-  return m?.[1]?.trim() || undefined;
+function parseColor(s?: string): string | undefined {
+  if (!s) return undefined;
+  const raw = s.match(/<!--\s*nexus:color=([#\w(),.\s%-]+)\s*-->/i);
+  if (raw?.[1]) return raw[1].trim();
+  const esc = s.match(/&lt;!--\s*nexus:color=([#\w(),.\s%-]+)\s*--&gt;/i);
+  if (esc?.[1]) return esc[1].trim();
+  return undefined;
 }
 
 function formatItem(a: Announcement) {
-  const t = (a.title || '').trim();
+  const t = stripMeta(a.title);
   const body = stripMeta(a.body);
   if (t && body && t !== body) return `${t}: ${body}`;
   return body || t;
@@ -79,7 +85,10 @@ export default function PortalAnnouncementMarquee() {
   const items = useMemo(
     () =>
       active
-        .map((a) => ({ text: formatItem(a), color: parseColor(a.body) }))
+        .map((a) => {
+          const color = parseColor(a.body) || parseColor(a.title);
+          return { text: formatItem(a), color };
+        })
         .filter((x) => x.text),
     [active],
   );
