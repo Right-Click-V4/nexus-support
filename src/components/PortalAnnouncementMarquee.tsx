@@ -3,13 +3,22 @@ import { Megaphone, Pause, Play } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 import type { Announcement } from '../types';
 
-/** Constant visual speed across the bar (px/sec) */
 const SPEED = 95;
+
+/** Visible separator between distinct announcements (non-collapsing). */
+const SEP = '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0·\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
 
 function severityClass(severity?: Announcement['severity']) {
   if (severity === 'critical') return 'portal-marquee--critical';
   if (severity === 'warning') return 'portal-marquee--warning';
   return 'portal-marquee--info';
+}
+
+function formatItem(a: Announcement) {
+  const t = (a.title || '').trim();
+  const body = (a.body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '').trim();
+  if (t && body && t !== body) return `${t}: ${body}`;
+  return body || t;
 }
 
 export default function PortalAnnouncementMarquee() {
@@ -23,29 +32,19 @@ export default function PortalAnnouncementMarquee() {
 
   const active = useMemo(
     () =>
-      (announcements || []).filter(
-        (a) =>
-          a.active !== false &&
-          (a.channel === 'marquee' || a.channel === 'both' || !a.channel),
-      ),
+      (announcements || []).filter((a) => {
+        if (a.active === false) return false;
+        const ch = a.channel || 'both';
+        return ch === 'marquee' || ch === 'both';
+      }),
     [announcements],
   );
 
   const baseText = useMemo(() => {
-    // Wide gaps so messages are easy to read; omit empty titles
-    const parts = active
-      .map((a) => {
-        const t = (a.title || '').trim();
-        const body = (a.body || '').trim();
-        if (t && body) return `${t}: ${body}`;
-        return body || t;
-      })
-      .filter(Boolean);
-    // Generous spacing between distinct announcements
-    return parts.join('          ·          ');
+    const parts = active.map(formatItem).filter(Boolean);
+    return parts.join(SEP);
   }, [active]);
 
-  // Build a segment string long enough to cover the full viewport (no empty gaps)
   useLayoutEffect(() => {
     const vp = viewportRef.current;
     const probe = measureRef.current;
@@ -57,13 +56,12 @@ export default function PortalAnnouncementMarquee() {
     let built = baseText;
     probe.textContent = built;
     let guard = 0;
-    const gap = '          ·          ';
     while (probe.getBoundingClientRect().width < vpW && guard < 40) {
-      built += gap + baseText;
+      built += SEP + baseText;
       probe.textContent = built;
       guard += 1;
     }
-    built += gap + baseText;
+    built += SEP + baseText;
     setFilled(built);
   }, [baseText]);
 
@@ -104,15 +102,9 @@ export default function PortalAnnouncementMarquee() {
         <Megaphone size={14} />
       </div>
       <div className="portal-marquee-viewport" ref={viewportRef}>
-        <span
-          ref={measureRef}
-          className="portal-marquee-text portal-marquee-probe"
-          aria-hidden
-        />
+        <span ref={measureRef} className="portal-marquee-text portal-marquee-probe" aria-hidden />
         <div
-          className={`portal-marquee-track ${paused ? 'is-paused' : ''} ${
-            segWidth > 0 ? 'is-ready' : ''
-          }`}
+          className={`portal-marquee-track ${paused ? 'is-paused' : ''} ${segWidth > 0 ? 'is-ready' : ''}`}
           style={
             {
               animationDuration: `${durationSec}s`,
