@@ -131,6 +131,10 @@ export default function NotFoundScreen({
           flex: 1 1 auto;
           min-height: 0;
           display: flex; align-items: center; justify-content: center;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          padding: 0;
         }
         .maint-art {
           display: block;
@@ -139,10 +143,11 @@ export default function NotFoundScreen({
           max-width: min(98vw, 1200px);
           max-height: min(82vh, 900px);
           object-fit: contain;
-          border-radius: 16px;
-          border: 1px solid rgba(251, 113, 133, 0.28);
-          box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 50px rgba(244, 63, 94, 0.22);
-          background: rgba(10, 6, 28, 0.35);
+          border: none;
+          border-radius: 0;
+          box-shadow: none;
+          background: transparent;
+          outline: none;
         }
         .maint-missing {
           text-align: center; padding: 2rem 1.5rem;
@@ -181,7 +186,6 @@ export default function NotFoundScreen({
           .maint-art {
             max-width: 98vw;
             max-height: min(72vh, 560px);
-            border-radius: 12px;
           }
         }
       `}</style>
