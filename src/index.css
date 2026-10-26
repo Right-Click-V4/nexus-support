@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 @import './portal-desert.css';
-@import './login-styles-a.css';
-@import './login-styles-b.css';
 @import './theme-contrast.css';
 @import './portal-home.css';
 
@@ -38,3 +36,45 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #a1a1aa; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: #71717a; }
+
+/* Minimal login surface so auth still looks solid if cosmos module is loading */
+.login-glass-card {
+  position: relative;
+  z-index: 20;
+  color: #f8fafc;
+  background: linear-gradient(160deg, rgba(30, 10, 60, 0.9) 0%, rgba(15, 5, 35, 0.94) 100%);
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.55), 0 0 70px rgba(139, 92, 246, 0.28);
+}
+.login-glass-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  color: #f8fafc;
+  font-size: 0.875rem;
+}
+.login-glass-input::placeholder { color: rgba(221, 214, 254, 0.45); }
+.login-cosmos-sky {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 115%, rgba(109, 40, 217, 0.55) 0%, transparent 62%),
+    linear-gradient(185deg, #040010 0%, #0a0122 32%, #140432 68%, #070014 100%);
+}
+.login-submit-btn {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+}
