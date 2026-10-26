@@ -1,4 +1,5 @@
-const src = `${import.meta.env.BASE_URL}404.jpg`;
+const BASE = import.meta.env.BASE_URL || '/';
+const src = `${BASE}404.jpg`;
 
 export default function NotFoundScreen({
   onAdminSignIn,
@@ -30,9 +31,16 @@ export default function NotFoundScreen({
             alt="404 — page not found. Monsters overran the station."
             className="maint-art"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = 'none';
+              const el = e.currentTarget;
+              el.style.display = 'none';
+              const hint = el.nextElementSibling as HTMLElement | null;
+              if (hint) hint.style.display = 'block';
             }}
           />
+          <div className="maint-missing" style={{ display: 'none' }}>
+            <div className="maint-missing-title">404</div>
+            <div className="maint-missing-sub">Station overrun</div>
+          </div>
         </div>
 
         <p className="maint-copy">
@@ -102,8 +110,7 @@ export default function NotFoundScreen({
             radial-gradient(1.5px 1.5px at 8% 20%, rgba(255,255,255,.85) 50%, transparent 52%),
             radial-gradient(1px 1px at 18% 70%, rgba(251,113,133,.9) 50%, transparent 52%),
             radial-gradient(1.5px 1.5px at 32% 35%, rgba(255,255,255,.7) 50%, transparent 52%),
-            radial-gradient(1px 1px at 55% 15%, rgba(125,211,252,.8) 50%, transparent 52%),
-            radial-gradient(1.2px 1.2px at 72% 62%, rgba(244,114,182,.75) 50%, transparent 52%);
+            radial-gradient(1px 1px at 55% 15%, rgba(125,211,252,.8) 50%, transparent 52%);
           animation: maint-twinkle 5s ease-in-out infinite alternate;
         }
         .maint-content {
@@ -129,6 +136,17 @@ export default function NotFoundScreen({
           box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 50px rgba(244, 63, 94, 0.22);
           background: rgba(10, 6, 28, 0.4);
         }
+        .maint-missing {
+          text-align: center; padding: 2rem 1.5rem;
+          border-radius: 18px; border: 1px solid rgba(251, 113, 133, 0.25);
+          background: rgba(10, 6, 28, 0.55);
+        }
+        .maint-missing-title {
+          font-size: clamp(3rem, 12vw, 5rem); font-weight: 800; line-height: 1;
+          background: linear-gradient(180deg, #fb7185, #f43f5e);
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .maint-missing-sub { margin-top: 0.5rem; color: #fecdd3; font-size: 0.95rem; }
         .maint-copy {
           margin: 0; text-align: center; font-size: clamp(0.9rem, 2.2vw, 1.05rem); line-height: 1.45;
           color: rgba(255, 228, 230, 0.92); max-width: 36rem;
