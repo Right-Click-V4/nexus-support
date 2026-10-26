@@ -16,6 +16,7 @@
     radial-gradient(ellipse 60% 20% at 30% 55%, rgba(232, 121, 249, 0.08) 0%, transparent 65%);
   filter: blur(1px);
   pointer-events: none;
+  animation: login-nebula-drift 36s ease-in-out infinite alternate;
 }
 
 .login-nebula {
@@ -71,9 +72,9 @@
 }
 @keyframes login-star-fall {
   0% { transform: translateY(-5vh); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(105vh); opacity: 0; }
+  8% { opacity: 1; }
+  88% { opacity: 0.85; }
+  100% { transform: translateY(108vh); opacity: 0; }
 }
 .login-star {
   animation-name: login-star-fall;
@@ -81,8 +82,18 @@
   animation-iteration-count: infinite;
 }
 
-/* Full-screen pilot + flybys */
-.login-pilot-stage,
+/* Pilot flies the full sky, above the columns, under the sign-in card.
+   theme-restored.css clipped this to the top-left, which hid the logo. */
+.login-pilot-stage {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible !important;
+  clip-path: none !important;
+  pointer-events: none !important;
+  z-index: 16 !important;
+}
 .login-flybys {
   position: absolute !important;
   inset: 0 !important;
@@ -90,28 +101,33 @@
   height: 100% !important;
   overflow: visible !important;
   pointer-events: none !important;
-  z-index: 1;
+  z-index: 4 !important;
 }
 .login-pilot {
   position: absolute;
   will-change: transform;
-  filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.65)) drop-shadow(0 0 28px rgba(139, 92, 246, 0.4));
-  animation: login-pilot-bob 3.2s ease-in-out infinite, login-pilot-glow 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.7)) drop-shadow(0 0 28px rgba(139, 92, 246, 0.45));
+  z-index: 2;
 }
-.login-pilot .login-logo-mark {
-  animation: login-pilot-spin 12s linear infinite;
+.login-pilot .login-logo-arcs {
+  transform-origin: 24px 24px;
+  animation: login-arc-spin 9s linear infinite;
 }
-@keyframes login-pilot-bob {
-  0%, 100% { filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.65)) drop-shadow(0 0 28px rgba(139, 92, 246, 0.4)); }
-  50% { filter: drop-shadow(0 0 18px rgba(232, 121, 249, 0.8)) drop-shadow(0 0 36px rgba(167, 139, 250, 0.55)); }
+.login-pilot .login-logo-arcs-rev {
+  transform-origin: 24px 24px;
+  animation: login-arc-spin 14s linear infinite reverse;
 }
-@keyframes login-pilot-glow {
-  0%, 100% { opacity: 0.95; }
-  50% { opacity: 1; }
+.login-pilot .login-logo-core {
+  transform-origin: 24px 24px;
+  animation: login-core-pulse 2.4s ease-in-out infinite;
 }
-@keyframes login-pilot-spin {
+@keyframes login-arc-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+@keyframes login-core-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
 .login-trail-spark {
   position: absolute;
@@ -119,13 +135,14 @@
   background: radial-gradient(circle, #f0abfc 0%, #a78bfa 40%, transparent 70%);
   pointer-events: none;
   transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px rgba(232, 121, 249, 0.45);
 }
 
-/* Glass card */
 .login-glass-card {
   position: relative;
-  background: linear-gradient(160deg, rgba(30, 15, 60, 0.72) 0%, rgba(20, 10, 45, 0.78) 100%) !important;
-  border: 1px solid rgba(196, 181, 253, 0.28) !important;
+  z-index: 30 !important;
+  background: linear-gradient(160deg, rgba(30, 15, 60, 0.78) 0%, rgba(20, 10, 45, 0.84) 100%) !important;
+  border: 1px solid rgba(196, 181, 253, 0.32) !important;
   box-shadow:
     0 0 0 1px rgba(139, 92, 246, 0.12),
     0 25px 50px -12px rgba(0, 0, 0, 0.55),
@@ -133,17 +150,26 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(24px) saturate(1.4) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  z-index: 10;
+  animation: login-card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .login-glass-card::before {
   content: '';
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(192, 132, 252, 0.25), transparent 40%, transparent 60%, rgba(167, 139, 250, 0.15));
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.35), transparent 42%, transparent 60%, rgba(167, 139, 250, 0.2));
   pointer-events: none;
   z-index: -1;
-  opacity: 0.7;
+  opacity: 0.8;
+  animation: login-border-sheen 7s ease-in-out infinite;
+}
+@keyframes login-card-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes login-border-sheen {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.95; }
 }
 
 .login-card-logo {
@@ -156,9 +182,16 @@
   background: linear-gradient(145deg, rgba(139, 92, 246, 0.45), rgba(192, 38, 211, 0.3));
   border: 1px solid rgba(196, 181, 253, 0.35);
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.35);
+  animation: login-logo-float 4.5s ease-in-out infinite;
 }
-.login-card-logo .login-logo-mark {
-  filter: drop-shadow(0 0 6px rgba(233, 213, 255, 0.6));
+@keyframes login-logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.login-card-logo .login-logo-mark { filter: drop-shadow(0 0 6px rgba(233, 213, 255, 0.6)); }
+.login-card-logo .login-logo-arcs {
+  transform-origin: 50% 50%;
+  animation: login-arc-spin 10s linear infinite;
 }
 
 .login-tab {
@@ -169,7 +202,7 @@
   color: rgba(221, 214, 254, 0.7) !important;
   background: rgba(30, 15, 60, 0.45) !important;
   border: 1px solid rgba(139, 92, 246, 0.2) !important;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .login-tab:hover {
   color: rgba(237, 233, 254, 0.95) !important;
@@ -186,26 +219,29 @@
   background: rgba(12, 6, 28, 0.65) !important;
   border: 1px solid rgba(139, 92, 246, 0.28) !important;
   color: #f5f3ff !important;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
-.login-glass-input::placeholder {
-  color: rgba(196, 181, 253, 0.45) !important;
-}
+.login-glass-input::placeholder { color: rgba(196, 181, 253, 0.45) !important; }
 .login-glass-input:focus {
   border-color: rgba(167, 139, 250, 0.55) !important;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.22) !important;
   outline: none !important;
 }
 
 .login-submit-btn {
-  background-image: linear-gradient(90deg, #7c3aed, #c026d3, #7c3aed) !important;
-  background-size: 160% 100% !important;
+  background-image: linear-gradient(90deg, #7c3aed, #c026d3, #7c3aed, #c026d3) !important;
+  background-size: 220% 100% !important;
   border: none !important;
+  animation: login-btn-shift 6s linear infinite;
   transition: filter 0.2s, transform 0.15s !important;
 }
 .login-submit-btn:hover:not(:disabled) {
   filter: brightness(1.12);
   transform: translateY(-1px);
+}
+@keyframes login-btn-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
 }
 
 .login-role-chip,
@@ -245,7 +281,6 @@
   100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
 }
 
-/* Marketing left panel */
 .login-brand-badge {
   width: 36px;
   height: 36px;
@@ -256,12 +291,14 @@
   background: linear-gradient(180deg, rgba(139, 92, 246, 0.55), rgba(76, 29, 149, 0.45));
   border: 1px solid rgba(196, 181, 253, 0.4);
   box-shadow: 0 0 16px rgba(139, 92, 246, 0.45);
+  animation: login-card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .login-hero-title {
   background: linear-gradient(180deg, #ffffff 30%, #e9d5ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  animation: login-card-in 0.75s 0.05s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .login-cap {
   display: flex;
@@ -272,6 +309,16 @@
   background: rgba(15, 6, 32, 0.42);
   border: 1px solid rgba(192, 132, 252, 0.18);
   backdrop-filter: blur(10px);
+  animation: login-card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.login-cap:nth-child(1) { animation-delay: 0.12s; }
+.login-cap:nth-child(2) { animation-delay: 0.22s; }
+.login-cap:nth-child(3) { animation-delay: 0.32s; }
+.login-cap:hover {
+  transform: translateY(-2px);
+  border-color: rgba(192, 132, 252, 0.4);
+  background: rgba(30, 12, 60, 0.55);
 }
 .login-cap-index {
   font-size: 11px;
@@ -285,7 +332,6 @@
   line-height: 1;
 }
 
-/* Flybys + chat bubbles */
 .login-flyby {
   position: absolute;
   left: 0;
@@ -362,7 +408,7 @@
 }
 @keyframes login-chat-pop {
   from { opacity: 0; transform: translateY(4px) scale(0.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 1; transform: none; }
 }
 .login-ship-svg {
   position: relative;
@@ -403,11 +449,24 @@
   to { opacity: 1; }
 }
 
-/* Ensure form text stays readable */
 .login-glass-card label,
 .login-glass-card .text-fuchsia-100\/90,
 .login-glass-card .text-violet-200\/75,
 .login-glass-card .text-violet-200\/70,
 .login-glass-card .text-fuchsia-200\/70 {
   color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-pilot-stage,
+  .login-glass-card,
+  .login-hero-title,
+  .login-cap,
+  .login-submit-btn,
+  .login-card-logo,
+  .login-nebula-a,
+  .login-nebula-b,
+  .login-star {
+    animation: none !important;
+  }
 }
