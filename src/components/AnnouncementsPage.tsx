@@ -107,14 +107,15 @@ function MessageEditor({
 
 function stripAnnounceMeta(s?: string) {
   return (s || '')
-    .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
-    .replace(/<!--\s*nexus:color=[^>]+\s*-->/gi, '')
-    .replace(/\\n/g, '\n')
+    .replace(/&lt;!--\s*nexus:[^&]*--&gt;/gi, '')
+    .replace(/<!--\s*nexus:[^>]*-->/gi, '')
+    .replace(/\\n/g, ' ')
     .trim();
 }
 
 function announceColor(s?: string): string | undefined {
-  const m = (s || '').match(/<!--\s*nexus:color=([^>\s]+)\s*-->/i);
+  const m = (s || '').match(/<!--\s*nexus:color=([#\w(),.\s%-]+)\s*-->/i)
+    || (s || '').match(/&lt;!--\s*nexus:color=([#\w(),.\s%-]+)\s*--&gt;/i);
   return m?.[1]?.trim() || undefined;
 }
 

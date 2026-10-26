@@ -21,14 +21,16 @@ function resolveChannel(a: { channel?: string; body?: string }) {
 
 function displayBody(body?: string) {
   return (body || '')
-    .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
-    .replace(/<!--\s*nexus:color=[^>]+\s*-->/gi, '')
+    .replace(/&lt;!--\s*nexus:[^&]*--&gt;/gi, '')
+    .replace(/<!--\s*nexus:[^>]*-->/gi, '')
     .replace(/\\n/g, ' ')
     .trim();
 }
 
-function bodyColor(body?: string): string | undefined {
-  const m = (body || '').match(/<!--\s*nexus:color=([^>\s]+)\s*-->/i);
+function bodyColor(body?: string, title?: string): string | undefined {
+  const src = body || title || '';
+  const m = src.match(/<!--\s*nexus:color=([#\w(),.\s%-]+)\s*-->/i)
+    || src.match(/&lt;!--\s*nexus:color=([#\w(),.\s%-]+)\s*--&gt;/i);
   return m?.[1]?.trim() || undefined;
 }
 
@@ -181,7 +183,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
                   )}
                 </div>
                 <p className="text-xs text-zinc-700 dark:text-zinc-300 mt-0.5 leading-relaxed line-clamp-2">
-                  <span style={bodyColor(a.body) ? { color: bodyColor(a.body) } : undefined}>{displayBody(a.body)}</span>
+                  <span style={bodyColor(a.body, a.title) ? { color: bodyColor(a.body, a.title) } : undefined}>{displayBody(a.body)}</span>
                 </p>
                 {a.created_at && (
                   <div className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">{formatDate(a.created_at)}</div>
