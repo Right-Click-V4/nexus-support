@@ -15,9 +15,21 @@ function severityClass(severity?: Announcement['severity']) {
   return 'portal-marquee--info';
 }
 
+function stripMeta(body?: string) {
+  return (body || '')
+    .replace(/^<!--nexus:channel=\w+-->\n?/gm, '')
+    .replace(/^<!--nexus:color=[^\n>]+-->\n?/gm, '')
+    .trim();
+}
+
+function parseColor(body?: string): string | undefined {
+  const m = (body || '').match(/<!--nexus:color=([^>\s]+)-->/);
+  return m?.[1] || undefined;
+}
+
 function formatItem(a: Announcement) {
   const t = (a.title || '').trim();
-  const body = (a.body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '').trim();
+  const body = stripMeta(a.body);
   if (t && body && t !== body) return `${t}: ${body}`;
   return body || t;
 }
@@ -42,10 +54,16 @@ export default function PortalAnnouncementMarquee() {
     [announcements],
   );
 
-  const baseText = useMemo(() => {
-    const parts = active.map(formatItem).filter(Boolean);
-    return parts.join(SEP);
-  }, [active]);
+  const items = useMemo(
+    () =>
+      active
+        .map((a) => ({ text: formatItem(a), color: parseColor(a.body) }))
+        .filter((x) => x.text),
+    [active],
+  );
+
+  const baseText = useMemo(() => items.map((x) => x.text).join(SEP), [items]);
+  const trackColor = items.find((x) => x.color)?.color;
 
   useLayoutEffect(() => {
     const vp = viewportRef.current;
@@ -115,10 +133,14 @@ export default function PortalAnnouncementMarquee() {
           }
         >
           <div className="portal-marquee-segment" ref={segmentRef}>
-            <span className="portal-marquee-text">{filled || baseText}</span>
+            <span className="portal-marquee-text" style={trackColor ? { color: trackColor } : undefined}>
+              {filled || baseText}
+            </span>
           </div>
           <div className="portal-marquee-segment" aria-hidden>
-            <span className="portal-marquee-text">{filled || baseText}</span>
+            <span className="portal-marquee-text" style={trackColor ? { color: trackColor } : undefined}>
+              {filled || baseText}
+            </span>
           </div>
         </div>
       </div>
