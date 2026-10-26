@@ -118,6 +118,7 @@ jobs:
         run: |
           set -e
           python3 scripts/patch_channel.py || true
+          python3 scripts/patch_channel_title.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/context/PlatformContext.tsx src/components/PortalHome.tsx || true
