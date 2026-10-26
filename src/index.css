@@ -2,4 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 @import './portal-desert.css';
-@import './theme-restored.css';
+@import './styles-1.css';
+@import './styles-2.css';
+@import './styles-3.css';
+@import './styles-4.css';
