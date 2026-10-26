@@ -109,10 +109,11 @@ jobs:
           set -e
           python3 scripts/patch_marquee.py || true
           python3 scripts/patch_marquee_css.py || true
+          python3 scripts/patch_marquee_sep_css.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/CustomerPortal.tsx src/components/PortalAnnouncementMarquee.tsx src/portal-lounge.css || true
-          git commit -m "feat(portal): seamless full-width marquee" || true
+          git commit -m "feat(portal): seamless full-width marquee with gaps" || true
           git push || true
 
       - name: Wire announcement channel filters
@@ -126,11 +127,12 @@ jobs:
           python3 scripts/patch_portal_reload.py || true
           python3 scripts/patch_strip_display.py || true
           python3 scripts/patch_overview_channel.py || true
+          python3 scripts/patch_announce_color_sync.py || true
           python3 scripts/patch_pc_cleanup.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/context/PlatformContext.tsx src/components/PortalHome.tsx src/components/AnnouncementsPage.tsx || true
-          git commit -m "feat: portal auto-reload + clean announce helpers" || true
+          git commit -m "feat: color persist + portal auto-reload on publish" || true
           git push || true
 
       - name: Setup Node
