@@ -3,7 +3,6 @@ const src = `${BASE}404.jpg`;
 
 export default function NotFoundScreen({
   onAdminSignIn,
-  onGoHome,
 }: {
   onAdminSignIn?: () => void;
   onGoHome?: () => void;
@@ -44,21 +43,16 @@ export default function NotFoundScreen({
         </div>
 
         <p className="maint-copy">
-          This page doesn't exist — or the station got overrun. Head back home and try again.
+          This page doesn't exist — or the station got overrun.
         </p>
 
-        <div className="maint-actions">
-          {onGoHome ? (
-            <button type="button" onClick={onGoHome} className="maint-admin-btn">
-              Back to home
-            </button>
-          ) : null}
-          {onAdminSignIn ? (
+        {onAdminSignIn ? (
+          <div className="maint-actions">
             <button type="button" onClick={onAdminSignIn} className="maint-admin-btn">
               Admin sign in
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
 
       <style>{`
