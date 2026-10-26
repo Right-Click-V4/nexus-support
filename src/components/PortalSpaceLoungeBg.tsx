@@ -32,6 +32,8 @@ function makeStars(count: number, seed: number): Star[] {
     '#a5f3fc',
     '#67e8f9',
     '#ddd6fe',
+    '#f5d0fe',
+    '#bfdbfe',
   ];
   const stars: Star[] = [];
   let s = seed;
@@ -40,23 +42,23 @@ function makeStars(count: number, seed: number): Star[] {
     return (s - 1) / 2147483646;
   };
   for (let i = 0; i < count; i++) {
-    const bright = i % 10 === 0;
+    const bright = i % 8 === 0;
     stars.push({
       left: `${rnd() * 100}%`,
       top: `${rnd() * 100}%`,
-      size: bright ? 1.5 + rnd() * 1.8 : 0.5 + rnd() * 1.2,
-      delay: rnd() * 10,
-      dur: 2 + rnd() * 4.5,
+      size: bright ? 1.6 + rnd() * 2.2 : 0.4 + rnd() * 1.3,
+      delay: rnd() * 12,
+      dur: 1.8 + rnd() * 5,
       color: colors[i % colors.length],
-      opacity: 0.35 + rnd() * 0.6,
-      glow: bright ? 5 + rnd() * 6 : 2 + rnd() * 3,
+      opacity: 0.3 + rnd() * 0.7,
+      glow: bright ? 6 + rnd() * 8 : 1.5 + rnd() * 3.5,
     });
   }
   return stars;
 }
 
 function makeDrift(count: number, seed: number): Drift[] {
-  const colors = ['#ffffff', '#e9d5ff', '#c4b5fd', '#67e8f9', '#a5f3fc'];
+  const colors = ['#ffffff', '#e9d5ff', '#c4b5fd', '#67e8f9', '#a5f3fc', '#f0abfc', '#ddd6fe'];
   const out: Drift[] = [];
   let s = seed;
   const rnd = () => {
@@ -65,13 +67,13 @@ function makeDrift(count: number, seed: number): Drift[] {
   };
   for (let i = 0; i < count; i++) {
     const angle = rnd() * Math.PI * 2;
-    const dist = 30 + rnd() * 80;
+    const dist = 40 + rnd() * 120;
     out.push({
       left: `${rnd() * 100}%`,
       top: `${rnd() * 100}%`,
-      size: 0.8 + rnd() * 1.6,
-      delay: rnd() * 20,
-      dur: 18 + rnd() * 25,
+      size: 0.6 + rnd() * 2.0,
+      delay: rnd() * 22,
+      dur: 14 + rnd() * 28,
       dx: `${Math.cos(angle) * dist}px`,
       dy: `${Math.sin(angle) * dist}px`,
       color: colors[i % colors.length],
@@ -80,10 +82,10 @@ function makeDrift(count: number, seed: number): Drift[] {
   return out;
 }
 
-/** Purple sky + login-style cyan shooting comets + drift particles. */
+/** Dense galaxy sky — twinkling stars + random drifting particles (no comets). */
 export default function PortalSpaceLoungeBg() {
-  const stars = useMemo(() => makeStars(160, 42), []);
-  const drifts = useMemo(() => makeDrift(40, 91), []);
+  const stars = useMemo(() => makeStars(280, 42), []);
+  const drifts = useMemo(() => makeDrift(90, 91), []);
 
   return (
     <div className="portal-cosmic" aria-hidden>
@@ -131,21 +133,6 @@ export default function PortalSpaceLoungeBg() {
               ['--dy' as string]: d.dy,
             }}
           />
-        ))}
-      </div>
-
-      {/* Login-style cyan comet shooting stars */}
-      <div className="portal-shooting-layer">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className={`portal-shooting-star portal-shooting-${i + 1}`}>
-            <span className="portal-comet-trail portal-comet-trail-a" />
-            <span className="portal-comet-trail portal-comet-trail-b" />
-            <span className="portal-comet-trail portal-comet-trail-c" />
-            <span className="portal-comet-head" />
-            <span className="portal-comet-particle portal-comet-p1" />
-            <span className="portal-comet-particle portal-comet-p2" />
-            <span className="portal-comet-particle portal-comet-p3" />
-          </div>
         ))}
       </div>
 

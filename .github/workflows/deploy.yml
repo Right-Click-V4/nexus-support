@@ -65,18 +65,19 @@ jobs:
           set -e
           python3 scripts/patch_footer.py || true
           python3 scripts/patch_footer_center.py || true
+          python3 scripts/patch_footer_in_main.py || true
           if grep -q portal-footer src/components/CustomerPortal.tsx; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add src/components/CustomerPortal.tsx
-            git commit -m "feat(portal): footer copyright centered" || true
+            git commit -m "feat(portal): footer inside scrollable main content" || true
             git push || true
           fi
 
       - name: Lock scroll to main content only
         run: |
           set -e
-          python3 scripts/patch_scroll_lock.py
+          python3 scripts/patch_scroll_lock.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/CustomerPortal.tsx
