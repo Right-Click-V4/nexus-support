@@ -5,9 +5,6 @@ import type { Announcement } from '../types';
 
 const SPEED = 95;
 
-const SEP =
-  '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0·\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
-
 function severityClass(severity?: Announcement['severity']) {
   if (severity === 'critical') return 'portal-marquee--critical';
   if (severity === 'warning') return 'portal-marquee--warning';
@@ -18,12 +15,12 @@ function stripMeta(body?: string) {
   return (body || '')
     .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
     .replace(/<!--\s*nexus:color=[^>]+\s*-->/gi, '')
-    .replace(/\\n/g, '\n')
+    .replace(/\\n/g, ' ')
     .trim();
 }
 
 function parseColor(body?: string): string | undefined {
-  const m = (body || '').match(/<!--\s*nexus:color=([^>\s]+)\s*-->/i);
+  const m = (body || '').match(/<!--\s*nexus:color=([#\w(),.\s%-]+)\s*-->/i);
   return m?.[1]?.trim() || undefined;
 }
 
@@ -34,12 +31,37 @@ function formatItem(a: Announcement) {
   return body || t;
 }
 
+function Segment({
+  items,
+  segRef,
+}: {
+  items: { text: string; color?: string }[];
+  segRef?: React.RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <div className="portal-marquee-segment" ref={segRef as React.RefObject<HTMLDivElement>}>
+      {items.map((item, i) => (
+        <span key={i} className="portal-marquee-item">
+          <span
+            className="portal-marquee-text"
+            style={item.color ? { color: item.color } : undefined}
+          >
+            {item.text}
+          </span>
+          <span className="portal-marquee-sep" aria-hidden>
+            {'\u00A0\u00A0\u00A0\u00A0•\u00A0\u00A0\u00A0\u00A0'}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function PortalAnnouncementMarquee() {
   const { announcements } = usePlatform();
   const [paused, setPaused] = useState(false);
   const [segWidth, setSegWidth] = useState(0);
-  const [filled, setFilled] = useState('');
-  const measureRef = useRef<HTMLSpanElement>(null);
+  const [copies, setCopies] = useState(2);
   const segmentRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -62,34 +84,16 @@ export default function PortalAnnouncementMarquee() {
     [active],
   );
 
-  const baseText = useMemo(() => items.map((x) => x.text).join(SEP), [items]);
-  const trackColor = items.find((x) => x.color)?.color;
-
   useLayoutEffect(() => {
-    const vp = viewportRef.current;
-    const probe = measureRef.current;
-    if (!vp || !probe || !baseText) {
-      setFilled(baseText);
-      return;
-    }
-    const vpW = vp.clientWidth || 1;
-    let built = baseText;
-    probe.textContent = built;
-    let guard = 0;
-    while (probe.getBoundingClientRect().width < vpW && guard < 40) {
-      built += SEP + baseText;
-      probe.textContent = built;
-      guard += 1;
-    }
-    built += SEP + baseText;
-    setFilled(built);
-  }, [baseText]);
-
-  useEffect(() => {
     const measure = () => {
       const seg = segmentRef.current;
-      if (!seg) return;
-      setSegWidth(Math.ceil(seg.getBoundingClientRect().width));
+      const vp = viewportRef.current;
+      if (!seg || !vp || items.length === 0) return;
+      const w = Math.ceil(seg.getBoundingClientRect().width);
+      setSegWidth(w);
+      const vpW = vp.clientWidth || 1;
+      const need = Math.max(2, Math.ceil(vpW / Math.max(w, 1)) + 1);
+      setCopies(need);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -100,9 +104,9 @@ export default function PortalAnnouncementMarquee() {
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [filled]);
+  }, [items]);
 
-  if (active.length === 0) return null;
+  if (active.length === 0 || items.length === 0) return null;
 
   const topSeverity = active.some((a) => a.severity === 'critical')
     ? 'critical'
@@ -110,7 +114,7 @@ export default function PortalAnnouncementMarquee() {
       ? 'warning'
       : 'info';
 
-  const durationSec = segWidth > 0 ? Math.max(5, segWidth / SPEED) : 10;
+  const durationSec = segWidth > 0 ? Math.max(6, segWidth / SPEED) : 12;
 
   return (
     <div
@@ -122,7 +126,6 @@ export default function PortalAnnouncementMarquee() {
         <Megaphone size={14} />
       </div>
       <div className="portal-marquee-viewport" ref={viewportRef}>
-        <span ref={measureRef} className="portal-marquee-text portal-marquee-probe" aria-hidden />
         <div
           className={`portal-marquee-track ${paused ? 'is-paused' : ''} ${segWidth > 0 ? 'is-ready' : ''}`}
           style={
@@ -132,16 +135,10 @@ export default function PortalAnnouncementMarquee() {
             } as React.CSSProperties
           }
         >
-          <div className="portal-marquee-segment" ref={segmentRef}>
-            <span className="portal-marquee-text" style={trackColor ? { color: trackColor } : undefined}>
-              {filled || baseText}
-            </span>
-          </div>
-          <div className="portal-marquee-segment" aria-hidden>
-            <span className="portal-marquee-text" style={trackColor ? { color: trackColor } : undefined}>
-              {filled || baseText}
-            </span>
-          </div>
+          <Segment items={items} segRef={segmentRef} />
+          {Array.from({ length: Math.max(1, copies - 1) }).map((_, i) => (
+            <Segment key={i} items={items} />
+          ))}
         </div>
       </div>
       <button
