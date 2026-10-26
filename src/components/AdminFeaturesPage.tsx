@@ -1,7 +1,9 @@
 import { useMaintenance } from '../context/MaintenanceContext';
+import { useSite404 } from '../context/Site404Context';
 
 export default function AdminFeaturesPage() {
-  const { enabled, saving, error, setEnabled } = useMaintenance();
+  const { enabled: maintOn, saving: maintSaving, error: maintError, setEnabled: setMaint } = useMaintenance();
+  const { enabled: site404On, saving: site404Saving, error: site404Error, setEnabled: setSite404 } = useSite404();
 
   return (
     <div className="max-w-xl space-y-4">
@@ -11,24 +13,46 @@ export default function AdminFeaturesPage() {
           Controls that only administrators can change. Agents and customers cannot open this page.
         </p>
       </div>
+
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center justify-between gap-4">
         <div>
           <div className="text-sm font-semibold text-slate-900">Maintenance mode</div>
           <p className="text-sm text-slate-500 mt-1">
-            When on, agents and customers see the maintenance screen. Admin accounts stay signed in and can turn this off.
+            When on, agents and customers see the maintenance screen. Admins stay signed in and can turn this off.
           </p>
-          {error && <p className="text-sm text-rose-600 mt-2">{error}</p>}
+          {maintError && <p className="text-sm text-rose-600 mt-2">{maintError}</p>}
         </div>
         <button
           type="button"
-          disabled={saving}
-          onClick={() => void setEnabled(!enabled)}
+          disabled={maintSaving}
+          onClick={() => void setMaint(!maintOn)}
           className={`shrink-0 min-w-[92px] px-4 py-2 rounded-lg text-sm font-semibold ${
-            enabled ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            maintOn ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
-          aria-pressed={enabled}
+          aria-pressed={maintOn}
         >
-          {saving ? 'Saving…' : enabled ? 'On' : 'Off'}
+          {maintSaving ? 'Saving…' : maintOn ? 'On' : 'Off'}
+        </button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center justify-between gap-4">
+        <div>
+          <div className="text-sm font-semibold text-slate-900">404 / Site down mode</div>
+          <p className="text-sm text-slate-500 mt-1">
+            Force the 404 “station overrun” screen for everyone except admins. Also used automatically for broken or unknown routes.
+          </p>
+          {site404Error && <p className="text-sm text-rose-600 mt-2">{site404Error}</p>}
+        </div>
+        <button
+          type="button"
+          disabled={site404Saving}
+          onClick={() => void setSite404(!site404On)}
+          className={`shrink-0 min-w-[92px] px-4 py-2 rounded-lg text-sm font-semibold ${
+            site404On ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+          aria-pressed={site404On}
+        >
+          {site404Saving ? 'Saving…' : site404On ? 'On' : 'Off'}
         </button>
       </div>
     </div>

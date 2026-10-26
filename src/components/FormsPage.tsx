@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 import { MAINTENANCE_FORM_NAME } from '../lib/maintenance';
+import { SITE404_FORM_NAME } from '../lib/site404';
 
 export default function FormsPage() {
   const { forms, saveForm, deleteForm } = usePlatform();
@@ -24,6 +25,8 @@ export default function FormsPage() {
     setDescription('');
   };
 
+  const hidden = new Set([MAINTENANCE_FORM_NAME, SITE404_FORM_NAME]);
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">Intake forms available for the portal and agent ticket creation.</p>
@@ -39,7 +42,7 @@ export default function FormsPage() {
         <button type="submit" className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-brand-600 rounded-lg"><Plus size={16} /> Add form</button>
       </form>
       <div className="grid md:grid-cols-2 gap-4">
-        {forms.filter((f) => f.name !== MAINTENANCE_FORM_NAME).map((f) => (
+        {forms.filter((f) => !hidden.has(f.name)).map((f) => (
           <div key={f.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
             <div className="flex justify-between">
               <div className="font-semibold text-slate-900">{f.name}</div>
