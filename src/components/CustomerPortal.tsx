@@ -430,15 +430,15 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
               </div>
             )}
           </div>
-        </main>
 
-        <footer className="portal-footer relative z-20 shrink-0 px-4 lg:px-6 py-3.5">
-          <div className="max-w-5xl mx-auto text-center">
-            <div className="text-[11px] sm:text-xs font-medium tracking-wide portal-footer-brand">
-              NexusOps Customer Portal · © 2026 Lizer &amp; Kirzhian
+          <footer className="portal-footer relative z-10 mt-8 mb-2 px-2 py-3.5 rounded-xl">
+            <div className="text-center">
+              <div className="text-[11px] sm:text-xs font-medium tracking-wide portal-footer-brand">
+                NexusOps Customer Portal · © 2026 Lizer &amp; Kirzhian
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        </main>
       </div>
     </div>
   );
