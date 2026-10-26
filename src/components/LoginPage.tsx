@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { markJustLoggedIn } from './PostLoginLoader';
-import { SpaceFlybys } from './LoginFlybys';
+import { CosmicFallBackground, NexusLogoMark } from './LoginScene';
 
 interface Props {
   audience?: 'customer' | 'agent';
@@ -9,35 +9,7 @@ interface Props {
   onOpenAgent?: () => void;
 }
 
-function NexusLogoMark({ size = 56 }: { size?: number }) {
-  return (
-    <div className="login-logo-mark" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 48 48" width={size} height={size} fill="none" aria-hidden>
-        <circle cx="24" cy="24" r="5.2" fill="#e9d5ff" className="login-logo-core" />
-        <g className="login-logo-arcs">
-          <path d="M24 7a17 17 0 0 1 17 17" stroke="#c4b5fd" strokeWidth="3" strokeLinecap="round" />
-          <path d="M24 41a17 17 0 0 1-17-17" stroke="#a78bfa" strokeWidth="3" strokeLinecap="round" opacity="0.7" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function CosmicFallBackground() {
-  return (
-    <div className="login-cosmos absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="login-cosmos-sky absolute inset-0" />
-      <div className="login-galaxy-band" />
-      <div className="login-nebula login-nebula-a absolute inset-0" />
-      <div className="login-nebula login-nebula-b absolute inset-0" />
-      <div className="login-dust absolute inset-0" />
-      <SpaceFlybys />
-      <div className="login-cosmos-vignette absolute inset-0 pointer-events-none" />
-    </div>
-  );
-}
-
-export default function LoginPage({ audience = 'customer' }: Props) {
+export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenAgent }: Props) {
   const { signIn, signUp, resetPassword, configError } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [audienceTab, setAudienceTab] = useState<'agent' | 'customer'>(audience === 'agent' ? 'agent' : 'customer');
@@ -51,7 +23,6 @@ export default function LoginPage({ audience = 'customer' }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const isAgent = audienceTab === 'agent';
-  const cardSub = isAgent ? 'Sign in to Agent Workspace' : 'Sign in to Customer Portal';
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -68,7 +39,8 @@ export default function LoginPage({ audience = 'customer' }: Props) {
         markJustLoggedIn();
         await signIn(email.trim(), password, isAgent ? 'agent' : 'customer');
         window.location.hash = isAgent ? '' : 'portal';
-      } else {
+      }
+      else {
         await signUp(email.trim(), password, name.trim() || undefined, isAgent ? 'agent' : 'customer');
         setInfo('Account created. You can sign in now.');
         setMode('signin');
@@ -104,12 +76,14 @@ export default function LoginPage({ audience = 'customer' }: Props) {
     }
   };
 
+  const cardSub = isAgent ? 'Sign in to Agent Workspace' : 'Sign in to Customer Portal';
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       <CosmicFallBackground />
       <div className="relative z-10 min-h-screen flex items-center justify-center px-5 sm:px-8 py-10">
-        <div className="flex items-center justify-center w-full">
-          {mode === 'signin' ? (
+          <div className="flex items-center justify-center w-full">
+            {mode === 'signin' ? (
             <div className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] rounded-[22px] px-6 py-7 sm:px-7">
               <div className="flex flex-col items-center text-center mb-5">
                 <div className="login-card-logo"><NexusLogoMark size={28} /></div>
@@ -135,7 +109,7 @@ export default function LoginPage({ audience = 'customer' }: Props) {
                     <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition" onClick={() => setShowPassword((v) => !v)}>{showPassword ? 'Hide' : 'Show'}</button>
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl disabled:opacity-60 text-white font-semibold text-sm py-2.5">
+                <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 hover:from-violet-400 hover:via-fuchsia-400 hover:to-violet-400 disabled:opacity-60 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30">
                   {loading ? 'Signing in…' : 'Sign in'}
                 </button>
                 <p className="text-center text-xs text-violet-200/70 pt-1">
@@ -147,7 +121,7 @@ export default function LoginPage({ audience = 'customer' }: Props) {
                 </div>
               </form>
             </div>
-          ) : (
+            ) : (
             <div className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] rounded-[22px] px-6 py-7 sm:px-7">
               <div className="flex flex-col items-center text-center mb-4">
                 <div className="login-card-logo"><NexusLogoMark size={28} /></div>
@@ -181,7 +155,7 @@ export default function LoginPage({ audience = 'customer' }: Props) {
                     <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition" onClick={() => setShowConfirm((v) => !v)}>{showConfirm ? 'Hide' : 'Show'}</button>
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl disabled:opacity-60 text-white font-medium text-sm py-2.5 mt-1">
+                <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-[length:160%_100%] hover:from-violet-500 hover:via-fuchsia-500 hover:to-violet-500 disabled:opacity-60 text-white font-medium text-sm py-2.5 shadow-lg shadow-violet-600/40 mt-1">
                   {loading ? 'Creating account…' : 'Create account'}
                 </button>
                 <p className="text-center text-xs text-fuchsia-200/70 pt-1">
@@ -190,8 +164,8 @@ export default function LoginPage({ audience = 'customer' }: Props) {
                 </p>
               </form>
             </div>
-          )}
-        </div>
+            )}
+          </div>
       </div>
     </div>
   );
