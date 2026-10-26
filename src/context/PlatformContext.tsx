@@ -68,7 +68,7 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
   const map = loadAnnounceChannels();
   return list.map((a) => ({
     ...a,
-    channel: a.channel || map[a.id] || map[`title:${a.title}`] || 'both',
+    channel: a.channel || map[a.id] || (a.title && map[`title:${a.title}`]) || map[`body:${(a.body || '').slice(0, 40)}`] || 'both',
   }));
 }
 
@@ -126,7 +126,7 @@ interface PlatformContextValue {
   deleteCanned: (id: string) => Promise<void>;
   addSurvey: (s: Omit<SurveyResponse, 'id' | 'created_at'> & { id?: string }) => Promise<void>;
   addReview: (r: Omit<QualityReview, 'id' | 'created_at'> & { id?: string }) => Promise<void>;
-  saveAnnouncement: (a: Partial<Announcement> & { title: string; body: string }) => Promise<void>;
+  saveAnnouncement: (a: Partial<Announcement> & { body: string; title?: string }) => Promise<void>;
   deleteAnnouncement: (id: string) => Promise<void>;
   saveForm: (f: Partial<FormDef> & { name: string }) => Promise<void>;
   deleteForm: (id: string) => Promise<void>;
@@ -194,6 +194,28 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);
+
+  useEffect(() => {
+    const pull = () => {
+      try {
+        const next = mergeAnnouncementChannels(load(LS.announce, [] as Announcement[]));
+        if (Array.isArray(next)) setAnnouncements(next);
+      } catch { /* ignore */ }
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LS.announce || e.key === LS.announceChannels) pull();
+    };
+    const onCustom = () => pull();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('nexus-announce-updated', onCustom as EventListener);
+    const tick = window.setInterval(pull, 2000);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('nexus-announce-updated', onCustom as EventListener);
+      window.clearInterval(tick);
+    };
+  }, []);
+
 
   useEffect(() => {
     save(LS.kb, articles); save(LS.chat, conversations); save(LS.notif, notifications);
@@ -327,18 +349,20 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     else setReviews((p) => [{ id: `qr-${Date.now()}`, created_at: new Date().toISOString(), ...r }, ...p]);
   };
 
-  const saveAnnouncement = async (a: Partial<Announcement> & { title: string; body: string }) => {
+  const saveAnnouncement = async (a: Partial<Announcement> & { body: string; title?: string }) => {
     const channel = a.channel || 'both';
     const severity = a.severity || 'info';
     const active = a.active ?? true;
+    const title = (a.title || '').trim();
+    const body = (a.body || '').trim();
+    const dbTitle = title || body.slice(0, 80) || 'Announcement';
 
-    // Optimistic local update so Admin + Portal react immediately
     if (!a.id) {
       const tempId = `an-${Date.now()}`;
       const optimistic: Announcement = {
         id: tempId,
-        title: a.title,
-        body: a.body,
+        title,
+        body,
         severity,
         active,
         channel,
@@ -346,19 +370,24 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       };
       setAnnouncements((prev) => [optimistic, ...prev]);
       saveAnnounceChannel(tempId, channel);
-      saveAnnounceChannel(`title:${a.title}`, channel);
+      if (title) saveAnnounceChannel(`title:${title}`, channel);
+      saveAnnounceChannel(`body:${body.slice(0, 40)}`, channel);
     } else {
       setAnnouncements((prev) =>
-        prev.map((x) => (x.id === a.id ? ({ ...x, ...a, channel, severity, active } as Announcement) : x)),
+        prev.map((x) => (x.id === a.id ? ({ ...x, ...a, title, body, channel, severity, active } as Announcement) : x)),
       );
       saveAnnounceChannel(a.id, channel);
-      saveAnnounceChannel(`title:${a.title}`, channel);
+      if (title) saveAnnounceChannel(`title:${title}`, channel);
+      saveAnnounceChannel(`body:${body.slice(0, 40)}`, channel);
     }
+
+    try {
+      window.dispatchEvent(new CustomEvent('nexus-announce-updated'));
+    } catch { /* ignore */ }
 
     if (!supabase) return;
 
-    // DB schema may not have `channel` yet — insert core columns only
-    const row = { title: a.title, body: a.body, severity, active };
+    const row = { title: dbTitle, body, severity, active };
     try {
       if (a.id) {
         const { error } = await supabase.from('announcements').update(row).eq('id', a.id);
@@ -368,11 +397,12 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         if (data?.id) {
           saveAnnounceChannel(data.id, channel);
-          saveAnnounceChannel(`title:${a.title}`, channel);
+          if (title) saveAnnounceChannel(`title:${title}`, channel);
+          saveAnnounceChannel(`body:${body.slice(0, 40)}`, channel);
           setAnnouncements((prev) =>
             prev.map((x) =>
-              x.title === a.title && x.body === a.body && String(x.id).startsWith('an-')
-                ? ({ ...x, ...data, channel } as Announcement)
+              x.body === body && String(x.id).startsWith('an-')
+                ? ({ ...x, ...data, title, body, channel } as Announcement)
                 : x,
             ),
           );
@@ -381,9 +411,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       await refreshPlatform();
     } catch (err) {
       console.error('saveAnnouncement failed', err);
-      // Keep optimistic local data so the portal still shows the post
     }
   };
+
   const deleteAnnouncement = async (id: string) => {
     if (supabase) { await supabase.from('announcements').delete().eq('id', id); await refreshPlatform(); }
     else setAnnouncements((p) => p.filter((x) => x.id !== id));
