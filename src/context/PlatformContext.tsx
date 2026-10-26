@@ -75,6 +75,17 @@ function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | nu
   return null;
 }
 
+function stripChannelMeta(body?: string): string {
+  return (body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '');
+}
+
+function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | null {
+  const m = (body || '').match(/^<!--nexus:channel=(\w+)-->/);
+  if (!m) return null;
+  if (m[1] === 'marquee' || m[1] === 'portal' || m[1] === 'both') return m[1];
+  return null;
+}
+
 function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
   const map = loadAnnounceChannels();
   return list.map((a) => {
@@ -260,6 +271,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
 
 
+
   useEffect(() => {
     save(LS.kb, articles); save(LS.chat, conversations); save(LS.notif, notifications);
     save(LS.auto, automations); save(LS.canned, canned); save(LS.survey, surveys);
@@ -416,12 +428,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     if (!a.id) {
       const tempId = `an-${Date.now()}`;
       const optimistic: Announcement = {
-        id: tempId,
-        title,
-        body: storedBody,
-        severity,
-        active,
-        channel,
+        id: tempId, title, body: storedBody, severity, active, channel,
         created_at: new Date().toISOString(),
       };
       nextList = [optimistic, ...announcements];
@@ -431,9 +438,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       saveAnnounceChannel(`body:${plainBody.slice(0, 40)}`, channel);
     } else {
       nextList = announcements.map((x) =>
-        x.id === a.id
-          ? ({ ...x, ...a, title, body: storedBody, channel, severity, active } as Announcement)
-          : x,
+        x.id === a.id ? ({ ...x, ...a, title, body: storedBody, channel, severity, active } as Announcement) : x,
       );
       setAnnouncements(nextList);
       saveAnnounceChannel(a.id, channel);
