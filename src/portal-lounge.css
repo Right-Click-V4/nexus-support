@@ -212,12 +212,12 @@ html.nexus-dark .portal-cosmic-veil {
   background: linear-gradient(180deg, rgba(8, 4, 20, 0.2) 0%, transparent 30%, rgba(5, 2, 15, 0.35) 100%);
 }
 
-/* Theme-aware glass sidebar — light = white translucent like cards */
+/* Theme-aware glass sidebar — light = purple gradient like top bar */
 .portal-sidebar {
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
   backdrop-filter: blur(18px) saturate(1.15);
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  border-right: 1px solid rgba(196, 181, 253, 0.35);
+  border-right: 1px solid rgba(167, 139, 250, 0.4);
   color: #0f0a1e;
   transition: background 0.85s ease, border-color 0.85s ease, color 0.85s ease;
 }
@@ -228,8 +228,8 @@ html.nexus-dark .portal-sidebar {
 }
 html.nexus-light .app-cosmos > aside.portal-sidebar,
 .app-cosmos > aside.portal-sidebar {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border-right: 1px solid rgba(196, 181, 253, 0.35) !important;
+  background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
+  border-right: 1px solid rgba(167, 139, 250, 0.4) !important;
   color: #0f0a1e !important;
 }
 html.nexus-dark .app-cosmos > aside.portal-sidebar {
@@ -363,9 +363,9 @@ html.nexus-dark .portal-home-hero {
 html.nexus-light .app-cosmos aside,
 html.nexus-light .app-cosmos aside.portal-sidebar,
 html.nexus-light aside.portal-sidebar {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border-color: rgba(196, 181, 253, 0.35) !important;
-  border-right: 1px solid rgba(196, 181, 253, 0.35) !important;
+  background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
+  border-color: rgba(167, 139, 250, 0.4) !important;
+  border-right: 1px solid rgba(167, 139, 250, 0.4) !important;
   color: #0f0a1e !important;
   backdrop-filter: blur(18px) saturate(1.1) !important;
   -webkit-backdrop-filter: blur(18px) saturate(1.1) !important;
@@ -385,4 +385,29 @@ html.nexus-light .app-cosmos aside .text-zinc-400,
 html.nexus-light .app-cosmos aside .text-zinc-500,
 html.nexus-light .app-cosmos aside .text-zinc-600 {
   color: #52525b !important;
+}
+
+/* Portal footer */
+.portal-footer {
+  background: linear-gradient(105deg, rgba(237, 233, 254, 0.88) 0%, rgba(221, 214, 254, 0.82) 50%, rgba(245, 243, 255, 0.9) 100%);
+  border-top: 1px solid rgba(167, 139, 250, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.9s ease, border-color 0.9s ease, color 0.9s ease;
+}
+html.nexus-dark .portal-footer {
+  background: rgba(12, 10, 28, 0.55);
+  border-top-color: rgba(63, 63, 70, 0.35);
+}
+.portal-footer-brand {
+  color: #4c1d95;
+}
+html.nexus-dark .portal-footer-brand {
+  color: #c4b5fd;
+}
+.portal-footer-links {
+  color: #6d28d9;
+}
+html.nexus-dark .portal-footer-links {
+  color: #a1a1aa;
 }
