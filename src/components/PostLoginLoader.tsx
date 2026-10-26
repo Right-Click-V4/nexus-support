@@ -12,7 +12,7 @@ export function markJustLoggedIn() {
   }
 }
 
-function hasJustLoggedIn(): boolean {
+export function hasJustLoggedIn(): boolean {
   try {
     const v = sessionStorage.getItem(POST_LOGIN_KEY);
     if (!v) return false;
@@ -51,15 +51,19 @@ function LogoMark({ spinning }: { spinning: boolean }) {
  */
 function SpaceScene() {
   return (
-    <div className="relative w-[200px] h-[160px] flex items-center justify-center" style={{ animation: 'pl-scene-in 0.85s cubic-bezier(0.22,1,0.36,1) both' }}>
-      <svg viewBox="0 0 200 160" width="200" height="160" fill="none" aria-hidden className="overflow-visible">
+    <div
+      className="relative w-[200px] h-[176px]"
+      style={{ animation: 'pl-scene-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both' }}
+    >
+      <svg viewBox="0 0 200 176" width="200" height="176" fill="none" aria-hidden className="overflow-visible">
         <defs>
-          <linearGradient id="pl-planet" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#e879f9" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#818cf8" stopOpacity="0.2" />
-          </linearGradient>
+          <radialGradient id="pl-planet" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#f5d0fe" />
+            <stop offset="45%" stopColor="#c084fc" />
+            <stop offset="100%" stopColor="#6b21a8" />
+          </radialGradient>
           <filter id="pl-glow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.2" result="b" />
+            <feGaussianBlur stdDeviation="3.5" result="b" />
             <feMerge>
               <feMergeNode in="b" />
               <feMergeNode in="SourceGraphic" />
@@ -67,20 +71,15 @@ function SpaceScene() {
           </filter>
         </defs>
 
-        {/* distant stars */}
-        <g opacity="0.9">
-          <circle cx="28" cy="36" r="1.4" fill="#f5d0fe" style={{ animation: 'pl-twinkle 2.4s ease-in-out infinite' }} />
-          <circle cx="168" cy="28" r="1.2" fill="#ddd6fe" style={{ animation: 'pl-twinkle 3s ease-in-out 0.4s infinite' }} />
-          <circle cx="52" cy="22" r="1" fill="#f5d0fe" style={{ animation: 'pl-twinkle 2.1s ease-in-out 0.8s infinite' }} />
-          <circle cx="150" cy="48" r="1.3" fill="#c4b5fd" style={{ animation: 'pl-twinkle 2.8s ease-in-out 0.2s infinite' }} />
-          <circle cx="40" cy="120" r="1" fill="#e9d5ff" style={{ animation: 'pl-twinkle 3.2s ease-in-out 1s infinite' }} />
-          <circle cx="175" cy="110" r="1.2" fill="#f5d0fe" style={{ animation: 'pl-twinkle 2.6s ease-in-out 0.6s infinite' }} />
-          <circle cx="90" cy="18" r="1.1" fill="#ddd6fe" style={{ animation: 'pl-twinkle 2.2s ease-in-out 1.2s infinite' }} />
+        {/* background stars */}
+        <g opacity="0.85">
+          <circle cx="28" cy="24" r="1.2" fill="#f5d0fe" style={{ animation: 'pl-twinkle 2.8s ease-in-out infinite' }} />
+          <circle cx="168" cy="30" r="1" fill="#e9d5ff" style={{ animation: 'pl-twinkle 3.2s ease-in-out 0.4s infinite' }} />
+          <circle cx="52" cy="140" r="1.1" fill="#ddd6fe" style={{ animation: 'pl-twinkle 2.4s ease-in-out 0.8s infinite' }} />
+          <circle cx="178" cy="120" r="0.9" fill="#f0abfc" style={{ animation: 'pl-twinkle 3.6s ease-in-out 0.2s infinite' }} />
+          <circle cx="18" cy="88" r="0.8" fill="#c4b5fd" style={{ animation: 'pl-twinkle 2.6s ease-in-out 1s infinite' }} />
+          <circle cx="150" cy="18" r="1.3" fill="#fae8ff" style={{ animation: 'pl-twinkle 3s ease-in-out 0.6s infinite' }} />
         </g>
-
-        {/* soft nebula blobs */}
-        <ellipse cx="70" cy="70" rx="36" ry="28" fill="#a855f7" opacity="0.08" />
-        <ellipse cx="130" cy="95" rx="40" ry="30" fill="#6366f1" opacity="0.07" />
 
         {/* orbital path */}
         <ellipse
@@ -98,11 +97,9 @@ function SpaceScene() {
         {/* planet body */}
         <g style={{ animation: 'pl-float 4.5s ease-in-out infinite alternate' }}>
           <circle cx="100" cy="88" r="28" fill="url(#pl-planet)" stroke="#e9d5ff" strokeWidth="2.2" filter="url(#pl-glow)" />
-          {/* surface arcs */}
           <path d="M82 78c8-6 20-8 32-2" stroke="#f5d0fe" strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
           <path d="M78 92c10 4 22 6 36 2" stroke="#c4b5fd" strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
           <path d="M88 102c6 3 14 4 22 1" stroke="#ddd6fe" strokeWidth="1.3" strokeLinecap="round" opacity="0.45" />
-          {/* highlight */}
           <circle cx="90" cy="78" r="5" fill="#faf5ff" opacity="0.35" />
         </g>
 
@@ -133,21 +130,113 @@ function SpaceScene() {
 }
 
 export function BootLoader({ label = 'Loading…' }: { label?: string }) {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 48 }, (_, i) => ({
+        id: i,
+        left: `${(i * 47 + 13) % 100}%`,
+        top: `${(i * 31 + 7) % 100}%`,
+        size: i % 7 === 0 ? 2.5 : i % 3 === 0 ? 1.8 : 1.2,
+        delay: `${(i * 0.27) % 4}s`,
+        duration: `${2.4 + (i % 5) * 0.55}s`,
+        opacity: 0.25 + (i % 6) * 0.1,
+      })),
+    [],
+  );
+
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center justify-center bg-[#0b0618]">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 120% 80% at 50% 30%, rgba(88, 28, 135, 0.35), transparent 60%),' +
-            'linear-gradient(180deg, #12082a 0%, #0b0618 100%)',
+            'radial-gradient(ellipse 120% 80% at 20% 15%, rgba(120, 40, 180, 0.42), transparent 55%),' +
+            'radial-gradient(ellipse 90% 70% at 85% 20%, rgba(60, 20, 140, 0.48), transparent 50%),' +
+            'radial-gradient(ellipse 80% 55% at 50% 100%, rgba(30, 10, 80, 0.55), transparent 55%),' +
+            'linear-gradient(180deg, #1a0a3a 0%, #0b0618 48%, #05030e 100%)',
         }}
       />
-      <div className="relative z-10 flex flex-col items-center gap-5">
-        <LogoMark spinning />
-        <p className="text-sm text-fuchsia-100/70">{label}</p>
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="absolute w-72 h-72 rounded-full opacity-30 blur-3xl"
+          style={{
+            left: '15%',
+            top: '20%',
+            background: 'radial-gradient(circle, rgba(192,38,211,0.45), transparent 70%)',
+            animation: 'pl-boot-drift 12s ease-in-out infinite alternate',
+          }}
+        />
+        <div
+          className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl"
+          style={{
+            right: '10%',
+            bottom: '15%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.4), transparent 70%)',
+            animation: 'pl-boot-drift 14s ease-in-out infinite alternate-reverse',
+          }}
+        />
       </div>
-      <style>{`@keyframes pl-spin-ring { to { transform: rotate(360deg); } }`}</style>
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {stars.map((s) => (
+          <span
+            key={s.id}
+            className="absolute rounded-full bg-white"
+            style={{
+              left: s.left,
+              top: s.top,
+              width: s.size,
+              height: s.size,
+              opacity: s.opacity,
+              boxShadow: s.size > 2 ? '0 0 6px rgba(255,255,255,0.55)' : undefined,
+              animation: `pl-boot-twinkle ${s.duration} ease-in-out infinite`,
+              animationDelay: s.delay,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center gap-6 px-6">
+        <div className="relative">
+          <div
+            className="absolute -inset-4 rounded-3xl opacity-50 blur-xl pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(167,139,250,0.45), transparent 70%)' }}
+          />
+          <LogoMark spinning />
+        </div>
+
+        <div className="text-center space-y-2 max-w-xs">
+          <p className="text-[15px] font-medium tracking-wide text-fuchsia-50/95">{label}</p>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300/55">Nexus Ops</p>
+        </div>
+
+        <div className="w-44 h-[3px] rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="h-full w-1/3 rounded-full"
+            style={{
+              background: 'linear-gradient(90deg, transparent, #e879f9, #a78bfa, transparent)',
+              animation: 'pl-boot-bar 1.35s ease-in-out infinite',
+            }}
+          />
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes pl-spin-ring { to { transform: rotate(360deg); } }
+        @keyframes pl-boot-twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.85); }
+          50% { opacity: 1; transform: scale(1.15); }
+        }
+        @keyframes pl-boot-drift {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(2.5%, 1.5%, 0); }
+        }
+        @keyframes pl-boot-bar {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(320%); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -255,45 +344,40 @@ export default function PostLoginLoader({
             right: '8%',
             bottom: '12%',
             background: 'radial-gradient(circle, rgba(99,102,241,0.45), transparent 70%)',
-            animation: 'pl-drift 15s ease-in-out infinite alternate-reverse',
+            animation: 'pl-drift 13s ease-in-out infinite alternate-reverse',
           }}
         />
       </div>
 
       <FloatingParticles />
 
-      <div className="relative z-10 flex flex-col items-center px-6 text-center">
+      <div className="relative z-10 flex flex-col items-center gap-7 px-6">
         <SpaceScene />
 
-        <p
-          key={line}
-          className={`mt-5 text-sm font-medium tracking-wide ${
-            isReady ? 'text-emerald-300/90' : 'text-fuchsia-100/90'
-          }`}
-        >
-          {isReady ? '✓  ' : ''}
-          {line}
-        </p>
+        <div className="text-center space-y-2 max-w-sm">
+          <p className="text-base font-medium tracking-wide text-fuchsia-50/95">{line}</p>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300/55">
+            {isReady ? 'Almost there' : 'Nexus Ops'}
+          </p>
+        </div>
 
-        <div className="mt-6 w-56 relative">
-          <div className="h-[5px] rounded-full bg-white/[0.08] border border-white/10 overflow-hidden backdrop-blur-sm">
+        <div className="relative w-52 h-[3px] rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+            style={{
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, #a78bfa, #e879f9, #f0abfc)',
+              boxShadow: '0 0 12px rgba(217, 70, 239, 0.55), 0 0 24px rgba(124, 58, 237, 0.25)',
+            }}
+          >
             <div
-              className="relative h-full rounded-full transition-all duration-700 ease-out"
+              className="absolute inset-0 opacity-60"
               style={{
-                width: `${progress}%`,
-                background: 'linear-gradient(90deg, #7c3aed 0%, #d946ef 45%, #a78bfa 75%, #c084fc 100%)',
-                boxShadow: '0 0 12px rgba(217, 70, 239, 0.55), 0 0 24px rgba(124, 58, 237, 0.25)',
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)',
+                animation: 'pl-shimmer 1.4s ease-in-out infinite',
               }}
-            >
-              <div
-                className="absolute inset-0 opacity-60"
-                style={{
-                  background:
-                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)',
-                  animation: 'pl-shimmer 1.4s ease-in-out infinite',
-                }}
-              />
-            </div>
+            />
           </div>
           <div
             className="absolute -bottom-2 left-0 h-3 rounded-full blur-md pointer-events-none transition-all duration-700"
@@ -410,7 +494,11 @@ export function PostLoginShell({
     return () => window.clearTimeout(t);
   }, [ready, mode]);
 
+  // Fresh login → boot ceremony only (never plain loader). Refresh → plain BootLoader.
   if (!ready || mode === 'wait') {
+    if (hasJustLoggedIn() || wantCeremony.current) {
+      return <PostLoginLoader label={label} fading={false} variant={variant} />;
+    }
     return <BootLoader label={label} />;
   }
 
@@ -422,7 +510,6 @@ export function PostLoginShell({
   const showPortal = mode === 'fading' || mode === 'done';
   const overlayFading = mode === 'fading';
 
-  // Portal stays sharp under the overlay. Only the cosmic layer fades out.
   return (
     <div className="relative min-h-screen bg-[#0b0618]">
       {showPortal && (
