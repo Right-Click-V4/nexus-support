@@ -13,6 +13,17 @@ import {
 } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 
+function resolveChannel(a: { channel?: string; body?: string }) {
+  const meta = (a.body || '').match(/^<!--nexus:channel=(\w+)-->/);
+  if (meta) return meta[1];
+  return a.channel || 'both';
+}
+
+function displayBody(body?: string) {
+  return (body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '');
+}
+
+
 type Props = {
   displayName: string;
   onNavigate: (view: 'community' | 'help' | 'submit' | 'chat' | 'track' | 'mytickets') => void;
@@ -80,12 +91,12 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
   const activeAnnouncements = useMemo(
     () =>
       (announcements || [])
-        .filter(
-          (a) =>
-            a.active !== false &&
-            a.channel !== 'marquee' &&
-            (a.channel === 'portal' || a.channel === 'both' || !a.channel),
-        )
+        .filter((a) => {
+          if (a.active === false) return false;
+          const ch = resolveChannel(a);
+          // Marquee-only must never show on the Overview card
+          return ch === 'portal' || ch === 'both';
+        })
         .slice(0, 4),
     [announcements],
   );
@@ -161,7 +172,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
                   )}
                 </div>
                 <p className="text-xs text-zinc-700 dark:text-zinc-300 mt-0.5 leading-relaxed line-clamp-2">
-                  {a.body}
+                  {displayBody(a.body)}
                 </p>
                 {a.created_at && (
                   <div className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">{formatDate(a.created_at)}</div>

@@ -64,12 +64,30 @@ function saveAnnounceChannel(id: string, channel: 'marquee' | 'portal' | 'both')
   save(LS.announceChannels, map);
 }
 
+function stripChannelMeta(body?: string): string {
+  return (body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '');
+}
+
+function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | null {
+  const m = (body || '').match(/^<!--nexus:channel=(\w+)-->/);
+  if (!m) return null;
+  if (m[1] === 'marquee' || m[1] === 'portal' || m[1] === 'both') return m[1];
+  return null;
+}
+
 function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
   const map = loadAnnounceChannels();
-  return list.map((a) => ({
-    ...a,
-    channel: a.channel || map[a.id] || (a.title && map[`title:${a.title}`]) || map[`body:${(a.body || '').slice(0, 40)}`] || 'both',
-  }));
+  return list.map((a) => {
+    const fromBody = parseChannelFromBody(a.body);
+    const channel =
+      a.channel ||
+      fromBody ||
+      map[a.id] ||
+      (a.title && map[`title:${a.title}`]) ||
+      map[`body:${stripChannelMeta(a.body).slice(0, 40)}`] ||
+      'both';
+    return { ...a, channel, body: a.body };
+  });
 }
 
 const DEFAULT_KB: KnowledgeArticle[] = [
@@ -208,13 +226,20 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     const onCustom = () => pull();
     window.addEventListener('storage', onStorage);
     window.addEventListener('nexus-announce-updated', onCustom as EventListener);
-    const tick = window.setInterval(pull, 2000);
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('nexus-announce');
+      bc.onmessage = () => pull();
+    } catch { /* ignore */ }
+    const tick = window.setInterval(pull, 1000);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('nexus-announce-updated', onCustom as EventListener);
       window.clearInterval(tick);
+      try { bc?.close(); } catch { /* ignore */ }
     };
   }, []);
+
 
 
   useEffect(() => {
@@ -354,40 +379,52 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     const severity = a.severity || 'info';
     const active = a.active ?? true;
     const title = (a.title || '').trim();
-    const body = (a.body || '').trim();
-    const dbTitle = title || body.slice(0, 80) || 'Announcement';
+    const plainBody = stripChannelMeta(a.body || '').trim();
+    const storedBody =
+      channel === 'both' ? plainBody : `<!--nexus:channel=${channel}-->\n${plainBody}`;
+    const dbTitle = title || plainBody.slice(0, 80) || 'Announcement';
 
+    let nextList: Announcement[] = [];
     if (!a.id) {
       const tempId = `an-${Date.now()}`;
       const optimistic: Announcement = {
         id: tempId,
         title,
-        body,
+        body: storedBody,
         severity,
         active,
         channel,
         created_at: new Date().toISOString(),
       };
-      setAnnouncements((prev) => [optimistic, ...prev]);
+      nextList = [optimistic, ...announcements];
+      setAnnouncements(nextList);
       saveAnnounceChannel(tempId, channel);
       if (title) saveAnnounceChannel(`title:${title}`, channel);
-      saveAnnounceChannel(`body:${body.slice(0, 40)}`, channel);
+      saveAnnounceChannel(`body:${plainBody.slice(0, 40)}`, channel);
     } else {
-      setAnnouncements((prev) =>
-        prev.map((x) => (x.id === a.id ? ({ ...x, ...a, title, body, channel, severity, active } as Announcement) : x)),
+      nextList = announcements.map((x) =>
+        x.id === a.id
+          ? ({ ...x, ...a, title, body: storedBody, channel, severity, active } as Announcement)
+          : x,
       );
+      setAnnouncements(nextList);
       saveAnnounceChannel(a.id, channel);
       if (title) saveAnnounceChannel(`title:${title}`, channel);
-      saveAnnounceChannel(`body:${body.slice(0, 40)}`, channel);
+      saveAnnounceChannel(`body:${plainBody.slice(0, 40)}`, channel);
     }
+
+    save(LS.announce, nextList);
 
     try {
       window.dispatchEvent(new CustomEvent('nexus-announce-updated'));
+      const bc = new BroadcastChannel('nexus-announce');
+      bc.postMessage({ type: 'updated' });
+      bc.close();
     } catch { /* ignore */ }
 
     if (!supabase) return;
 
-    const row = { title: dbTitle, body, severity, active };
+    const row = { title: dbTitle, body: storedBody, severity, active };
     try {
       if (a.id) {
         const { error } = await supabase.from('announcements').update(row).eq('id', a.id);
@@ -398,14 +435,16 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         if (data?.id) {
           saveAnnounceChannel(data.id, channel);
           if (title) saveAnnounceChannel(`title:${title}`, channel);
-          saveAnnounceChannel(`body:${body.slice(0, 40)}`, channel);
-          setAnnouncements((prev) =>
-            prev.map((x) =>
-              x.body === body && String(x.id).startsWith('an-')
-                ? ({ ...x, ...data, title, body, channel } as Announcement)
+          saveAnnounceChannel(`body:${plainBody.slice(0, 40)}`, channel);
+          setAnnouncements((prev) => {
+            const merged = prev.map((x) =>
+              (x.body === storedBody || stripChannelMeta(x.body) === plainBody) && String(x.id).startsWith('an-')
+                ? ({ ...x, ...data, title, body: storedBody, channel } as Announcement)
                 : x,
-            ),
-          );
+            );
+            save(LS.announce, merged);
+            return merged;
+          });
         }
       }
       await refreshPlatform();
