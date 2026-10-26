@@ -1,0 +1,184 @@
+/* Critical login glass overrides (loads after theme-restored) */
+.login-cosmos-sky {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 115%, rgba(109, 40, 217, 0.55) 0%, transparent 62%),
+    radial-gradient(ellipse 32% 26% at 12% 18%, rgba(56, 189, 248, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 28% 24% at 88% 16%, rgba(244, 114, 182, 0.16) 0%, transparent 58%),
+    linear-gradient(185deg, #040010 0%, #0a0122 32%, #140432 68%, #070014 100%) !important;
+}
+.login-galaxy-band {
+  position: absolute; inset: 8% -15% auto; height: 46%;
+  background: linear-gradient(102deg, transparent 4%, rgba(125,211,252,0.08) 22%, rgba(192,132,252,0.18) 48%, rgba(244,114,182,0.1) 68%, transparent 92%);
+  filter: blur(10px); transform: rotate(-14deg); mix-blend-mode: screen; opacity: 0.75; pointer-events: none;
+}
+.login-nebula { opacity: 0.5; mix-blend-mode: screen; pointer-events: none; }
+.login-nebula-a { background: radial-gradient(ellipse 60% 40% at 30% 70%, rgba(168,85,247,0.32), transparent 70%); }
+.login-nebula-b { background: radial-gradient(ellipse 50% 35% at 75% 40%, rgba(236,72,153,0.18), transparent 65%); }
+.login-dust { opacity: 0.45; pointer-events: none; background-image: radial-gradient(1px 1px at 20% 30%, #fff 50%, transparent 52%), radial-gradient(1px 1px at 70% 60%, #c4b5fd 50%, transparent 52%); background-size: 200px 200px; }
+.login-cosmos-vignette {
+  background: radial-gradient(ellipse 55% 50% at 72% 48%, transparent 0%, rgba(4,0,14,0.55) 100%);
+  pointer-events: none;
+}
+.login-glass-card {
+  position: relative; z-index: 20; isolation: isolate;
+  color: #f8fafc !important;
+  background: linear-gradient(165deg, rgba(28,10,58,0.97) 0%, rgba(12,4,28,0.98) 100%) !important;
+  border: 1px solid rgba(196,181,253,0.45) !important;
+  border-radius: 1.25rem !important;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 56px rgba(0,0,0,0.55), 0 0 48px rgba(139,92,246,0.22);
+}
+.login-glass-card::before {
+  content: ''; position: absolute; inset: -12px; border-radius: 28px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.4), transparent 60%);
+  filter: blur(18px); z-index: -1; pointer-events: none;
+}
+.login-glass-card label { color: rgba(245,208,254,0.92) !important; }
+.login-glass-input {
+  display: block; width: 100%; box-sizing: border-box;
+  background: rgba(8,4,20,0.78) !important;
+  border: 1px solid rgba(196,181,253,0.38) !important;
+  border-radius: 0.75rem !important;
+  color: #f8fafc !important;
+  padding: 0.7rem 0.9rem; font-size: 0.875rem;
+}
+.login-glass-input::placeholder { color: rgba(221,214,254,0.55) !important; }
+.login-glass-input:focus {
+  border-color: rgba(167,139,250,0.9) !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.35);
+  background: rgba(12,6,28,0.92) !important; outline: none;
+}
+.login-submit-btn {
+  display: block; width: 100%; border: none; border-radius: 0.75rem;
+  padding: 0.7rem 1rem; font-size: 0.875rem; font-weight: 600;
+  color: #fff !important; cursor: pointer;
+  background: linear-gradient(90deg, #8b5cf6, #d946ef, #8b5cf6) !important;
+  background-size: 160% 100%;
+  box-shadow: 0 10px 24px rgba(124,58,237,0.4);
+}
+.login-card-logo {
+  width: 54px; height: 54px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, rgba(124,58,237,0.55), rgba(76,29,149,0.4));
+  border: 1px solid rgba(216,180,254,0.45);
+  box-shadow: 0 0 22px rgba(168,85,247,0.55);
+}
+.login-brand-badge {
+  width: 36px; height: 36px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, rgba(139,92,246,0.55), rgba(76,29,149,0.45));
+  border: 1px solid rgba(196,181,253,0.4);
+  box-shadow: 0 0 16px rgba(139,92,246,0.45);
+}
+.login-tab {
+  flex: 1; padding: 0.6rem 0.5rem; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(167,139,250,0.4);
+  background: rgba(15,8,32,0.65);
+  color: #e9d5ff !important; font-weight: 600;
+}
+.login-tab-on {
+  background: linear-gradient(180deg, #8b5cf6, #7c3aed) !important;
+  border-color: transparent !important;
+  color: #fff !important; -webkit-text-fill-color: #fff;
+  box-shadow: 0 8px 18px rgba(124,58,237,0.4);
+}
+.login-hero-title {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  background: none !important;
+}
+.login-status-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(6,78,59,0.88);
+  border: 1px solid rgba(52,211,153,0.55);
+  color: #d1fae5 !important; font-size: 12px; font-weight: 650;
+}
+.login-status-dot {
+  width: 7px; height: 7px; border-radius: 999px; background: #34d399;
+  animation: login-status-pulse 1.8s ease-out infinite;
+}
+@keyframes login-status-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.55); }
+  70% { box-shadow: 0 0 0 7px rgba(52,211,153,0); }
+  100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+}
+.login-cap {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 10px 12px; border-radius: 14px;
+  background: rgba(15,6,32,0.55);
+  border: 1px solid rgba(192,132,252,0.22);
+  backdrop-filter: blur(10px);
+}
+.login-cap-index {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  color: #e9d5ff !important;
+  background: rgba(139,92,246,0.28);
+  border: 1px solid rgba(196,181,253,0.32);
+  border-radius: 8px; padding: 4px 6px; line-height: 1;
+}
+.login-role-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px;
+  background: rgba(109,40,217,0.35);
+  border: 1px solid rgba(196,181,253,0.4);
+  color: #ede9fe !important; font-size: 12px; font-weight: 600;
+}
+.login-logo-arcs { transform-origin: 24px 24px; animation: login-logo-spin 8s linear infinite; }
+.login-logo-arcs-rev { transform-origin: 24px 24px; animation: login-logo-spin 5.5s linear infinite reverse; }
+.login-logo-core {
+  transform-box: fill-box; transform-origin: center;
+  animation: login-core-pulse 1.5s ease-in-out infinite alternate;
+}
+@keyframes login-logo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes login-core-pulse { from { transform: scale(0.82); opacity: 0.7; } to { transform: scale(1.18); opacity: 1; } }
+.login-pilot .login-logo-mark { animation: login-pilot-bob 2.8s ease-in-out infinite; }
+@keyframes login-pilot-bob {
+  0% { transform: translateY(0) rotate(-7deg) scale(1); }
+  50% { transform: translateY(-7px) rotate(7deg) scale(1.08); }
+  100% { transform: translateY(0) rotate(-7deg) scale(1); }
+}
+.login-pilot-glow {
+  position: absolute; inset: -18px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,121,249,0.45) 0%, transparent 70%);
+  filter: blur(8px); pointer-events: none;
+  animation: login-glow-breathe 2.2s ease-in-out infinite alternate;
+}
+@keyframes login-glow-breathe {
+  from { opacity: 0.45; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.15); }
+}
+.login-flybys { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 4; }
+.login-flyby { position: absolute; left: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; will-change: transform; }
+.login-flyby-ltr { animation-name: login-flyby-ltr; animation-timing-function: linear; animation-fill-mode: forwards; }
+.login-flyby-rtl { animation-name: login-flyby-rtl; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes login-flyby-ltr { from { transform: translateX(-12vw); } to { transform: translateX(112vw); } }
+@keyframes login-flyby-rtl { from { transform: translateX(112vw); } to { transform: translateX(-12vw); } }
+.login-flyby-rtl .login-flyby-craft { transform: scaleX(-1); }
+.login-flyby-chat {
+  background: rgba(20,12,40,0.92); border: 1.5px solid rgba(192,132,252,0.55);
+  color: #fce7f3; font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 12px;
+  white-space: nowrap; margin-bottom: 6px; direction: ltr; unicode-bidi: plaintext;
+}
+html.nexus-dark .app-cosmos [class*="bg-rose-"],
+html.nexus-dark .app-cosmos [class*="bg-amber-"],
+html.nexus-dark .app-cosmos [class*="bg-yellow-"],
+html.nexus-dark .app-cosmos [class*="bg-green-"],
+html.nexus-dark .app-cosmos [class*="bg-emerald-"],
+html.nexus-dark .app-cosmos [class*="bg-blue-"],
+html.nexus-dark .app-cosmos [class*="bg-violet-"],
+html.nexus-dark .app-cosmos [class*="bg-purple-"],
+html.nexus-dark .app-cosmos [class*="bg-fuchsia-"],
+html.nexus-dark .app-cosmos [class*="bg-pink-"],
+html.nexus-dark .app-cosmos [class*="bg-sky-"],
+html.nexus-dark .app-cosmos [class*="bg-cyan-"],
+html.nexus-dark .app-cosmos [class*="bg-orange-"],
+html.nexus-dark .app-cosmos [class*="bg-lime-"] {
+  color: #1e1b4b !important;
+}
+html.nexus-light .app-cosmos .text-zinc-900,
+html.nexus-light .app-cosmos .text-zinc-800,
+html.nexus-light .app-cosmos .text-zinc-700 { color: #18181b !important; }
+html.nexus-light .app-cosmos .bg-white {
+  background-color: #fff !important; color: #18181b; border-color: #e4e4e7 !important;
+}

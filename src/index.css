@@ -1,5 +1,6 @@
 @import './portal-desert.css';
 @import './theme-restored.css';
+@import './login-glass.css';
 
 @tailwind base;
 @tailwind components;
