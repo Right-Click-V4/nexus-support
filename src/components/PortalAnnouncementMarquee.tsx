@@ -51,7 +51,7 @@ export default function PortalAnnouncementMarquee() {
       <div className="portal-marquee-viewport">
         <div
           className={`portal-marquee-track ${paused ? 'is-paused' : ''}`}
-          style={{ animationDuration: `${Math.max(18, text.length * 0.18)}s` }}
+          style={{ animationDuration: `${Math.max(8, text.length * 0.08)}s` }}
         >
           <span className="portal-marquee-text">{track}</span>
         </div>
