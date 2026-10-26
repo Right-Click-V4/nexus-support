@@ -2,7 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 @import './portal-desert.css';
+@import './login-styles-a.css';
+@import './login-styles-b.css';
 @import './theme-contrast.css';
+@import './portal-home.css';
 
 :root {
   font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
