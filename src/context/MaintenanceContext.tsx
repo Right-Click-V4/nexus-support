@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { fetchMaintenance, readMaintenanceCache, saveMaintenance } from '../lib/maintenance';
+import { fetchMaintenance, readMaintenanceCache, saveMaintenance, writeMaintenanceCache } from '../lib/maintenance';
 
 type MaintenanceValue = {
   enabled: boolean;
@@ -11,6 +11,7 @@ type MaintenanceValue = {
 };
 
 const MaintenanceContext = createContext<MaintenanceValue | null>(null);
+const LOCAL_KEY = 'nexus-maintenance-on';
 
 export function MaintenanceProvider({ children }: { children: ReactNode }) {
   const [enabled, setEnabledState] = useState(readMaintenanceCache);
@@ -20,32 +21,45 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+
+    const apply = (on: boolean) => {
+      if (cancelled) return;
+      setEnabledState(on);
+      writeMaintenanceCache(on);
+    };
+
     fetchMaintenance()
-      .then((on) => {
-        if (!cancelled) setEnabledState(on);
-      })
+      .then(apply)
       .finally(() => {
         if (!cancelled) setReady(true);
       });
 
-    if (!isSupabaseConfigured || !supabase) return () => { cancelled = true; };
-    const channel = supabase
-      .channel('nexus-maintenance')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'forms' }, () => {
-        void fetchMaintenance().then((on) => {
-          if (!cancelled) setEnabledState(on);
-        });
-      })
-      .subscribe();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LOCAL_KEY && e.newValue != null) {
+        apply(e.newValue === '1');
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    if (isSupabaseConfigured && supabase) {
+      channel = supabase
+        .channel('nexus-maintenance')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'forms' }, () => {
+          void fetchMaintenance().then(apply);
+        })
+        .subscribe();
+    }
+
     const poll = window.setInterval(() => {
-      void fetchMaintenance().then((on) => {
-        if (!cancelled) setEnabledState(on);
-      });
-    }, 8000);
+      void fetchMaintenance().then(apply);
+    }, 2500);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('storage', onStorage);
       window.clearInterval(poll);
-      void supabase.removeChannel(channel);
+      if (channel && supabase) void supabase.removeChannel(channel);
     };
   }, []);
 
@@ -53,10 +67,12 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
     setSaving(true);
     setError(null);
     setEnabledState(on);
+    writeMaintenanceCache(on);
     try {
       await saveMaintenance(on);
     } catch (err) {
       setEnabledState(!on);
+      writeMaintenanceCache(!on);
       setError(err instanceof Error ? err.message : 'Could not update maintenance mode');
     } finally {
       setSaving(false);
