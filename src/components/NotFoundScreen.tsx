@@ -111,8 +111,8 @@ export default function NotFoundScreen({
         .maint-content {
           position: relative; z-index: 2;
           height: 100%; width: 100%;
-          max-width: 1400px; margin: 0 auto;
-          padding: clamp(8px, 1.5vh, 16px) clamp(8px, 2vw, 20px);
+          max-width: 1500px; margin: 0 auto;
+          padding: clamp(6px, 1.2vh, 14px) clamp(6px, 1.5vw, 16px);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           gap: clamp(6px, 1vh, 12px); box-sizing: border-box;
         }
@@ -126,23 +126,30 @@ export default function NotFoundScreen({
           width: 7px; height: 7px; border-radius: 50%; background: #fb7185;
           animation: maint-pulse 1.6s ease-out infinite;
         }
+        /* Clip gray/silver border baked into the PNG */
         .maint-frame {
           width: 100%;
           flex: 1 1 auto;
           min-height: 0;
           display: flex; align-items: center; justify-content: center;
+          overflow: hidden;
           background: transparent;
           border: none;
           box-shadow: none;
           padding: 0;
+          max-width: min(96vw, 1280px);
+          max-height: min(86vh, 980px);
         }
         .maint-art {
           display: block;
           width: 100%;
           height: 100%;
-          max-width: min(98vw, 1200px);
-          max-height: min(82vh, 900px);
-          object-fit: contain;
+          max-width: none;
+          max-height: none;
+          object-fit: cover;
+          /* Scale up so outer gray + silver frame are cropped away */
+          transform: scale(1.14);
+          transform-origin: center center;
           border: none;
           border-radius: 0;
           box-shadow: none;
@@ -183,10 +190,11 @@ export default function NotFoundScreen({
           100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0); }
         }
         @media (max-width: 640px) {
-          .maint-art {
+          .maint-frame {
             max-width: 98vw;
-            max-height: min(72vh, 560px);
+            max-height: min(75vh, 620px);
           }
+          .maint-art { transform: scale(1.16); }
         }
       `}</style>
     </div>
