@@ -1,4 +1,4 @@
-/* Purple sky + login cyan comets + theme-aware glass sidebar */
+/* Purple sky + dense galaxy particles + theme-aware glass sidebar */
 
 .portal-cosmic {
   pointer-events: none;
@@ -88,119 +88,10 @@ html.nexus-light .portal-cosmic-star { filter: brightness(1.1); }
 }
 
 .portal-shooting-layer {
-  position: absolute; inset: 0; z-index: 3; overflow: hidden; pointer-events: none;
+  display: none !important;
 }
 .portal-shooting-star {
-  position: absolute;
-  left: 0;
-  width: 110px;
-  height: 22px;
-  opacity: 0;
-  will-change: transform, opacity;
-  animation-name: portal-comet-fly;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-duration: 30s;
-  background: none !important;
-  box-shadow: none !important;
-}
-.portal-shooting-1 { top: 16%; animation-delay: 2s; }
-.portal-shooting-2 { top: 40%; animation-delay: 12s; }
-.portal-shooting-3 { top: 65%; animation-delay: 22s; }
-
-.portal-comet-trail {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  border-radius: 999px;
-  transform-origin: right center;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(34, 211, 238, 0.05) 10%,
-    rgba(103, 232, 249, 0.45) 45%,
-    rgba(165, 243, 252, 0.9) 78%,
-    #ffffff 100%
-  );
-  box-shadow:
-    0 0 8px 2px rgba(34, 211, 238, 0.5),
-    0 0 18px 5px rgba(6, 182, 212, 0.35);
-}
-.portal-comet-trail-a {
-  width: 90px; height: 4px;
-  transform: translateY(-50%) rotate(-2deg);
-  animation: portal-comet-ribbon 0.5s ease-in-out infinite alternate;
-}
-.portal-comet-trail-b {
-  width: 68px; height: 2.5px;
-  top: calc(50% - 5px);
-  transform: translateY(-50%) rotate(4deg);
-  opacity: 0.75;
-  animation: portal-comet-ribbon 0.55s ease-in-out infinite alternate-reverse;
-  background: linear-gradient(90deg, transparent 0%, rgba(125, 211, 252, 0.2) 30%, rgba(56, 189, 248, 0.7) 75%, #e0f2fe 100%);
-}
-.portal-comet-trail-c {
-  width: 48px; height: 2px;
-  top: calc(50% + 5px);
-  transform: translateY(-50%) rotate(-5deg);
-  opacity: 0.55;
-  animation: portal-comet-ribbon 0.6s ease-in-out infinite alternate;
-  background: linear-gradient(90deg, transparent 0%, rgba(165, 243, 252, 0.15) 35%, rgba(34, 211, 238, 0.6) 80%, #fff 100%);
-}
-@keyframes portal-comet-ribbon {
-  from { filter: brightness(0.85) saturate(1.1); }
-  to { filter: brightness(1.3) saturate(1.5); }
-}
-
-.portal-comet-head {
-  position: absolute;
-  right: 0; top: 50%;
-  width: 10px; height: 10px;
-  transform: translateY(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff 0%, #a5f3fc 40%, #22d3ee 70%, transparent 100%);
-  box-shadow:
-    0 0 8px 2px rgba(255, 255, 255, 0.95),
-    0 0 16px 4px rgba(34, 211, 238, 0.9),
-    0 0 28px 8px rgba(6, 182, 212, 0.5);
-  animation: portal-star-pulse 0.4s ease-in-out infinite alternate;
-}
-@keyframes portal-star-pulse {
-  from { transform: translateY(-50%) scale(0.85); }
-  to { transform: translateY(-50%) scale(1.2); }
-}
-
-.portal-comet-particle {
-  position: absolute;
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff 0%, #a5f3fc 40%, transparent 70%);
-  box-shadow: 0 0 8px 2px rgba(34, 211, 238, 0.85);
-  animation: portal-comet-spark 0.6s ease-out infinite;
-}
-.portal-comet-p1 { right: 30px; top: 30%; }
-.portal-comet-p2 { right: 46px; top: 65%; width: 3px; height: 3px; animation-delay: 0.1s; }
-.portal-comet-p3 { right: 60px; top: 25%; width: 3.5px; height: 3.5px; animation-delay: 0.2s; }
-@keyframes portal-comet-spark {
-  0% { opacity: 1; transform: scale(1) translate(0, 0); }
-  100% { opacity: 0; transform: scale(0.2) translate(-14px, 4px); }
-}
-
-@keyframes portal-comet-fly {
-  0%, 88% {
-    opacity: 0;
-    transform: translate3d(-120px, 0, 0) rotate(-8deg);
-  }
-  90% { opacity: 1; }
-  97% {
-    opacity: 0.95;
-    transform: translate3d(110vw, 50px, 0) rotate(-8deg);
-  }
-  98%, 100% {
-    opacity: 0;
-    transform: translate3d(115vw, 55px, 0) rotate(-8deg);
-  }
+  display: none !important;
 }
 
 .portal-cosmic-veil {
@@ -279,7 +170,7 @@ html.nexus-dark .portal-nav-active {
 .portal-sidebar-footer .portal-nav-item { color: #312e81; }
 html.nexus-dark .portal-sidebar-footer .portal-nav-item { color: #a1a1aa; }
 
-/* Full-viewport shell: only main content scrolls */
+/* Full-viewport shell: only main content scrolls (all tabs) */
 .app-cosmos {
   position: relative;
   isolation: isolate;
@@ -307,12 +198,11 @@ html.nexus-dark .portal-sidebar-footer .portal-nav-item { color: #a1a1aa; }
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-}
-.portal-shell .nexus-topbar,
-.portal-shell .portal-footer {
-  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 .portal-shell .nexus-topbar {
+  flex-shrink: 0;
   position: relative; z-index: 20;
   background: linear-gradient(105deg, rgba(237, 233, 254, 0.92) 0%, rgba(221, 214, 254, 0.88) 45%, rgba(233, 213, 255, 0.9) 100%);
   backdrop-filter: blur(14px);
@@ -323,7 +213,6 @@ html.nexus-dark .portal-shell .nexus-topbar {
   background: rgba(12, 10, 28, 0.55);
   border-bottom-color: rgba(63, 63, 70, 0.35);
 }
-/* Beat index.css solid white topbar in light mode */
 html.nexus-light .nexus-topbar,
 html.nexus-light .portal-shell .nexus-topbar {
   background: linear-gradient(105deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.9) 40%, rgba(245, 243, 255, 0.92) 100%) !important;
@@ -331,7 +220,6 @@ html.nexus-light .portal-shell .nexus-topbar {
   color: #1e1b4b !important;
   backdrop-filter: blur(14px) !important;
 }
-.portal-shell > main { position: relative; z-index: 10; /* scroll handled above */ }
 
 .portal-glass-card {
   background: rgba(255, 255, 255, 0.8);
@@ -377,11 +265,7 @@ html.nexus-dark .portal-home-hero {
 @media (prefers-reduced-motion: reduce) {
   .portal-nebula-wash,
   .portal-cosmic-star,
-  .portal-drift-particle,
-  .portal-shooting-star,
-  .portal-comet-trail,
-  .portal-comet-head,
-  .portal-comet-particle {
+  .portal-drift-particle {
     animation: none !important;
   }
 }
@@ -414,23 +298,23 @@ html.nexus-light .app-cosmos aside .text-zinc-600 {
   color: #52525b !important;
 }
 
-/* Portal footer — light: soft white glass card; dark: muted glass */
+/* Portal footer lives inside main content scroll */
 .portal-footer {
-  background: rgba(255, 255, 255, 0.72);
-  border-top: 1px solid rgba(226, 232, 240, 0.55);
-  backdrop-filter: blur(14px) saturate(1.05);
-  -webkit-backdrop-filter: blur(14px) saturate(1.05);
-  box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.04);
-  transition: background 0.9s ease, border-color 0.9s ease, color 0.9s ease, box-shadow 0.9s ease;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.45);
+  backdrop-filter: blur(12px) saturate(1.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.05);
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  transition: background 0.9s ease, border-color 0.9s ease, color 0.9s ease;
 }
 html.nexus-dark .portal-footer {
-  background: rgba(12, 10, 28, 0.6);
-  border-top-color: rgba(63, 63, 70, 0.4);
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 12, 40, 0.55);
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
 }
 html.nexus-light .portal-footer {
-  background: rgba(255, 255, 255, 0.78) !important;
-  border-top: 1px solid rgba(203, 213, 225, 0.5) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(203, 213, 225, 0.5) !important;
 }
 .portal-footer-brand {
   color: #64748b;
