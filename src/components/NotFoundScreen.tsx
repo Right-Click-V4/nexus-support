@@ -1,7 +1,6 @@
 const BASE = import.meta.env.BASE_URL || '/';
-// Prefer cropped 404.jpg (no gray frame). Fall back to original PNG.
-const srcJpg = `${BASE}404.jpg`;
-const srcPng = `${BASE}${encodeURIComponent('404_ Monsters Overran the Station.png')}`;
+const ART = '404_ Monsters Overran the Station.png';
+const src = `${BASE}${encodeURIComponent(ART)}`;
 
 export default function NotFoundScreen({
   onAdminSignIn,
@@ -28,15 +27,11 @@ export default function NotFoundScreen({
 
         <div className="maint-frame">
           <img
-            src={srcJpg}
+            src={src}
             alt="404 — page not found. Monsters overran the station."
             className="maint-art"
             onError={(e) => {
               const el = e.currentTarget;
-              if (el.src.includes('404.jpg')) {
-                el.src = srcPng;
-                return;
-              }
               el.style.display = 'none';
               const hint = el.nextElementSibling as HTMLElement | null;
               if (hint) hint.style.display = 'block';
@@ -132,9 +127,12 @@ export default function NotFoundScreen({
           animation: maint-pulse 1.6s ease-out infinite;
         }
         .maint-frame {
-          width: 100%;
+          /* Sized to the art AFTER clip-path removes ~7.5% border on each side */
+          width: min(88vw, 760px);
+          aspect-ratio: 1036 / 1122;
+          max-height: min(68vh, 680px);
+          overflow: hidden;
           display: flex; align-items: center; justify-content: center;
-          overflow: visible;
           background: transparent;
           border: none;
           box-shadow: none;
@@ -142,16 +140,20 @@ export default function NotFoundScreen({
         }
         .maint-art {
           display: block;
-          width: auto;
-          height: auto;
-          max-width: min(90vw, 820px);
-          max-height: min(70vh, 700px);
-          object-fit: contain;
+          width: 100%;
+          height: 100%;
+          object-fit: fill;
+          /* Crop only the gray/silver frame baked into the PNG (~7.3% each side) */
+          clip-path: inset(7.2% 7.5% 7.2% 7.5%);
+          -webkit-clip-path: inset(7.2% 7.5% 7.2% 7.5%);
           border: none;
           border-radius: 0;
           box-shadow: none;
           background: transparent;
           outline: none;
+          /* Compensate so clipped image still fills the frame */
+          transform: scale(1.175);
+          transform-origin: center center;
         }
         .maint-missing {
           text-align: center; padding: 2rem 1.5rem;
@@ -187,9 +189,9 @@ export default function NotFoundScreen({
           100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0); }
         }
         @media (max-width: 640px) {
-          .maint-art {
-            max-width: 94vw;
-            max-height: min(60vh, 520px);
+          .maint-frame {
+            width: min(94vw, 420px);
+            max-height: min(58vh, 500px);
           }
         }
       `}</style>
