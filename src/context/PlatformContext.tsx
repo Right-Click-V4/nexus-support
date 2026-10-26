@@ -222,7 +222,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         const temps = prev.filter(
           (x) =>
             String(x.id).startsWith('an-') &&
-            !fromDb.some((d) => stripChannelMeta(d.body) === stripChannelMeta(x.body)),
+            !fromDb.some((d) => stripAllMeta(d.body) === stripAllMeta(x.body)),
         );
         const merged = [...temps, ...fromDb];
         const seen = new Set<string>();
@@ -267,6 +267,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       try { bc?.close(); } catch { /* ignore */ }
     };
   }, []);
+
 
 
 
@@ -520,13 +521,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     }
 
     save(LS.announce, nextList);
-
-    try {
-      window.dispatchEvent(new CustomEvent('nexus-announce-updated'));
-      const bc = new BroadcastChannel('nexus-announce');
-      bc.postMessage({ type: 'updated' });
-      bc.close();
-    } catch { /* ignore */ }
+    notifyAnnounceSync();
 
     if (!supabase) return;
 
@@ -544,7 +539,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           saveAnnounceChannel(`body:${plainBody.slice(0, 40)}`, channel);
           setAnnouncements((prev) => {
             const merged = prev.map((x) =>
-              (x.body === storedBody || stripChannelMeta(x.body) === plainBody) && String(x.id).startsWith('an-')
+              (x.body === storedBody || stripAllMeta(x.body) === stripAllMeta(plainBody)) && String(x.id).startsWith('an-')
                 ? ({ ...x, ...data, title, body: storedBody, channel } as Announcement)
                 : x,
             );
