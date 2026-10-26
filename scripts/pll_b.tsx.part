@@ -1,0 +1,291 @@
+function FloatingParticles() {
+  const dots = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, i) => ({
+        id: i,
+        left: `${(i * 37 + 11) % 100}%`,
+        size: i % 5 === 0 ? 3 : i % 3 === 0 ? 2 : 1.5,
+        delay: `${(i * 0.37) % 6}s`,
+        duration: `${10 + (i % 7) * 1.4}s`,
+        opacity: 0.2 + (i % 5) * 0.08,
+      })),
+    [],
+  );
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {dots.map((d) => (
+        <span
+          key={d.id}
+          className="absolute rounded-full bg-fuchsia-200"
+          style={{
+            left: d.left,
+            bottom: '-4%',
+            width: d.size,
+            height: d.size,
+            opacity: d.opacity,
+            boxShadow: d.size > 2 ? '0 0 6px rgba(232,121,249,0.5)' : undefined,
+            animation: `pl-particle-rise ${d.duration} linear infinite`,
+            animationDelay: d.delay,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default function PostLoginLoader({
+  label = 'Opening workspace…',
+  fading = false,
+  variant = 'agent',
+}: {
+  label?: string;
+  subtitle?: string;
+  fading?: boolean;
+  variant?: 'agent' | 'customer';
+}) {
+  const steps =
+    variant === 'customer'
+      ? ['Verifying account…', 'Loading your tickets…', 'Preparing live chat…', 'Ready']
+      : ['Verifying session…', 'Loading your desk…', 'Syncing tickets & chat…', 'Ready'];
+
+  const [stepIdx, setStepIdx] = useState(0);
+
+  useEffect(() => {
+    const timers = [
+      window.setTimeout(() => setStepIdx(1), 750),
+      window.setTimeout(() => setStepIdx(2), 1600),
+      window.setTimeout(() => setStepIdx(3), 2500),
+    ];
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, []);
+
+  const status = steps[Math.min(stepIdx, steps.length - 1)];
+  const isReady = stepIdx >= steps.length - 1;
+  const line = stepIdx === 0 && label ? label : status;
+  const progress = Math.min(100, ((stepIdx + 1) / steps.length) * 100);
+
+  return (
+    <div
+      className={`relative min-h-screen overflow-hidden flex items-center justify-center bg-[#0b0618] ${
+        fading ? 'opacity-0 scale-[0.985]' : 'opacity-100 scale-100'
+      }`}
+      style={{
+        transition: `opacity ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      }}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 120% 80% at 20% 10%, rgba(120, 40, 180, 0.45), transparent 55%),' +
+            'radial-gradient(ellipse 90% 70% at 85% 25%, rgba(60, 20, 140, 0.5), transparent 50%),' +
+            'radial-gradient(ellipse 80% 60% at 50% 95%, rgba(30, 10, 80, 0.6), transparent 55%),' +
+            'linear-gradient(180deg, #1a0a3a 0%, #0b0618 45%, #05030e 100%)',
+        }}
+      />
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="absolute w-80 h-80 rounded-full opacity-25 blur-3xl"
+          style={{
+            left: '12%',
+            top: '18%',
+            background: 'radial-gradient(circle, rgba(192,38,211,0.5), transparent 70%)',
+            animation: 'pl-drift 11s ease-in-out infinite alternate',
+          }}
+        />
+        <div
+          className="absolute w-[28rem] h-[28rem] rounded-full opacity-20 blur-3xl"
+          style={{
+            right: '8%',
+            bottom: '12%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.45), transparent 70%)',
+            animation: 'pl-drift 13s ease-in-out infinite alternate-reverse',
+          }}
+        />
+      </div>
+
+      <FloatingParticles />
+
+      <div className="relative z-10 flex flex-col items-center gap-7 px-6">
+        <SpaceScene />
+
+        <div className="text-center space-y-2 max-w-sm">
+          <p className="text-base font-medium tracking-wide text-fuchsia-50/95">{line}</p>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300/55">
+            {isReady ? 'Almost there' : 'Nexus Ops'}
+          </p>
+        </div>
+
+        <div className="relative w-52 h-[3px] rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+            style={{
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, #a78bfa, #e879f9, #f0abfc)',
+              boxShadow: '0 0 12px rgba(217, 70, 239, 0.55), 0 0 24px rgba(124, 58, 237, 0.25)',
+            }}
+          >
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)',
+                animation: 'pl-shimmer 1.4s ease-in-out infinite',
+              }}
+            />
+          </div>
+          <div
+            className="absolute -bottom-2 left-0 h-3 rounded-full blur-md pointer-events-none transition-all duration-700"
+            style={{
+              width: `${progress}%`,
+              background: 'rgba(217, 70, 239, 0.35)',
+            }}
+          />
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes pl-spin-ring { to { transform: rotate(360deg); } }
+        @keyframes pl-drift {
+          from { transform: translate3d(0,0,0); }
+          to { transform: translate3d(3%, 2%, 0); }
+        }
+        @keyframes pl-particle-rise {
+          from { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+          12% { opacity: 0.85; }
+          70% { opacity: 0.45; }
+          to { transform: translate3d(8px, -110vh, 0) scale(1); opacity: 0; }
+        }
+        @keyframes pl-shimmer {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(120%); }
+        }
+        @keyframes pl-scene-in {
+          from { opacity: 0; transform: translateY(12px) scale(0.94); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes pl-float {
+          from { transform: translateY(0); }
+          to { transform: translateY(-4px); }
+        }
+        @keyframes pl-ring-tilt {
+          from { transform: rotate(-6deg); }
+          to { transform: rotate(6deg); }
+        }
+        @keyframes pl-probe-orbit {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pl-orbit-dash {
+          to { stroke-dashoffset: -36; }
+        }
+        @keyframes pl-twinkle {
+          0%, 100% { opacity: 0.35; }
+          50% { opacity: 1; }
+        }
+        @keyframes pl-comet {
+          0% { transform: translate(-20px, -10px); opacity: 0; }
+          15% { opacity: 0.85; }
+          85% { opacity: 0.5; }
+          100% { transform: translate(160px, 40px); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export function PostLoginShell({
+  ready,
+  label,
+  variant = 'agent',
+  children,
+}: {
+  ready: boolean;
+  label: string;
+  subtitle?: string;
+  variant?: 'agent' | 'customer';
+  children: ReactNode;
+}) {
+  const [mode, setMode] = useState<'wait' | 'ceremony' | 'fading' | 'done'>('wait');
+  const started = useRef(false);
+  const wantCeremony = useRef(false);
+
+  useEffect(() => {
+    if (!ready) {
+      started.current = false;
+      setMode('wait');
+      return;
+    }
+
+    if (!started.current) {
+      started.current = true;
+      wantCeremony.current = hasJustLoggedIn();
+      if (!wantCeremony.current) {
+        setMode('done');
+        return;
+      }
+      setMode('ceremony');
+      const t = window.setTimeout(() => setMode('fading'), MIN_MS);
+      return () => window.clearTimeout(t);
+    }
+  }, [ready]);
+
+  useEffect(() => {
+    if (mode !== 'fading') return;
+    const t = window.setTimeout(() => {
+      clearJustLoggedIn();
+      setMode('done');
+    }, FADE_MS);
+    return () => window.clearTimeout(t);
+  }, [mode]);
+
+  useEffect(() => {
+    if (!ready || mode === 'ceremony' || mode === 'fading') return;
+    if (!hasJustLoggedIn()) return;
+    if (wantCeremony.current && mode === 'done') return;
+    wantCeremony.current = true;
+    started.current = true;
+    setMode('ceremony');
+    const t = window.setTimeout(() => setMode('fading'), MIN_MS);
+    return () => window.clearTimeout(t);
+  }, [ready, mode]);
+
+  // Fresh login → boot ceremony only (never plain loader). Refresh → plain BootLoader.
+  if (!ready || mode === 'wait') {
+    if (hasJustLoggedIn() || wantCeremony.current) {
+      return <PostLoginLoader label={label} fading={false} variant={variant} />;
+    }
+    return <BootLoader label={label} />;
+  }
+
+  if (mode === 'done' && !wantCeremony.current) {
+    return <>{children}</>;
+  }
+
+  const showOverlay = mode === 'ceremony' || mode === 'fading';
+  const showPortal = mode === 'fading' || mode === 'done';
+  const overlayFading = mode === 'fading';
+
+  return (
+    <div className="relative min-h-screen bg-[#0b0618]">
+      {showPortal && (
+        <div className="relative z-0 min-h-screen">
+          {children}
+        </div>
+      )}
+
+      {showOverlay && (
+        <div
+          className="fixed inset-0 z-50 pointer-events-none"
+          style={{
+            opacity: overlayFading ? 0 : 1,
+            transition: `opacity ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          }}
+        >
+          <PostLoginLoader label={label} fading={false} variant={variant} />
+        </div>
+      )}
+    </div>
+  );
+}
