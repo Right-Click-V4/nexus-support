@@ -279,9 +279,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             {view === 'chat' && <PortalLiveChat onBack={() => setView('home')} />}
             {view === 'submit' && (
               <div className="max-w-lg">
-                <button type="button" onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 mb-3">
-                  <ArrowLeft size={16} /> Back
-                </button>
                 <div className="mb-3">
                   <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">Submit a request</h1>
                   <p className="text-zinc-500 text-sm mt-1">We typically respond within one business day.</p>
@@ -336,7 +333,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'track' && (
               <div className="max-w-md">
-                <button type="button" onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 mb-3"><ArrowLeft size={16} /> Back</button>
                 <h1 className="text-xl font-semibold text-zinc-900 mb-1">Track a ticket</h1>
                 <form onSubmit={track} className="portal-glass-card rounded-xl p-4 sm:p-5 space-y-3 mt-3">
                   {trackError && <div className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-lg">{trackError}</div>}
@@ -382,7 +378,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'mytickets' && (
               <div className="max-w-2xl">
-                <button type="button" onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 mb-3"><ArrowLeft size={16} /> Back</button>
                 <h1 className="text-xl font-semibold text-zinc-900 mb-3">My tickets</h1>
                 {myTickets.length === 0 ? (
                   <div className="rounded-xl border border-zinc-200 bg-white/80 px-4 py-3 text-sm text-zinc-500">No tickets linked to {user?.email} yet.</div>
@@ -404,7 +399,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'help' && (
               <div className="max-w-2xl">
-                <button type="button" onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 mb-3"><ArrowLeft size={16} /> Back</button>
                 <h1 className="text-xl font-semibold text-zinc-900 mb-3">Help articles</h1>
                 <div className="space-y-2">
                   {HELP_ARTICLES.map((a) => (
@@ -418,7 +412,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'account' && (
               <div className="max-w-md">
-                <button type="button" onClick={() => setView('home')} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 mb-3"><ArrowLeft size={16} /> Back</button>
                 <h1 className="text-xl font-semibold text-zinc-900 mb-3">Account</h1>
                 <div className="rounded-xl border border-zinc-200 bg-white/80 p-4 space-y-3">
                   <div className="flex items-center gap-3">

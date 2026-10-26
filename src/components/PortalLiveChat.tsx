@@ -146,9 +146,6 @@ export default function PortalLiveChat({ onBack }: Props) {
   if (!chatId || !conversation) {
     return (
       <div className="max-w-md mx-auto">
-        <button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 mb-6">
-          <ArrowLeft size={16} /> Back
-        </button>
         <div className="text-center mb-6">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-lg shadow-brand-500/25 mb-4">
             <MessageCircle className="text-white" size={26} />
@@ -220,9 +217,6 @@ export default function PortalLiveChat({ onBack }: Props) {
   return (
     <div className="max-w-lg mx-auto flex flex-col h-[calc(100vh-8rem)] min-h-[440px]">
       <div className="flex items-center justify-between mb-3">
-        <button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700">
-          <ArrowLeft size={16} /> Back
-        </button>
         <button type="button" onClick={endAndLeave} className="text-xs text-zinc-400 hover:text-rose-600">
           End session
         </button>
