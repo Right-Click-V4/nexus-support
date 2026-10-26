@@ -4,6 +4,8 @@ import {
   Megaphone, FileText, Rocket, Settings, LogOut, User, Users, MessageSquareText, Shield,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useBranding } from '../context/BrandingContext';
+import { DEFAULT_BRANDING } from '../lib/branding';
 
 interface SidebarProps {
   active: string;
@@ -22,9 +24,16 @@ interface SidebarProps {
   isAdmin?: boolean;
 }
 
-function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
+function BrandMark({ logoUrl, className = 'w-8 h-8' }: { logoUrl?: string; className?: string }) {
+  if (logoUrl) {
+    return (
+      <div className={`${className} rounded-xl overflow-hidden bg-white/10 ring-1 ring-white/15 flex items-center justify-center shrink-0`}>
+        <img src={logoUrl} alt="" className="w-full h-full object-contain" />
+      </div>
+    );
+  }
   return (
-    <div className={`${className} rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-md shadow-brand-900/40`}>
+    <div className={`${className} rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-md shadow-brand-900/40 shrink-0`}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <circle cx="12" cy="12" r="3" fill="white" />
         <path d="M12 3a9 9 0 0 1 9 9" stroke="white" strokeWidth="2.2" strokeLinecap="round" opacity="0.95" />
@@ -50,6 +59,10 @@ export default function Sidebar({
   onProfile,
   isAdmin = false,
 }: SidebarProps) {
+  const { branding } = useBranding();
+  const appName = (branding.appName || '').trim() || DEFAULT_BRANDING.appName;
+  const logoUrl = (branding.logoUrl || '').trim();
+
   const resolvedName = displayName || userName;
   const resolvedTickets = openCount ?? ticketCount;
   const resolvedChats = chatBadge ?? chatCount;
@@ -107,9 +120,9 @@ export default function Sidebar({
   return (
     <aside className="w-60 shrink-0 bg-zinc-950 text-zinc-100 flex flex-col border-r border-zinc-800/80">
       <div className="px-4 py-5 flex items-center gap-3 border-b border-zinc-800/80">
-        <BrandMark />
-        <div>
-          <div className="text-sm font-semibold tracking-tight">Nexus Ops</div>
+        <BrandMark logoUrl={logoUrl} />
+        <div className="min-w-0">
+          <div className="text-sm font-semibold tracking-tight truncate">{appName}</div>
           <div className="text-[11px] text-zinc-500">Support desk</div>
         </div>
       </div>
