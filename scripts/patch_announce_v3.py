@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Channel-in-body persistence, BroadcastChannel live sync, merge helpers."""
 from pathlib import Path
 import re
 
 p = Path("src/context/PlatformContext.tsx")
 t = p.read_text()
 if "parseChannelFromBody" in t and "setInterval(pull, 1000)" in t and "bc.onmessage" in t:
-    print("announce v3 already present")
+    print("v3 already")
     raise SystemExit(0)
 
-helpers = """
-function stripChannelMeta(body?: string): string {
+m = re.search(r"function mergeAnnouncementChannels\(list: Announcement\[\]\): Announcement\[] \{[\s\S]*?\n\}", t)
+if not m:
+    raise SystemExit("no merge")
+helpers = """function stripChannelMeta(body?: string): string {
   return (body || '').replace(/^<!--nexus:channel=\\w+-->\\n?/, '');
 }
 
@@ -34,23 +35,13 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
       'both';
     return { ...a, channel, body: a.body };
   });
-}
-"""
-
-m = re.search(
-    r"function mergeAnnouncementChannels\(list: Announcement\[\]\): Announcement\[] \{[\s\S]*?\n\}",
-    t,
-)
-if m:
-    t = t[: m.start()] + helpers.strip() + t[m.end() :]
-    print("merge replaced")
-else:
-    raise SystemExit("mergeAnnouncementChannels not found")
+}"""
+t = t[:m.start()] + helpers + t[m.end():]
 
 start = t.find("  const saveAnnouncement = async")
 end = t.find("  const deleteAnnouncement", start)
 if start < 0 or end < 0:
-    raise SystemExit("saveAnnouncement block not found")
+    raise SystemExit("no saveAnnouncement")
 
 new_fn = """  const saveAnnouncement = async (a: Partial<Announcement> & { body: string; title?: string }) => {
     const channel = a.channel || 'both';
@@ -66,12 +57,7 @@ new_fn = """  const saveAnnouncement = async (a: Partial<Announcement> & { body:
     if (!a.id) {
       const tempId = `an-${Date.now()}`;
       const optimistic: Announcement = {
-        id: tempId,
-        title,
-        body: storedBody,
-        severity,
-        active,
-        channel,
+        id: tempId, title, body: storedBody, severity, active, channel,
         created_at: new Date().toISOString(),
       };
       nextList = [optimistic, ...announcements];
@@ -81,9 +67,7 @@ new_fn = """  const saveAnnouncement = async (a: Partial<Announcement> & { body:
       saveAnnounceChannel(`body:${plainBody.slice(0, 40)}`, channel);
     } else {
       nextList = announcements.map((x) =>
-        x.id === a.id
-          ? ({ ...x, ...a, title, body: storedBody, channel, severity, active } as Announcement)
-          : x,
+        x.id === a.id ? ({ ...x, ...a, title, body: storedBody, channel, severity, active } as Announcement) : x,
       );
       setAnnouncements(nextList);
       saveAnnounceChannel(a.id, channel);
@@ -131,15 +115,9 @@ new_fn = """  const saveAnnouncement = async (a: Partial<Announcement> & { body:
     }
   };
 """
-
 t = t[:start] + new_fn + "\n" + t[end:]
 
-t = t.replace(
-    "saveAnnouncement: (a: Partial<Announcement> & { title: string; body: string }) => Promise<void>;",
-    "saveAnnouncement: (a: Partial<Announcement> & { body: string; title?: string }) => Promise<void>;",
-)
-
-sync_fn = """  useEffect(() => {
+sync = """  useEffect(() => {
     const pull = () => {
       try {
         const next = mergeAnnouncementChannels(load(LS.announce, [] as Announcement[]));
@@ -166,24 +144,20 @@ sync_fn = """  useEffect(() => {
     };
   }, []);
 """
+m2 = re.search(r"  useEffect\(\(\) => \{\n    const pull = \(\) => \{[\s\S]*?setInterval\(pull, \d+\);[\s\S]*?\}, \[\]\);", t)
+if m2:
+    t = t[:m2.start()] + sync + t[m2.end():]
+    print("sync replaced")
+elif "setInterval(pull, 1000)" not in t:
+    marker = "  useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);"
+    if marker in t:
+        t = t.replace(marker, marker + "\n\n" + sync, 1)
+        print("sync inserted")
 
-if "setInterval(pull, 1000)" not in t:
-    m2 = re.search(
-        r"  useEffect\(\(\) => \{\n    const pull = \(\) => \{[\s\S]*?setInterval\(pull, \d+\);[\s\S]*?\}, \[\]\);",
-        t,
-    )
-    if m2:
-        t = t[: m2.start()] + sync_fn + t[m2.end() :]
-        print("sync replaced")
-    else:
-        marker = "  useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);"
-        if marker in t:
-            t = t.replace(marker, marker + "\n\n" + sync_fn, 1)
-            print("sync inserted")
-        else:
-            print("WARN no sync")
-else:
-    print("sync already")
+t = t.replace(
+    "saveAnnouncement: (a: Partial<Announcement> & { title: string; body: string }) => Promise<void>;",
+    "saveAnnouncement: (a: Partial<Announcement> & { body: string; title?: string }) => Promise<void>;",
+)
 
 p.write_text(t)
 print("done", len(t))

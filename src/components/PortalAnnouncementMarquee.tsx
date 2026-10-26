@@ -5,8 +5,9 @@ import type { Announcement } from '../types';
 
 const SPEED = 95;
 
-/** Visible separator between distinct announcements (non-collapsing). */
-const SEP = '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0·\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+/** Wide non-collapsing gaps between distinct announcements */
+const SEP =
+  '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0·\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
 
 function severityClass(severity?: Announcement['severity']) {
   if (severity === 'critical') return 'portal-marquee--critical';
@@ -34,7 +35,8 @@ export default function PortalAnnouncementMarquee() {
     () =>
       (announcements || []).filter((a) => {
         if (a.active === false) return false;
-        const ch = a.channel || 'both';
+        const meta = (a.body || '').match(/^<!--nexus:channel=(\w+)-->/);
+        const ch = a.channel || meta?.[1] || 'both';
         return ch === 'marquee' || ch === 'both';
       }),
     [announcements],
