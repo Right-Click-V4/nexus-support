@@ -31,16 +31,19 @@ export default function PortalAnnouncementMarquee() {
     [announcements],
   );
 
-  const baseText = useMemo(
-    () =>
-      active
-        .map((a) => {
-          const body = (a.body || '').trim();
-          return body ? `${a.title}: ${body}` : a.title;
-        })
-        .join('   ·   '),
-    [active],
-  );
+  const baseText = useMemo(() => {
+    // Wide gaps so messages are easy to read; omit empty titles
+    const parts = active
+      .map((a) => {
+        const t = (a.title || '').trim();
+        const body = (a.body || '').trim();
+        if (t && body) return `${t}: ${body}`;
+        return body || t;
+      })
+      .filter(Boolean);
+    // Generous spacing between distinct announcements
+    return parts.join('          ·          ');
+  }, [active]);
 
   // Build a segment string long enough to cover the full viewport (no empty gaps)
   useLayoutEffect(() => {
@@ -54,12 +57,13 @@ export default function PortalAnnouncementMarquee() {
     let built = baseText;
     probe.textContent = built;
     let guard = 0;
+    const gap = '          ·          ';
     while (probe.getBoundingClientRect().width < vpW && guard < 40) {
-      built += '   ·   ' + baseText;
+      built += gap + baseText;
       probe.textContent = built;
       guard += 1;
     }
-    built += '   ·   ' + baseText;
+    built += gap + baseText;
     setFilled(built);
   }, [baseText]);
 

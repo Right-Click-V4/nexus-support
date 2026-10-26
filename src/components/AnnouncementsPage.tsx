@@ -48,7 +48,8 @@ export default function AnnouncementsPage() {
 
   const submitAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !body.trim() || busy) return;
+    // Title is optional (useful for marquee-only posts); body is required
+    if (!body.trim() || busy) return;
     setBusy(true);
     setStatusMsg(null);
     try {
@@ -63,7 +64,7 @@ export default function AnnouncementsPage() {
       setBody('');
       setSeverity('info');
       setChannel('both');
-      setStatusMsg('Announcement published — visible on the Customer Portal now.');
+      setStatusMsg('Published — Customer Portal updates immediately (no refresh needed).');
     } catch (err) {
       console.error(err);
       setStatusMsg('Could not publish. Check the console or try again.');
@@ -107,7 +108,7 @@ export default function AnnouncementsPage() {
         >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="font-semibold text-slate-900">{a.title}</div>
+              <div className="font-semibold text-slate-900">{a.title?.trim() || '(No title)'}</div>
               <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
                 {a.severity || 'info'}
               </span>
@@ -158,14 +159,13 @@ export default function AnnouncementsPage() {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
+            placeholder="Title (optional — leave blank for marquee-only)"
             className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-            required
           />
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Message"
+            placeholder="Message (required)"
             rows={3}
             className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             required
