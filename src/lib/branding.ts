@@ -104,39 +104,6 @@ export async function saveBranding(partial: Partial<BrandingSettings>): Promise<
   return next;
 }
 
-/** Apply primary color + favicon to the live document. */
-export function applyBrandingToDom(b: BrandingSettings) {
-  const root = document.documentElement;
-  const hex = normalizeHex(b.primaryColor) || DEFAULT_BRANDING.primaryColor;
-  root.style.setProperty('--brand-500', hex);
-  root.style.setProperty('--brand-600', shade(hex, -12));
-  root.style.setProperty('--brand-700', shade(hex, -22));
-  root.style.setProperty('--brand-400', shade(hex, 12));
-
-  // Tailwind brand utilities often use hardcoded colors; also set a data attr for CSS hooks
-  root.setAttribute('data-brand', hex);
-
-  const fav = b.faviconUrl.trim();
-  let link = document.querySelector<HTMLLinkElement>('link[data-nexus-favicon="1"]');
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'icon';
-    link.setAttribute('data-nexus-favicon', '1');
-    document.head.appendChild(link);
-  }
-  if (fav) {
-    link.href = fav;
-  } else {
-    // restore default public favicon if cleared
-    const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL || '/';
-    link.href = `${base}favicon.svg`;
-  }
-
-  if (b.appName) {
-    document.title = b.appName;
-  }
-}
-
 function shade(hex: string, percent: number): string {
   const n = hex.replace('#', '');
   const num = parseInt(n, 16);
@@ -149,4 +116,80 @@ function shade(hex: string, percent: number): string {
   g = Math.round((t - g) * p + g);
   b = Math.round((t - b) * p + b);
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+function hexToRgb(hex: string): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return `${(n >> 16) & 0xff} ${(n >> 8) & 0xff} ${n & 0xff}`;
+}
+
+/** Apply primary color + favicon + title to the live document. */
+export function applyBrandingToDom(b: BrandingSettings) {
+  const root = document.documentElement;
+  const hex = normalizeHex(b.primaryColor) || DEFAULT_BRANDING.primaryColor;
+  const c400 = shade(hex, 18);
+  const c500 = hex;
+  const c600 = shade(hex, -12);
+  const c700 = shade(hex, -22);
+  const c800 = shade(hex, -32);
+
+  root.style.setProperty('--brand-400', c400);
+  root.style.setProperty('--brand-500', c500);
+  root.style.setProperty('--brand-600', c600);
+  root.style.setProperty('--brand-700', c700);
+  root.style.setProperty('--brand-800', c800);
+  root.style.setProperty('--brand-500-rgb', hexToRgb(c500));
+  root.setAttribute('data-brand', hex);
+
+  // Tailwind compiles brand-* to fixed hex at build time — override at runtime
+  let style = document.getElementById('nexus-brand-runtime') as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'nexus-brand-runtime';
+    document.head.appendChild(style);
+  }
+  style.textContent = `
+    .bg-brand-400, .hover\\:bg-brand-400:hover { background-color: ${c400} !important; }
+    .bg-brand-500, .hover\\:bg-brand-500:hover { background-color: ${c500} !important; }
+    .bg-brand-600, .hover\\:bg-brand-600:hover, .hover\\:bg-brand-700:hover { background-color: ${c600} !important; }
+    .bg-brand-700 { background-color: ${c700} !important; }
+    .bg-brand-600\\/20 { background-color: color-mix(in srgb, ${c600} 20%, transparent) !important; }
+    .bg-brand-500\\/20 { background-color: color-mix(in srgb, ${c500} 20%, transparent) !important; }
+    .bg-brand-50, .bg-brand-50\\/60 {
+      background-color: color-mix(in srgb, ${c500} 18%, transparent) !important;
+    }
+    .text-brand-400 { color: ${c400} !important; }
+    .text-brand-500, .text-brand-600, .hover\\:text-brand-600:hover { color: ${c600} !important; }
+    .text-brand-700, .text-brand-800, .text-brand-900 { color: ${c700} !important; }
+    .border-brand-100, .border-brand-200 { border-color: color-mix(in srgb, ${c500} 35%, transparent) !important; }
+    .border-brand-500, .border-brand-600 { border-color: ${c600} !important; }
+    .ring-brand-500\\/30, .focus\\:ring-brand-500\\/30:focus {
+      --tw-ring-color: color-mix(in srgb, ${c500} 30%, transparent) !important;
+    }
+    .from-brand-400 { --tw-gradient-from: ${c400} var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+    .from-brand-500 { --tw-gradient-from: ${c500} var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+    .to-violet-500, .to-violet-600 {
+      /* keep secondary gradient stop; primary from-* already set */
+    }
+    .shadow-brand-900\\/40 { --tw-shadow-color: color-mix(in srgb, ${c800} 40%, transparent) !important; }
+  `;
+
+  const fav = b.faviconUrl.trim();
+  let link = document.querySelector<HTMLLinkElement>('link[data-nexus-favicon="1"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    link.setAttribute('data-nexus-favicon', '1');
+    document.head.appendChild(link);
+  }
+  if (fav) {
+    link.href = fav;
+  } else {
+    const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL || '/';
+    link.href = `${base}favicon.svg`;
+  }
+
+  if (b.appName) {
+    document.title = b.appName;
+  }
 }
