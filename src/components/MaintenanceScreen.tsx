@@ -6,26 +6,276 @@ export default function MaintenanceScreen({
   onAdminSignIn?: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-[#10182b] text-white flex flex-col items-center justify-center px-4 py-8">
-      <img
-        src={src}
-        alt="System under maintenance. We'll be right back!"
-        className="w-full max-w-3xl rounded-2xl shadow-2xl border border-white/10"
-      />
-      <p className="mt-4 text-sm text-violet-100/80 text-center">
-        Nexus Ops is under maintenance. We'll be right back!
-      </p>
-      {onAdminSignIn ? (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={onAdminSignIn}
-            className="text-sm px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500"
-          >
+    <div className="maint-shell">
+      <div className="maint-bg" aria-hidden>
+        <div className="maint-grid" />
+        <div className="maint-orb maint-orb-a" />
+        <div className="maint-orb maint-orb-b" />
+        <div className="maint-orb maint-orb-c" />
+        <div className="maint-scan" />
+        <div className="maint-stars" />
+        <div className="maint-ring maint-ring-a" />
+        <div className="maint-ring maint-ring-b" />
+      </div>
+
+      <div className="maint-content">
+        <div className="maint-badge">
+          <span className="maint-badge-dot" />
+          System status · Maintenance
+        </div>
+
+        <div className="maint-frame">
+          <img
+            src={src}
+            alt="System under maintenance. We'll be right back!"
+            className="maint-art"
+          />
+        </div>
+
+        <p className="maint-copy">Nexus Ops is under maintenance. We'll be right back!</p>
+
+        {onAdminSignIn ? (
+          <button type="button" onClick={onAdminSignIn} className="maint-admin-btn">
             Admin sign in
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
+
+      <style>{`
+        .maint-shell {
+          position: fixed;
+          inset: 0;
+          z-index: 50;
+          overflow: hidden;
+          color: #f5f3ff;
+          background: #070414;
+        }
+        .maint-bg {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(ellipse 80% 55% at 50% 110%, rgba(109, 40, 217, 0.45) 0%, transparent 60%),
+            radial-gradient(ellipse 40% 35% at 12% 18%, rgba(56, 189, 248, 0.14) 0%, transparent 55%),
+            radial-gradient(ellipse 36% 30% at 88% 12%, rgba(244, 114, 182, 0.12) 0%, transparent 55%),
+            linear-gradient(180deg, #050210 0%, #12042c 48%, #080318 100%);
+        }
+        .maint-grid {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(167, 139, 250, 0.07) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(167, 139, 250, 0.07) 1px, transparent 1px);
+          background-size: 48px 48px;
+          mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 20%, transparent 75%);
+          animation: maint-grid-drift 28s linear infinite;
+        }
+        .maint-orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(40px);
+          opacity: 0.55;
+        }
+        .maint-orb-a {
+          width: min(42vw, 420px);
+          height: min(42vw, 420px);
+          left: -8%;
+          top: 18%;
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.55), transparent 70%);
+          animation: maint-float 16s ease-in-out infinite alternate;
+        }
+        .maint-orb-b {
+          width: min(36vw, 360px);
+          height: min(36vw, 360px);
+          right: -6%;
+          bottom: 12%;
+          background: radial-gradient(circle, rgba(56, 189, 248, 0.35), transparent 70%);
+          animation: maint-float 19s ease-in-out infinite alternate-reverse;
+        }
+        .maint-orb-c {
+          width: min(28vw, 280px);
+          height: min(28vw, 280px);
+          left: 40%;
+          top: -8%;
+          background: radial-gradient(circle, rgba(236, 72, 153, 0.28), transparent 70%);
+          animation: maint-float 22s ease-in-out infinite alternate;
+        }
+        .maint-scan {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.65), transparent);
+          box-shadow: 0 0 18px 4px rgba(139, 92, 246, 0.35);
+          animation: maint-scan 7s linear infinite;
+          opacity: 0.7;
+        }
+        .maint-stars {
+          position: absolute;
+          inset: 0;
+          background-image:
+            radial-gradient(1.5px 1.5px at 8% 20%, rgba(255,255,255,.85) 50%, transparent 52%),
+            radial-gradient(1px 1px at 18% 70%, rgba(196,181,253,.9) 50%, transparent 52%),
+            radial-gradient(1.5px 1.5px at 32% 35%, rgba(255,255,255,.7) 50%, transparent 52%),
+            radial-gradient(1px 1px at 55% 15%, rgba(125,211,252,.8) 50%, transparent 52%),
+            radial-gradient(1.2px 1.2px at 72% 62%, rgba(244,114,182,.75) 50%, transparent 52%),
+            radial-gradient(1px 1px at 88% 40%, rgba(255,255,255,.65) 50%, transparent 52%),
+            radial-gradient(1.4px 1.4px at 42% 82%, rgba(196,181,253,.7) 50%, transparent 52%),
+            radial-gradient(1px 1px at 95% 78%, rgba(255,255,255,.55) 50%, transparent 52%);
+          animation: maint-twinkle 5s ease-in-out infinite alternate;
+        }
+        .maint-ring {
+          position: absolute;
+          border-radius: 50%;
+          border: 1px solid rgba(167, 139, 250, 0.18);
+        }
+        .maint-ring-a {
+          width: min(55vw, 560px);
+          height: min(55vw, 560px);
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          animation: maint-spin 48s linear infinite;
+        }
+        .maint-ring-b {
+          width: min(38vw, 380px);
+          height: min(38vw, 380px);
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          border-color: rgba(56, 189, 248, 0.12);
+          animation: maint-spin 32s linear infinite reverse;
+        }
+        .maint-content {
+          position: relative;
+          z-index: 2;
+          height: 100%;
+          width: 100%;
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: clamp(12px, 2.5vh, 28px) clamp(12px, 3vw, 32px);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: clamp(10px, 1.8vh, 18px);
+          box-sizing: border-box;
+        }
+        .maint-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: #e9d5ff;
+          background: rgba(139, 92, 246, 0.18);
+          border: 1px solid rgba(196, 181, 253, 0.35);
+          backdrop-filter: blur(8px);
+        }
+        .maint-badge-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #fbbf24;
+          box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55);
+          animation: maint-pulse 1.6s ease-out infinite;
+        }
+        .maint-frame {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 1 auto;
+          min-height: 0;
+        }
+        .maint-art {
+          display: block;
+          width: auto;
+          height: auto;
+          max-width: min(96vw, 920px);
+          max-height: min(68vh, 640px);
+          object-fit: contain;
+          border-radius: 18px;
+          border: 1px solid rgba(196, 181, 253, 0.28);
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+            0 24px 60px rgba(0, 0, 0, 0.55),
+            0 0 50px rgba(139, 92, 246, 0.22);
+          background: rgba(10, 6, 28, 0.4);
+        }
+        .maint-copy {
+          margin: 0;
+          text-align: center;
+          font-size: clamp(0.9rem, 2.2vw, 1.05rem);
+          line-height: 1.45;
+          color: rgba(237, 233, 254, 0.92);
+          max-width: 36rem;
+          text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+        }
+        .maint-admin-btn {
+          margin-top: 2px;
+          padding: 0.55rem 1.1rem;
+          border-radius: 0.75rem;
+          border: 1px solid rgba(196, 181, 253, 0.4);
+          background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+          color: #fff;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 8px 24px rgba(109, 40, 217, 0.35);
+        }
+        .maint-admin-btn:hover { filter: brightness(1.08); }
+
+        @keyframes maint-grid-drift {
+          from { background-position: 0 0; }
+          to { background-position: 48px 48px; }
+        }
+        @keyframes maint-float {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(18px, -22px, 0); }
+        }
+        @keyframes maint-scan {
+          0% { top: -2%; opacity: 0; }
+          8% { opacity: 0.75; }
+          92% { opacity: 0.75; }
+          100% { top: 102%; opacity: 0; }
+        }
+        @keyframes maint-twinkle {
+          from { opacity: 0.45; }
+          to { opacity: 0.95; }
+        }
+        @keyframes maint-spin {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes maint-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55); }
+          70% { box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+
+        @media (max-height: 700px) {
+          .maint-art { max-height: min(58vh, 480px); }
+          .maint-badge { font-size: 10px; padding: 4px 10px; }
+        }
+        @media (max-width: 640px) {
+          .maint-art {
+            max-width: 96vw;
+            max-height: min(55vh, 420px);
+            border-radius: 14px;
+          }
+          .maint-copy { font-size: 0.9rem; padding: 0 4px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .maint-grid, .maint-orb, .maint-scan, .maint-stars, .maint-ring, .maint-badge-dot {
+            animation: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
