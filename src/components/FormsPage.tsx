@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
+import { MAINTENANCE_FORM_NAME } from '../lib/maintenance';
 
 export default function FormsPage() {
   const { forms, saveForm, deleteForm } = usePlatform();
@@ -38,7 +39,7 @@ export default function FormsPage() {
         <button type="submit" className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-brand-600 rounded-lg"><Plus size={16} /> Add form</button>
       </form>
       <div className="grid md:grid-cols-2 gap-4">
-        {forms.map((f) => (
+        {forms.filter((f) => f.name !== MAINTENANCE_FORM_NAME).map((f) => (
           <div key={f.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
             <div className="flex justify-between">
               <div className="font-semibold text-slate-900">{f.name}</div>

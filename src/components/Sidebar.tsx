@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Ticket, Building2, BookOpen, MessageSquare,
   BarChart3, UserCog, Zap, ClipboardList, ShieldCheck,
-  Megaphone, FileText, Rocket, Settings, LogOut, User, Users, MessageSquareText,
+  Megaphone, FileText, Rocket, Settings, LogOut, User, Users, MessageSquareText, Shield,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -9,8 +9,11 @@ interface SidebarProps {
   active: string;
   onNavigate: (id: string) => void;
   ticketCount?: number;
+  openCount?: number;
   chatCount?: number;
+  chatBadge?: number;
   userName?: string;
+  displayName?: string;
   userEmail?: string;
   avatarUrl?: string | null;
   agentStatus?: string;
@@ -35,8 +38,11 @@ export default function Sidebar({
   active,
   onNavigate,
   ticketCount = 0,
+  openCount,
   chatCount = 0,
+  chatBadge,
   userName = 'Agent',
+  displayName,
   userEmail = '',
   avatarUrl,
   agentStatus = 'online',
@@ -44,14 +50,17 @@ export default function Sidebar({
   onProfile,
   isAdmin = false,
 }: SidebarProps) {
-  const initials = userName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'AG';
+  const resolvedName = displayName || userName;
+  const resolvedTickets = openCount ?? ticketCount;
+  const resolvedChats = chatBadge ?? chatCount;
+  const initials = resolvedName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'AG';
 
   const navItems = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
-    { id: 'tickets', label: 'Tickets', icon: Ticket, badge: ticketCount || undefined },
+    { id: 'tickets', label: 'Tickets', icon: Ticket, badge: resolvedTickets || undefined },
     { id: 'customers', label: 'Branches', icon: Building2 },
     { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen },
-    { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: chatCount || undefined, badgeColor: 'bg-emerald-500' },
+    { id: 'chat', label: 'Live Chat', icon: MessageSquare, badge: resolvedChats || undefined, badgeColor: 'bg-emerald-500' },
   ];
 
   const managementItems = [
@@ -117,6 +126,14 @@ export default function Sidebar({
           <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Tools</div>
           <div className="space-y-0.5">{renderNav(toolItems)}</div>
         </div>
+        {isAdmin && (
+          <div>
+            <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Admin</div>
+            <div className="space-y-0.5">
+              {renderNav([{ id: 'admin-features', label: 'Admin features', icon: Shield }])}
+            </div>
+          </div>
+        )}
       </nav>
       <div className="p-3 border-t border-zinc-800/80 space-y-1">
         <button type="button" onClick={() => onNavigate('settings')} className={clsx('w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium', active === 'settings' ? 'bg-brand-600/20 text-white' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200')}>
@@ -137,7 +154,7 @@ export default function Sidebar({
             />
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <div className="text-sm font-medium text-zinc-100 truncate">{userName}</div>
+            <div className="text-sm font-medium text-zinc-100 truncate">{resolvedName}</div>
             <div className="text-[11px] text-zinc-500 truncate">{userEmail}</div>
           </div>
           <User size={14} className="text-zinc-500 shrink-0" />

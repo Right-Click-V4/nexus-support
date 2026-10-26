@@ -21,9 +21,13 @@ import LoginPage from './components/LoginPage';
 import CustomerPortal from './components/CustomerPortal';
 import PortalAuthGate from './components/PortalAuthGate';
 import { PostLoginShell, BootLoader } from './components/PostLoginLoader';
+import AdminFeaturesPage from './components/AdminFeaturesPage';
+import MaintenanceScreen from './components/MaintenanceScreen';
 import { TicketProvider, useTickets } from './context/TicketContext';
 import { PlatformProvider, usePlatform } from './context/PlatformContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { MaintenanceProvider, useMaintenance } from './context/MaintenanceContext';
+import { useIsAdmin } from './components/useIsAdmin';
 import { Search, Bell, Settings, ExternalLink } from 'lucide-react';
 import AgentAvatar from './components/AgentAvatar';
 import ThemeToggle from './components/ThemeToggle';
@@ -52,6 +56,7 @@ const TITLES: Record<string, string> = {
   releases: 'Releases',
   settings: 'Settings',
   profile: 'Profile',
+  'admin-features': 'Admin features',
 };
 
 function AgentShell() {
@@ -61,6 +66,9 @@ function AgentShell() {
   const notifRef = useRef<HTMLDivElement>(null);
   const { tickets, usingSupabase, currentAgent } = useTickets();
   const { user, loading: authLoading, authBusy, requiresAuth, signOut, accountRole } = useAuth();
+  const { enabled: maintenanceOn, ready: maintenanceReady } = useMaintenance();
+  const { isAdmin, adminReady } = useIsAdmin();
+  const [adminLogin, setAdminLogin] = useState(false);
   const {
     notifications,
     unreadCount,
@@ -99,6 +107,19 @@ function AgentShell() {
     return <BootLoader label="Loading workspace…" />;
   }
 
+  const admin = accountRole === 'admin' || isAdmin || !!currentAgent?.is_admin;
+  const maintenanceBlocks = maintenanceReady && maintenanceOn && !admin;
+
+  if (maintenanceBlocks && !user && !authBusy && !adminLogin) {
+    return <MaintenanceScreen onAdminSignIn={() => setAdminLogin(true)} />;
+  }
+  if (maintenanceOn && user && !adminReady && !authBusy) {
+    return <BootLoader label="Checking access…" />;
+  }
+  if (maintenanceBlocks && user && adminReady && !authBusy) {
+    return <MaintenanceScreen onSignOut={() => void signOut()} />;
+  }
+
   // Keep login form mounted while validating so wrong-tab / pending errors show
   if (requiresAuth && (!user || authBusy)) {
     return (
@@ -132,7 +153,7 @@ function AgentShell() {
           avatarUrl={currentAgent?.avatar_url || (user?.user_metadata?.avatar_url as string | undefined) || null}
           agentStatus={currentAgent?.status || 'online'}
           onProfile={() => setActiveNav('profile')}
-          isAdmin={accountRole === 'admin' || !!currentAgent?.is_admin}
+          isAdmin={admin}
         />
         <div className="flex-1 flex flex-col min-w-0 min-h-screen">
           <header className="nexus-topbar h-14 shrink-0 flex items-center gap-3 px-4 lg:px-6">
@@ -258,10 +279,37 @@ function AgentShell() {
             {activeNav === 'releases' && <ReleasesPage />}
             {activeNav === 'settings' && <SettingsPage />}
             {activeNav === 'profile' && <ProfilePage />}
+            {activeNav === 'admin-features' && admin && <AdminFeaturesPage />}
+            {activeNav === 'admin-features' && !admin && (
+              <div className="text-sm text-zinc-500">Admin access required.</div>
+            )}
           </main>
         </div>
       </div>
     </PostLoginShell>
+  );
+}
+
+function PortalShell() {
+  const { enabled, ready } = useMaintenance();
+  const { isAdmin, adminReady } = useIsAdmin();
+  const { user, accountRole, signOut, authBusy } = useAuth();
+  const admin = accountRole === 'admin' || isAdmin;
+
+  if (!ready || authBusy || (user && !adminReady)) {
+    return <BootLoader label="Loading portal…" />;
+  }
+  if (enabled && !admin) {
+    return <MaintenanceScreen onSignOut={user ? () => void signOut() : undefined} />;
+  }
+  return (
+    <PortalAuthGate
+      onOpenAgent={() => {
+        window.location.hash = '';
+      }}
+    >
+      <CustomerPortal />
+    </PortalAuthGate>
   );
 }
 
@@ -278,13 +326,7 @@ function Root() {
     return (
       <TicketProvider>
         <PlatformProvider>
-          <PortalAuthGate
-            onOpenAgent={() => {
-              window.location.hash = '';
-            }}
-          >
-            <CustomerPortal />
-          </PortalAuthGate>
+          <PortalShell />
         </PlatformProvider>
       </TicketProvider>
     );
@@ -302,7 +344,9 @@ function Root() {
 export default function App() {
   return (
     <AuthProvider>
-      <Root />
+      <MaintenanceProvider>
+        <Root />
+      </MaintenanceProvider>
     </AuthProvider>
   );
 }
