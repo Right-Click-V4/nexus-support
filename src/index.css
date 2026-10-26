@@ -2,10 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 @import './portal-desert.css';
-@import './s1.css';
-@import './s2.css';
-@import './s3.css';
-@import './s4.css';
-@import './s5.css';
-@import './s6.css';
-@import './s7.css';
+
+/*
+ * Full previous theme (login + signed-in light/dark + portal)
+ * loaded from last known-good commit before the contrast overhaul broke CSS.
+ */
+@import url('https://cdn.jsdelivr.net/gh/Right-Click-V4/nexus-support@a6f9164d9f60fb4cb51c38c789367651f0f283f4/src/index.css');
