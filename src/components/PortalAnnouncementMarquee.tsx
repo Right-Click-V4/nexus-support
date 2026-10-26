@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Megaphone, Pause, Play } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 import type { Announcement } from '../types';
 
-/** Pixels per second — higher = faster across the full bar */
-const MARQUEE_PX_PER_SEC = 110;
+/** Constant visual speed across the bar (px/sec) */
+const SPEED = 95;
 
 function severityClass(severity?: Announcement['severity']) {
   if (severity === 'critical') return 'portal-marquee--critical';
@@ -15,8 +15,10 @@ function severityClass(severity?: Announcement['severity']) {
 export default function PortalAnnouncementMarquee() {
   const { announcements } = usePlatform();
   const [paused, setPaused] = useState(false);
-  const [shiftPx, setShiftPx] = useState(0);
-  const segmentRef = useRef<HTMLSpanElement>(null);
+  const [segWidth, setSegWidth] = useState(0);
+  const [filled, setFilled] = useState('');
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const segmentRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const active = useMemo(
@@ -29,7 +31,7 @@ export default function PortalAnnouncementMarquee() {
     [announcements],
   );
 
-  const text = useMemo(
+  const baseText = useMemo(
     () =>
       active
         .map((a) => {
@@ -40,16 +42,32 @@ export default function PortalAnnouncementMarquee() {
     [active],
   );
 
-  // Measure one segment; ensure at least viewport width so travel spans full bar (1 → 2)
+  // Build a segment string long enough to cover the full viewport (no empty gaps)
+  useLayoutEffect(() => {
+    const vp = viewportRef.current;
+    const probe = measureRef.current;
+    if (!vp || !probe || !baseText) {
+      setFilled(baseText);
+      return;
+    }
+    const vpW = vp.clientWidth || 1;
+    let built = baseText;
+    probe.textContent = built;
+    let guard = 0;
+    while (probe.getBoundingClientRect().width < vpW && guard < 40) {
+      built += '   ·   ' + baseText;
+      probe.textContent = built;
+      guard += 1;
+    }
+    built += '   ·   ' + baseText;
+    setFilled(built);
+  }, [baseText]);
+
   useEffect(() => {
     const measure = () => {
       const seg = segmentRef.current;
-      const vp = viewportRef.current;
-      if (!seg || !vp) return;
-      const segW = Math.ceil(seg.getBoundingClientRect().width);
-      const vpW = Math.ceil(vp.getBoundingClientRect().width);
-      // One loop distance = one full segment (min viewport so short text still crosses the bar)
-      setShiftPx(Math.max(segW, vpW));
+      if (!seg) return;
+      setSegWidth(Math.ceil(seg.getBoundingClientRect().width));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -60,7 +78,7 @@ export default function PortalAnnouncementMarquee() {
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [text]);
+  }, [filled]);
 
   if (active.length === 0) return null;
 
@@ -70,10 +88,7 @@ export default function PortalAnnouncementMarquee() {
       ? 'warning'
       : 'info';
 
-  const durationSec = shiftPx > 0 ? Math.max(4, shiftPx / MARQUEE_PX_PER_SEC) : 8;
-
-  // Pad short text so each segment is at least ~viewport wide (smooth full-width travel)
-  const pad = '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+  const durationSec = segWidth > 0 ? Math.max(5, segWidth / SPEED) : 10;
 
   return (
     <div
@@ -85,40 +100,28 @@ export default function PortalAnnouncementMarquee() {
         <Megaphone size={14} />
       </div>
       <div className="portal-marquee-viewport" ref={viewportRef}>
+        <span
+          ref={measureRef}
+          className="portal-marquee-text portal-marquee-probe"
+          aria-hidden
+        />
         <div
-          className={`portal-marquee-track ${paused ? 'is-paused' : ''}`}
+          className={`portal-marquee-track ${paused ? 'is-paused' : ''} ${
+            segWidth > 0 ? 'is-ready' : ''
+          }`}
           style={
             {
               animationDuration: `${durationSec}s`,
-              ['--marquee-shift' as string]: `${shiftPx}px`,
+              ['--marquee-shift' as string]: `${segWidth}px`,
             } as React.CSSProperties
           }
         >
-          <span className="portal-marquee-text" ref={segmentRef}>
-            {text}
-            {pad}
-            <span className="portal-marquee-gap" aria-hidden>
-              ·
-            </span>
-            {pad}
-          </span>
-          <span className="portal-marquee-text" aria-hidden>
-            {text}
-            {pad}
-            <span className="portal-marquee-gap" aria-hidden>
-              ·
-            </span>
-            {pad}
-          </span>
-          {/* Third copy so LTR always covers the full strip while looping */}
-          <span className="portal-marquee-text" aria-hidden>
-            {text}
-            {pad}
-            <span className="portal-marquee-gap" aria-hidden>
-              ·
-            </span>
-            {pad}
-          </span>
+          <div className="portal-marquee-segment" ref={segmentRef}>
+            <span className="portal-marquee-text">{filled || baseText}</span>
+          </div>
+          <div className="portal-marquee-segment" aria-hidden>
+            <span className="portal-marquee-text">{filled || baseText}</span>
+          </div>
         </div>
       </div>
       <button
