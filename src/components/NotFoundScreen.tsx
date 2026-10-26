@@ -111,10 +111,10 @@ export default function NotFoundScreen({
         .maint-content {
           position: relative; z-index: 2;
           height: 100%; width: 100%;
-          max-width: 1200px; margin: 0 auto;
-          padding: clamp(8px, 1.5vh, 16px) clamp(10px, 2vw, 20px);
+          max-width: 1100px; margin: 0 auto;
+          padding: clamp(10px, 2vh, 20px) clamp(12px, 2.5vw, 24px);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: clamp(8px, 1.2vh, 14px); box-sizing: border-box;
+          gap: clamp(10px, 1.5vh, 16px); box-sizing: border-box;
         }
         .maint-badge {
           display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
@@ -127,11 +127,10 @@ export default function NotFoundScreen({
           animation: maint-pulse 1.6s ease-out infinite;
         }
         .maint-frame {
-          width: min(92vw, 720px);
-          height: min(68vh, 680px);
+          width: 100%;
           flex: 0 1 auto;
           display: flex; align-items: center; justify-content: center;
-          overflow: hidden;
+          overflow: visible;
           background: transparent;
           border: none;
           box-shadow: none;
@@ -139,12 +138,12 @@ export default function NotFoundScreen({
         }
         .maint-art {
           display: block;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          /* Mild scale crops gray/silver border without blowing past the viewport */
-          transform: scale(1.1);
-          transform-origin: center center;
+          width: auto;
+          height: auto;
+          max-width: min(90vw, 820px);
+          max-height: min(70vh, 700px);
+          object-fit: contain;
+          transform: none;
           border: none;
           border-radius: 0;
           box-shadow: none;
@@ -185,11 +184,10 @@ export default function NotFoundScreen({
           100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0); }
         }
         @media (max-width: 640px) {
-          .maint-frame {
-            width: min(94vw, 420px);
-            height: min(58vh, 480px);
+          .maint-art {
+            max-width: 94vw;
+            max-height: min(60vh, 520px);
           }
-          .maint-art { transform: scale(1.12); }
         }
       `}</style>
     </div>
