@@ -88,6 +88,52 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     if (user.email) setEmail((e) => e || user.email || '');
   }, [isCustomerSession, user]);
 
+
+  // Hard-reload this portal tab when Admin publishes/deletes an announcement
+  useEffect(() => {
+    let lastTick = '';
+    try { lastTick = localStorage.getItem('nexus-announce-tick') || ''; } catch { /* ignore */ }
+
+    const hardReload = () => {
+      try {
+        const url = window.location.href;
+        window.location.replace(url);
+      } catch {
+        try { window.location.reload(); } catch { /* ignore */ }
+      }
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'nexus-announce-tick' || e.key === 'nexus-announce' || e.key === 'nexus-announce-channels') {
+        hardReload();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('nexus-announce');
+      bc.onmessage = () => hardReload();
+    } catch { /* ignore */ }
+
+    const poll = window.setInterval(() => {
+      try {
+        const t = localStorage.getItem('nexus-announce-tick') || '';
+        if (t && t !== lastTick) {
+          lastTick = t;
+          hardReload();
+        }
+      } catch { /* ignore */ }
+    }, 400);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.clearInterval(poll);
+      try { bc?.close(); } catch { /* ignore */ }
+    };
+  }, []);
+
+
   const branchOptions = useMemo(() => {
     const set = new Set(BRANCH_OPTIONS);
     tickets.forEach((t) => { if (t.branch) set.add(t.branch); });

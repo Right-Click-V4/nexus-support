@@ -275,6 +275,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
 
 
+
   useEffect(() => {
     const isCustomerPortal = () => {
       try {
@@ -497,13 +498,13 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     const plainBody = stripChannelMeta(a.body || '').trim();
     const storedBody =
       channel === 'both' ? plainBody : `<!--nexus:channel=${channel}-->\n${plainBody}`;
-    const dbTitle = title || plainBody.slice(0, 80) || 'Announcement';
+    const dbTitle = (stripAllMeta(title) || stripAllMeta(plainBody).slice(0, 80) || 'Announcement');
 
     let nextList: Announcement[] = [];
     if (!a.id) {
       const tempId = `an-${Date.now()}`;
       const optimistic: Announcement = {
-        id: tempId, title, body: storedBody, severity, active, channel,
+        id: tempId, title: stripAllMeta(title) || stripAllMeta(plainBody).slice(0, 80), body: storedBody, severity, active, channel,
         created_at: new Date().toISOString(),
       };
       nextList = [optimistic, ...announcements];
@@ -550,6 +551,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         }
       }
       await refreshPlatform();
+      notifyAnnounceSync();
     } catch (err) {
       console.error('saveAnnouncement failed', err);
     }
