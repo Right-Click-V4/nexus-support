@@ -11,6 +11,7 @@ import { INITIAL_BRANCHES } from '../data';
 import PortalLiveChat from './PortalLiveChat';
 import PortalAuthGate from './PortalAuthGate';
 import PortalHome from './PortalHome';
+import PortalAnnouncementMarquee from './PortalAnnouncementMarquee';
 import PortalCommunityChat from './PortalCommunityChat';
 import ThemeToggle from './ThemeToggle';
 import PortalSpaceLoungeBg from './PortalSpaceLoungeBg';
@@ -267,6 +268,8 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
           </div>
           <ThemeToggle />
         </header>
+
+        <PortalAnnouncementMarquee />
 
         <main className="relative z-10 flex-1 overflow-y-auto p-3 lg:p-5">
           <div className="max-w-5xl mx-auto">
