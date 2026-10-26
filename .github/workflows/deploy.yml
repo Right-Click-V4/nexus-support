@@ -120,10 +120,11 @@ jobs:
           set -e
           python3 scripts/patch_channel.py || true
           python3 scripts/patch_channel_title.py || true
+          python3 scripts/patch_announce_live_full.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/context/PlatformContext.tsx src/components/PortalHome.tsx || true
-          git commit -m "feat: announcement channel persistence and portal filters" || true
+          git commit -m "feat: announcement optional title + live sync" || true
           git push || true
 
       - name: Setup Node
