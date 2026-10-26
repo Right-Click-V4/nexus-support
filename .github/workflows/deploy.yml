@@ -123,11 +123,12 @@ jobs:
           python3 scripts/patch_announce_live_full.py || true
           python3 scripts/patch_announce_v3.py || true
           python3 scripts/patch_announce_rt.py || true
+          python3 scripts/patch_portal_reload.py || true
           python3 scripts/patch_overview_channel.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/context/PlatformContext.tsx src/components/PortalHome.tsx || true
-          git commit -m "feat: live announce sync + delete + channel filters" || true
+          git commit -m "feat: portal auto-reload on announce + channel filters" || true
           git push || true
 
       - name: Setup Node
