@@ -1,6 +1,7 @@
 const BASE = import.meta.env.BASE_URL || '/';
-const ART = '404_ Monsters Overran the Station.png';
-const src = `${BASE}${encodeURIComponent(ART)}`;
+// Prefer cropped 404.jpg (no gray frame). Fall back to original PNG.
+const srcJpg = `${BASE}404.jpg`;
+const srcPng = `${BASE}${encodeURIComponent('404_ Monsters Overran the Station.png')}`;
 
 export default function NotFoundScreen({
   onAdminSignIn,
@@ -27,11 +28,15 @@ export default function NotFoundScreen({
 
         <div className="maint-frame">
           <img
-            src={src}
+            src={srcJpg}
             alt="404 — page not found. Monsters overran the station."
             className="maint-art"
             onError={(e) => {
               const el = e.currentTarget;
+              if (el.src.includes('404.jpg')) {
+                el.src = srcPng;
+                return;
+              }
               el.style.display = 'none';
               const hint = el.nextElementSibling as HTMLElement | null;
               if (hint) hint.style.display = 'block';
@@ -128,7 +133,6 @@ export default function NotFoundScreen({
         }
         .maint-frame {
           width: 100%;
-          flex: 0 1 auto;
           display: flex; align-items: center; justify-content: center;
           overflow: visible;
           background: transparent;
@@ -143,7 +147,6 @@ export default function NotFoundScreen({
           max-width: min(90vw, 820px);
           max-height: min(70vh, 700px);
           object-fit: contain;
-          transform: none;
           border: none;
           border-radius: 0;
           box-shadow: none;
