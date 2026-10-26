@@ -383,7 +383,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       throw new Error(
-        'Account created. An admin must approve your account under Users → Pending before you can sign in.'
+        role === 'agent'
+          ? 'Account created. An admin must approve your account under Users → Pending before you can sign in.'
+          : 'Account created. Check your email if confirmation is required, then sign in on the Customer tab.'
       );
     } finally {
       setAuthBusy(false);

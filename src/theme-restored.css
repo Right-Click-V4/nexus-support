@@ -1,22 +1,63 @@
 /* Restored previous Nexus Ops theme (pre-breakage) */
 
 /* Login essentials */
+.login-cosmos {
+  z-index: 0;
+  isolation: isolate;
+  pointer-events: none;
+}
+/* Ships lost their flight CSS and were stacking on the headline. Keep them in the empty sky. */
+.login-flybys {
+  height: 16%;
+  bottom: auto;
+  overflow: hidden;
+}
+.login-flyby {
+  position: absolute;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  will-change: transform;
+}
+.login-flyby-ltr { animation: login-flyby-ltr linear forwards; }
+.login-flyby-rtl { animation: login-flyby-rtl linear forwards; }
+@keyframes login-flyby-ltr {
+  from { transform: translateX(-14vw); }
+  to { transform: translateX(110vw); }
+}
+@keyframes login-flyby-rtl {
+  from { transform: translateX(110vw); }
+  to { transform: translateX(-14vw); }
+}
+.login-pilot-stage { overflow: hidden; clip-path: inset(0 0 72% 46%); }
+.login-pilot { position: absolute; will-change: transform; pointer-events: none; }
+.login-light-trail, .login-trail-spark { pointer-events: none; }
+.login-copy {
+  position: relative;
+  z-index: 2;
+  padding: 1.35rem 1.4rem 1.15rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(8, 2, 22, 0.72), rgba(8, 2, 22, 0.5));
+  border: 1px solid rgba(196, 181, 253, 0.16);
+}
 .login-glass-card {
-  position: relative; z-index: 20; color: #f8fafc;
-  background: linear-gradient(160deg, rgba(30, 10, 60, 0.88) 0%, rgba(15, 5, 35, 0.92) 100%);
-  border: 1px solid rgba(192, 132, 252, 0.35); border-radius: 1rem; padding: 1.25rem 1.5rem;
-  backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: 0 24px 56px rgba(0,0,0,0.55), 0 0 70px rgba(139,92,246,0.28);
+  position: relative; z-index: 20; isolation: isolate; color: #f8fafc;
+  background: linear-gradient(165deg, rgba(28, 10, 58, 0.97) 0%, rgba(12, 4, 28, 0.98) 100%);
+  border: 1px solid rgba(196, 181, 253, 0.45); border-radius: 1.25rem; padding: 1.5rem 1.5rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 24px 56px rgba(0,0,0,0.55), 0 0 48px rgba(139,92,246,0.18);
 }
 .login-glass-input {
   display: block; width: 100%; box-sizing: border-box;
-  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 0.75rem; padding: 0.65rem 0.85rem; color: #f8fafc; font-size: 0.875rem;
+  background: rgba(8, 4, 20, 0.78); border: 1px solid rgba(196, 181, 253, 0.38);
+  border-radius: 0.75rem; padding: 0.7rem 0.9rem; color: #f8fafc; font-size: 0.875rem;
 }
-.login-glass-input::placeholder { color: rgba(221,214,254,0.45); }
+.login-glass-input::placeholder { color: rgba(221,214,254,0.7); }
 .login-glass-input:focus {
-  border-color: rgba(167,139,250,0.75); box-shadow: 0 0 0 3px rgba(139,92,246,0.3);
-  background: rgba(255,255,255,0.12); outline: none;
+  border-color: rgba(167,139,250,0.9); box-shadow: 0 0 0 3px rgba(139,92,246,0.35);
+  background: rgba(12, 6, 28, 0.92); outline: none;
 }
 .login-cosmos-sky {
   background:
@@ -29,20 +70,26 @@
   background: linear-gradient(180deg, #8b5cf6, #6d28d9);
 }
 .login-hero-title {
-  background: linear-gradient(180deg, #ffffff 30%, #e9d5ff 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  color: #f8fafc;
+  -webkit-text-fill-color: #f8fafc;
+  background: none;
 }
 .login-status-pill {
-  display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px;
-  border-radius: 999px; background: rgba(16,185,129,0.12);
-  border: 1px solid rgba(52,211,153,0.35); color: #d1fae5; font-size: 11px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
+  border-radius: 999px; background: rgba(6, 78, 59, 0.88);
+  border: 1px solid rgba(52,211,153,0.6); color: #d1fae5; font-size: 12px; font-weight: 650;
+  white-space: nowrap; position: relative; z-index: 2;
+}
+.login-status-dot {
+  width: 7px; height: 7px; flex: none; border-radius: 999px; background: #34d399;
 }
 .login-tab {
-  flex: 1; padding: 0.6rem 0.5rem; border-radius: 12px;
-  border: 1px solid rgba(167,139,250,0.28); background: rgba(15,8,32,0.35); color: #ddd6fe; font-weight: 600;
+  flex: 1; padding: 0.6rem 0.5rem; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(167,139,250,0.4); background: rgba(15,8,32,0.65); color: #e9d5ff; font-weight: 600;
 }
 .login-tab-on {
-  background: linear-gradient(180deg, #8b5cf6, #7c3aed); border-color: transparent; color: #fff;
+  background: linear-gradient(180deg, #8b5cf6, #6d28d9); border-color: transparent; color: #fff;
+  -webkit-text-fill-color: #fff;
 }
 
 /* Signed-in shells. Dark/light is html.nexus-dark / html.nexus-light. */

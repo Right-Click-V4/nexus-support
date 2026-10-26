@@ -270,7 +270,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
       <CosmicFallBackground />
       <div className="relative z-10 min-h-screen flex items-center justify-center">
         <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-10 lg:gap-14 xl:gap-20 2xl:gap-28 px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-8 lg:py-12 items-center">
-          <div className="flex flex-col relative z-10 order-2 lg:order-1">
+          <div className="login-copy flex flex-col relative z-10 order-2 lg:order-1">
             <div className="flex items-center gap-3">
               <div className="login-brand-badge">
                 <NexusLogoMark size={20} />
