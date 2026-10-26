@@ -14,7 +14,12 @@ export default function PortalAnnouncementMarquee() {
   const [paused, setPaused] = useState(false);
 
   const active = useMemo(
-    () => (announcements || []).filter((a) => a.active !== false),
+    () =>
+      (announcements || []).filter(
+        (a) =>
+          a.active !== false &&
+          (a.channel === 'marquee' || a.channel === 'both' || !a.channel),
+      ),
     [announcements],
   );
 
