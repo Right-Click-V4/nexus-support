@@ -2,10 +2,4 @@
 @tailwind components;
 @tailwind utilities;
 @import './portal-desert.css';
-
-/*
- * Restore styles from commit a6f9164 (before light/dark contrast overhaul).
- * Browser loads the full previous CSS (login animations + signed-in themes).
- * Unknown @tailwind lines inside the remote file are ignored by the browser.
- */
-@import url("https://cdn.jsdelivr.net/gh/Right-Click-V4/nexus-support@a6f9164d9f60fb4cb51c38c789367651f0f283f4/src/index.css");
+@import './theme-restored.css';
