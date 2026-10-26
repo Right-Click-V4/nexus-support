@@ -6,157 +6,57 @@ export type AgentStatus = 'online' | 'busy' | 'away' | 'offline';
 export interface Agent {
   id: string;
   name: string;
-  initials: string;
-  role: string;
+  email: string;
+  avatar?: string;
   status: AgentStatus;
-  color: string;
-  email?: string;
-  user_id?: string | null;
-  phone?: string;
-  bio?: string;
-  timezone?: string;
-  is_admin?: boolean;
-  avatar_url?: string | null;
-  branch?: string | null;
-  skills?: string[];
-  working_hours?: string;
-  ooo?: boolean;
-  signature?: string;
-  /** Account approval for self-signup agents (not presence status) */
-  approval_status?: 'pending' | 'approved' | 'rejected' | null;
-}
-
-export interface BranchMember {
-  id: string;
-  name: string;
-  email?: string;
   role?: string;
+  team?: string;
 }
-
-export interface Branch {
-  id: string;
-  name: string;
-  email?: string;
-  members: BranchMember[];
-}
-
-export interface Customer {
-  id: string;
-  name: string;
-  email?: string;
-  company?: string;
-  role?: string;
-  branch?: string | null;
-  status?: 'pending' | 'approved' | 'rejected' | null;
-  created_at?: string;
-}
-
-export interface TicketMessage {
-  id: string;
-  ticket_id?: string;
-  author: string;
-  text: string;
-  kind: 'public' | 'internal';
-  created_at: string;
-}
-
-export interface TicketNote {
-  id: string;
-  text: string;
-  author: string;
-  created_at: string;
-}
-
-export interface TicketAttachment {
-  id: string;
-  name: string;
-  size: number;
-  mime: string;
-  url: string;
-  created_at: string;
-  uploaded_by?: string;
-}
-
-export const MAX_ATTACHMENT_BYTES = 8_000_000;
-export const MAX_CHAT_FILE_BYTES = 8_000_000;
 
 export interface Ticket {
   id: string;
-  title: string;
+  subject: string;
   description?: string;
-  priority: Priority;
   status: Status;
-  channel: Channel;
-  assignee_id?: string | null;
-  assignee?: Agent | null;
-  customer_name: string;
+  priority: Priority;
+  channel?: Channel;
+  customer_name?: string;
   customer_email?: string;
-  branch?: string;
+  assignee_id?: string;
   tags?: string[];
   created_at: string;
   updated_at?: string;
-  sla_due_at?: string | null;
-  first_response_at?: string | null;
-  deleted_at?: string | null;
-  messages?: TicketMessage[];
-  notes?: TicketNote[];
-  attachments?: TicketAttachment[];
-  csat?: number | null;
-}
-
-const SLA_HOURS: Record<Priority, number> = {
-  critical: 4,
-  high: 8,
-  medium: 24,
-  low: 72,
-};
-
-export function computeSlaDue(priority: Priority, fromIso?: string): string {
-  const start = fromIso ? new Date(fromIso).getTime() : Date.now();
-  const hours = SLA_HOURS[priority] ?? 24;
-  return new Date(start + hours * 3_600_000).toISOString();
-}
-
-export function ticketBranch(t: Pick<Ticket, 'branch' | 'customer_name'>): string {
-  if (t.branch && t.branch.trim()) return t.branch.trim();
-  return '';
+  branch?: string;
 }
 
 export interface KnowledgeArticle {
   id: string;
   title: string;
+  category: string;
   body: string;
-  category?: string;
-  tags?: string[];
-  updated_at?: string;
   published?: boolean;
+  updated_at?: string;
 }
 
 export interface ChatMessage {
   id: string;
-  conversation_id?: string;
-  sender: 'agent' | 'customer';
   text: string;
+  sender: 'agent' | 'customer' | 'system';
   created_at: string;
-  author?: string;
-  is_agent?: boolean;
-  file_url?: string;
-  file_name?: string;
 }
 
 export interface ChatConversation {
   id: string;
   customer_name: string;
   customer_email?: string;
-  status: 'open' | 'closed' | 'waiting' | 'active' | 'ended';
-  agent_id?: string;
-  branch?: string;
-  ticket_id?: string;
+  status: 'waiting' | 'active' | 'ended';
   preview?: string;
   unread?: number;
-  created_at: string;
-  updated_at?: string;
   messages?: ChatMessage[];
+  branch?: string;
+  ticket_id?: string;
+  updated_at?: string;
+  created_at?: string;
 }
 
 export interface AppNotification {
@@ -165,10 +65,30 @@ export interface AppNotification {
   body?: string;
   read?: boolean;
   created_at: string;
-  type?: string;
-  link?: string;
-  agent_id?: string;
-  user_id?: string;
+}
+
+export interface CannedResponse {
+  id: string;
+  title: string;
+  body: string;
+  shortcut?: string;
+}
+
+export interface SurveyResponse {
+  id: string;
+  ticket_id?: string;
+  score: number;
+  comment?: string;
+  created_at: string;
+}
+
+export interface QualityReview {
+  id: string;
+  ticket_id?: string;
+  score: number;
+  notes?: string;
+  reviewer?: string;
+  created_at: string;
 }
 
 export interface Announcement {
@@ -177,6 +97,8 @@ export interface Announcement {
   body: string;
   active?: boolean;
   severity?: 'info' | 'warning' | 'critical';
+  /** Where it appears on the Customer Portal: marquee banner, Overview card, or both */
+  channel?: 'marquee' | 'portal' | 'both';
   created_at?: string;
 }
 
@@ -194,43 +116,21 @@ export interface Automation {
   action_value?: string;
 }
 
-export interface CannedResponse {
+export interface FormField {
   id: string;
-  title: string;
-  body: string;
-  shortcut?: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  options?: string[];
 }
 
-export interface Survey {
-  id: string;
-  ticket_id?: string;
-  score: number;
-  comment?: string;
-  customer_name?: string;
-  created_at?: string;
-}
-
-export type SurveyResponse = Survey;
-
-export interface QualityReview {
-  id: string;
-  ticket_id?: string;
-  score: number;
-  notes?: string;
-  reviewer?: string;
-  agent_name?: string;
-  created_at?: string;
-}
-
-export interface SupportForm {
+export interface FormDef {
   id: string;
   name: string;
   description?: string;
-  fields: { id: string; label: string; type: string; required?: boolean }[];
-  active: boolean;
+  fields: FormField[];
+  active?: boolean;
 }
-
-export type FormDef = SupportForm;
 
 export interface ReleaseNote {
   id: string;
