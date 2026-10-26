@@ -78,7 +78,15 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
   const first = displayName?.split(' ')[0] || 'there';
 
   const activeAnnouncements = useMemo(
-    () => (announcements || []).filter((a) => a.active !== false && (a.channel === 'portal' || a.channel === 'both' || !a.channel)).slice(0, 4),
+    () =>
+      (announcements || [])
+        .filter(
+          (a) =>
+            a.active !== false &&
+            a.channel !== 'marquee' &&
+            (a.channel === 'portal' || a.channel === 'both' || !a.channel),
+        )
+        .slice(0, 4),
     [announcements],
   );
 
@@ -92,7 +100,6 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5 pb-2">
-      {/* Hero row */}
       <section className="portal-overview-glass rounded-2xl px-5 py-4 sm:px-6 sm:py-5">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300/90">
           Customer portal overview
@@ -117,7 +124,6 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
         </div>
       </section>
 
-      {/* Announcements + Patch notes */}
       <div className="grid lg:grid-cols-2 gap-4">
         <section className="portal-overview-glass rounded-2xl p-4 sm:p-5 flex flex-col min-h-[220px]">
           <div className="flex items-center gap-2 mb-3">
@@ -204,7 +210,6 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
         </section>
       </div>
 
-      {/* How support works */}
       <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-300 flex items-center justify-center">
@@ -237,7 +242,6 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
         </div>
       </section>
 
-      {/* Channels + tips */}
       <div className="grid lg:grid-cols-2 gap-4">
         <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-3">
