@@ -5,7 +5,6 @@ import type { Announcement } from '../types';
 
 const SPEED = 95;
 
-/** Wide non-collapsing gaps between distinct announcements */
 const SEP =
   '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0·\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
 
@@ -17,14 +16,15 @@ function severityClass(severity?: Announcement['severity']) {
 
 function stripMeta(body?: string) {
   return (body || '')
-    .replace(/^<!--nexus:channel=\w+-->\n?/gm, '')
-    .replace(/^<!--nexus:color=[^\n>]+-->\n?/gm, '')
+    .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
+    .replace(/<!--\s*nexus:color=[^>]+\s*-->/gi, '')
+    .replace(/\\n/g, '\n')
     .trim();
 }
 
 function parseColor(body?: string): string | undefined {
-  const m = (body || '').match(/<!--nexus:color=([^>\s]+)-->/);
-  return m?.[1] || undefined;
+  const m = (body || '').match(/<!--\s*nexus:color=([^>\s]+)\s*-->/i);
+  return m?.[1]?.trim() || undefined;
 }
 
 function formatItem(a: Announcement) {
@@ -47,7 +47,7 @@ export default function PortalAnnouncementMarquee() {
     () =>
       (announcements || []).filter((a) => {
         if (a.active === false) return false;
-        const meta = (a.body || '').match(/^<!--nexus:channel=(\w+)-->/);
+        const meta = (a.body || '').match(/<!--\s*nexus:channel=(\w+)\s*-->/i);
         const ch = a.channel || meta?.[1] || 'both';
         return ch === 'marquee' || ch === 'both';
       }),
