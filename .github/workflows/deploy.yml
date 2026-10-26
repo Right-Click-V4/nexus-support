@@ -63,12 +63,13 @@ jobs:
       - name: Add portal footer
         run: |
           set -e
-          python3 scripts/patch_footer.py
+          python3 scripts/patch_footer.py || true
+          python3 scripts/patch_footer_center.py || true
           if grep -q portal-footer src/components/CustomerPortal.tsx; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add src/components/CustomerPortal.tsx
-            git commit -m "feat(portal): add footer on all tabs" || true
+            git commit -m "feat(portal): footer copyright centered" || true
             git push || true
           fi
 
