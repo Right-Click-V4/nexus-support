@@ -105,7 +105,21 @@ function MessageEditor({
   );
 }
 
+function stripAnnounceMeta(s?: string) {
+  return (s || '')
+    .replace(/<!--\s*nexus:channel=\w+\s*-->/gi, '')
+    .replace(/<!--\s*nexus:color=[^>]+\s*-->/gi, '')
+    .replace(/\\n/g, '\n')
+    .trim();
+}
+
+function announceColor(s?: string): string | undefined {
+  const m = (s || '').match(/<!--\s*nexus:color=([^>\s]+)\s*-->/i);
+  return m?.[1]?.trim() || undefined;
+}
+
 type Channel = 'marquee' | 'portal' | 'both';
+
 
 function channelLabel(c?: string) {
   if (c === 'marquee') return 'Marquee only';
@@ -230,16 +244,9 @@ export default function AnnouncementsPage() {
             </div>
             <p
               className="text-sm text-slate-600 mt-1 whitespace-pre-wrap"
-              style={
-                (a.body || '').match(/<!--nexus:color=([^>]+)-->/)
-                  ? { color: (a.body || '').match(/<!--nexus:color=([^>]+)-->/)![1] }
-                  : undefined
-              }
+              style={announceColor(a.body) ? { color: announceColor(a.body) } : undefined}
             >
-              {(a.body || '')
-                .replace(/^<!--nexus:channel=\w+-->\n?/, '')
-                .replace(/^<!--nexus:color=[^>]+-->\n?/, '')
-                .trim()}
+              {stripAnnounceMeta(a.body)}
             </p>
             {a.created_at && (
               <div className="text-[11px] text-slate-400 mt-1.5">
@@ -413,13 +420,9 @@ export default function AnnouncementsPage() {
                 </div>
                 <p
                   className="text-sm text-slate-600 mt-1.5 whitespace-pre-wrap"
-                  style={
-                    (r.notes || '').match(/<!--nexus:color=([^>]+)-->/)
-                      ? { color: (r.notes || '').match(/<!--nexus:color=([^>]+)-->/)![1] }
-                      : undefined
-                  }
+                  style={announceColor(r.notes) ? { color: announceColor(r.notes) } : undefined}
                 >
-                  {(r.notes || '').replace(/^<!--nexus:color=[^>]+-->\n?/, '').trim()}
+                  {stripAnnounceMeta(r.notes)}
                 </p>
                 <div className="text-[11px] text-slate-400 mt-1.5">
                   {new Date(r.released_at).toLocaleString()}

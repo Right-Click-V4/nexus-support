@@ -100,6 +100,17 @@ function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | nu
   return null;
 }
 
+function stripChannelMeta(body?: string): string {
+  return (body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '');
+}
+
+function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | null {
+  const m = (body || '').match(/^<!--nexus:channel=(\w+)-->/);
+  if (!m) return null;
+  if (m[1] === 'marquee' || m[1] === 'portal' || m[1] === 'both') return m[1];
+  return null;
+}
+
 function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
   const map = loadAnnounceChannels();
   return list.map((a) => {
@@ -255,6 +266,34 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);
+
+  useEffect(() => {
+    const pull = () => {
+      try {
+        const next = mergeAnnouncementChannels(load(LS.announce, [] as Announcement[]));
+        if (Array.isArray(next)) setAnnouncements(next);
+      } catch { /* ignore */ }
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LS.announce || e.key === LS.announceChannels) pull();
+    };
+    const onCustom = () => pull();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('nexus-announce-updated', onCustom as EventListener);
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('nexus-announce');
+      bc.onmessage = () => pull();
+    } catch { /* ignore */ }
+    const tick = window.setInterval(pull, 500);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('nexus-announce-updated', onCustom as EventListener);
+      window.clearInterval(tick);
+      try { bc?.close(); } catch { /* ignore */ }
+    };
+  }, []);
+
 
   useEffect(() => {
     const isCustomerPortal = () => {
