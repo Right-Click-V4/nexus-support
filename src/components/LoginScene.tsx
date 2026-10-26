@@ -105,7 +105,9 @@ function LogoPilotStage() {
         return <span key={`spark-${i}-${Math.round(p.x)}`} className="login-trail-spark" style={{ left: p.x + ((i % 3) - 1) * 5, top: p.y + ((i % 2) * 3 - 1), opacity: Math.max(0, 0.55 * (1 - t)), width: 2 + (1 - t) * 3, height: 2 + (1 - t) * 3 }} />;
       })}
       <div ref={pilotRef} className="login-pilot login-pilot-js" style={{ left: 0, top: 0, transform: 'translate(-50%, -50%)' }}>
-        <NexusLogoMark size={48} />
+        <span className="login-pilot-halo" />
+        <span className="login-pilot-orbit" />
+        <NexusLogoMark size={52} />
       </div>
     </div>
   );
