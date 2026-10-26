@@ -9,7 +9,8 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured, getSupabaseConfigError } from '../lib/supabase';
 import {
   startTabSession,
-  shouldClearSessionOnLoad,
+  detectNewBrowserSession,
+  markTabSessionLive,
   clearSupabaseAuthStorage,
 } from '../lib/tabSession';
 
@@ -146,13 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const boot = async () => {
-      if (shouldClearSessionOnLoad(tabCtl.tabId)) {
+      // New browser window/session (all prior tabs closed) → force login
+      const isNewSession = await detectNewBrowserSession();
+      if (isNewSession) {
         clearSupabaseAuthStorage();
         try {
           await supabase.auth.signOut({ scope: 'local' });
         } catch {
           /* ignore */
         }
+        markTabSessionLive();
         if (!cancelled) {
           setSession(null);
           setUser(null);
@@ -160,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
+      markTabSessionLive();
       const { data } = await supabase.auth.getSession();
       await applySession(data.session);
     };
@@ -261,7 +266,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     try {
       localStorage.removeItem('nexus-live-tabs-v1');
+      localStorage.removeItem('nexus-live-tabs-v2');
       localStorage.removeItem('nexus-last-tab-close-v1');
+      sessionStorage.removeItem('nexus-auth-live-v2');
     } catch {
       /* ignore */
     }
