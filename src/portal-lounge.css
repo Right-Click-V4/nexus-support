@@ -279,11 +279,38 @@ html.nexus-dark .portal-nav-active {
 .portal-sidebar-footer .portal-nav-item { color: #312e81; }
 html.nexus-dark .portal-sidebar-footer .portal-nav-item { color: #a1a1aa; }
 
-.app-cosmos { position: relative; isolation: isolate; }
+/* Full-viewport shell: only main content scrolls */
+.app-cosmos {
+  position: relative;
+  isolation: isolate;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+.portal-sidebar {
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+}
 .portal-shell {
   position: relative; z-index: 10;
   background: transparent !important;
+  height: 100%;
+  max-height: 100dvh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.portal-shell > main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.portal-shell .nexus-topbar,
+.portal-shell .portal-footer {
+  flex-shrink: 0;
 }
 .portal-shell .nexus-topbar {
   position: relative; z-index: 20;
@@ -304,7 +331,7 @@ html.nexus-light .portal-shell .nexus-topbar {
   color: #1e1b4b !important;
   backdrop-filter: blur(14px) !important;
 }
-.portal-shell > main { position: relative; z-index: 10; }
+.portal-shell > main { position: relative; z-index: 10; /* scroll handled above */ }
 
 .portal-glass-card {
   background: rgba(255, 255, 255, 0.8);
