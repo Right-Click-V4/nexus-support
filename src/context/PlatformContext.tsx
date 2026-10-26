@@ -72,40 +72,7 @@ function stripChannelMeta(body?: string): string {
 }
 
 function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | null {
-  const m = (body || '').match(/^<!--nexus:channel=(\w+)-->/);
-  if (!m) return null;
-  if (m[1] === 'marquee' || m[1] === 'portal' || m[1] === 'both') return m[1];
-  return null;
-}
-
-function stripChannelMeta(body?: string): string {
-  return (body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '');
-}
-
-function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | null {
-  const m = (body || '').match(/^<!--nexus:channel=(\w+)-->/);
-  if (!m) return null;
-  if (m[1] === 'marquee' || m[1] === 'portal' || m[1] === 'both') return m[1];
-  return null;
-}
-
-function stripChannelMeta(body?: string): string {
-  return (body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '');
-}
-
-function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | null {
-  const m = (body || '').match(/^<!--nexus:channel=(\w+)-->/);
-  if (!m) return null;
-  if (m[1] === 'marquee' || m[1] === 'portal' || m[1] === 'both') return m[1];
-  return null;
-}
-
-function stripChannelMeta(body?: string): string {
-  return (body || '').replace(/^<!--nexus:channel=\w+-->\n?/, '');
-}
-
-function parseChannelFromBody(body?: string): 'marquee' | 'portal' | 'both' | null {
-  const m = (body || '').match(/^<!--nexus:channel=(\w+)-->/);
+  const m = (body || '').match(/<!--\s*nexus:channel=(\w+)\s*-->/i);
   if (!m) return null;
   if (m[1] === 'marquee' || m[1] === 'portal' || m[1] === 'both') return m[1];
   return null;
@@ -125,6 +92,18 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
     return { ...a, channel, body: a.body };
   });
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 const DEFAULT_KB: KnowledgeArticle[] = [
   { id: 'kb-1', title: 'How to reset a customer password', category: 'Account', body: 'Open profile then Security, Reset password.', published: true },
@@ -293,6 +272,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       try { bc?.close(); } catch { /* ignore */ }
     };
   }, []);
+
 
 
   useEffect(() => {
