@@ -1,8 +1,8 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
+  useEffect,
   useCallback,
   type ReactNode,
 } from 'react';
@@ -23,17 +23,53 @@ import type {
 } from '../types';
 
 const LS = {
-  kb: 'nexus-kb-v1', chat: 'nexus-chat-v1', notif: 'nexus-notif-v1', auto: 'nexus-auto-v1',
-  canned: 'nexus-canned-v1', survey: 'nexus-survey-v1', quality: 'nexus-quality-v1',
-  announce: 'nexus-announce-v1', forms: 'nexus-forms-v1', releases: 'nexus-releases-v1',
+  kb: 'nexus-kb-v1',
+  chat: 'nexus-chat-v1',
+  notif: 'nexus-notif-v1',
+  auto: 'nexus-auto-v1',
+  canned: 'nexus-canned-v1',
+  survey: 'nexus-survey-v1',
+  quality: 'nexus-quality-v1',
+  announce: 'nexus-announce-v1', forms: 'nexus-forms-v1', releases: 'nexus-releases-v1', announceChannels: 'nexus-announce-channels-v1',
 };
 
 function load<T>(key: string, fallback: T): T {
-  try { const raw = localStorage.getItem(key); if (raw) return JSON.parse(raw) as T; } catch {}
-  return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
+
 function save(key: string, value: unknown) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+function loadAnnounceChannels(): Record<string, 'marquee' | 'portal' | 'both'> {
+  try {
+    const raw = localStorage.getItem(LS.announceChannels);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAnnounceChannel(id: string, channel: 'marquee' | 'portal' | 'both') {
+  const map = loadAnnounceChannels();
+  map[id] = channel;
+  save(LS.announceChannels, map);
+}
+
+function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
+  const map = loadAnnounceChannels();
+  return list.map((a) => ({
+    ...a,
+    channel: a.channel || map[a.id] || 'both',
+  }));
 }
 
 const DEFAULT_KB: KnowledgeArticle[] = [
@@ -79,7 +115,7 @@ interface PlatformContextValue {
   sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer') => Promise<void>;
   setChatStatus: (id: string, status: 'waiting' | 'active' | 'ended') => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
-  pushNotification: (title: string, body: string, link?: string) => Promise<void>;
+  pushNotification: (title: string, body?: string, link?: string) => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
@@ -109,20 +145,20 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [canned, setCanned] = useState<CannedResponse[]>(() => load(LS.canned, DEFAULT_CANNED));
   const [surveys, setSurveys] = useState<SurveyResponse[]>(() => load(LS.survey, []));
   const [reviews, setReviews] = useState<QualityReview[]>(() => load(LS.quality, []));
-  const [announcements, setAnnouncements] = useState<Announcement[]>(() => load(LS.announce, DEFAULT_ANNOUNCE));
+  const [announcements, setAnnouncements] = useState<Announcement[]>(() => mergeAnnouncementChannels(load(LS.announce, DEFAULT_ANNOUNCE)));
   const [forms, setForms] = useState<FormDef[]>(() => load(LS.forms, DEFAULT_FORMS));
   const [releases, setReleases] = useState<Release[]>(() => load(LS.releases, DEFAULT_RELEASES));
 
   const refreshPlatform = useCallback(async () => {
     if (!isSupabaseConfigured || !supabase) return;
-    const notifQuery = user?.id
+    const notifQ = user?.id
       ? supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(80)
       : supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
-    const [kb, chats, msgs, notifs, autos, cans, surv, qa, ann, frm, rel] = await Promise.all([
+    const [kb, chats, msgs, notifs, autos, can, surv, qual, ann, frm, rel] = await Promise.all([
       supabase.from('knowledge_articles').select('*').order('created_at', { ascending: false }),
       supabase.from('chat_conversations').select('*').order('updated_at', { ascending: false }),
       supabase.from('chat_messages').select('*').order('created_at', { ascending: true }),
-      notifQuery,
+      notifQ,
       supabase.from('automations').select('*'),
       supabase.from('canned_responses').select('*'),
       supabase.from('survey_responses').select('*').order('created_at', { ascending: false }),
@@ -133,32 +169,26 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     ]);
     if (kb.data) setArticles(kb.data as KnowledgeArticle[]);
     if (chats.data) {
-      const list = chats.data as ChatConversation[];
+      const messages = (msgs.data || []) as ChatMessage[];
       const byConv: Record<string, ChatMessage[]> = {};
-      for (const m of (msgs.data || []) as ChatMessage[]) {
+      for (const m of messages) {
         const cid = (m as ChatMessage & { conversation_id?: string }).conversation_id || '';
         if (!byConv[cid]) byConv[cid] = [];
         byConv[cid].push(m);
       }
-      setConversations(list.map((c) => ({ ...c, messages: byConv[c.id] || [] })));
+      setConversations(
+        (chats.data as ChatConversation[]).map((c) => ({
+          ...c,
+          messages: byConv[c.id] || c.messages || [],
+        })),
+      );
     }
-    if (notifs.data) {
-      const rows = notifs.data as AppNotification[];
-      const seen = new Set<string>();
-      const deduped: AppNotification[] = [];
-      for (const n of rows) {
-        const key = `${n.title}|${n.body}|${(n.created_at || '').slice(0, 16)}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        deduped.push(n);
-      }
-      setNotifications(deduped);
-    }
+    if (notifs.data) setNotifications(notifs.data as AppNotification[]);
     if (autos.data) setAutomations(autos.data as Automation[]);
-    if (cans.data?.length) setCanned(cans.data as CannedResponse[]);
+    if (can.data) setCanned(can.data as CannedResponse[]);
     if (surv.data) setSurveys(surv.data as SurveyResponse[]);
-    if (qa.data) setReviews(qa.data as QualityReview[]);
-    if (ann.data) setAnnouncements(ann.data as Announcement[]);
+    if (qual.data) setReviews(qual.data as QualityReview[]);
+    if (ann.data) setAnnouncements(mergeAnnouncementChannels(ann.data as Announcement[]));
     if (frm.data) setForms(frm.data as FormDef[]);
     if (rel.data) setReleases(rel.data as Release[]);
   }, [user?.id]);
@@ -166,14 +196,13 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);
 
   useEffect(() => {
-    if (isSupabaseConfigured) return;
     save(LS.kb, articles); save(LS.chat, conversations); save(LS.notif, notifications);
     save(LS.auto, automations); save(LS.canned, canned); save(LS.survey, surveys);
     save(LS.quality, reviews); save(LS.announce, announcements); save(LS.forms, forms); save(LS.releases, releases);
   }, [articles, conversations, notifications, automations, canned, surveys, reviews, announcements, forms, releases]);
 
   const saveArticle = async (a: { id?: string; title: string; category: string; body: string; published?: boolean }) => {
-    const published = a.published !== false;
+    const published = a.published ?? true;
     if (supabase) {
       if (a.id) await supabase.from('knowledge_articles').update({ title: a.title, category: a.category, body: a.body, published }).eq('id', a.id);
       else await supabase.from('knowledge_articles').insert({ title: a.title, category: a.category, body: a.body, published });
@@ -181,8 +210,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     } else {
       setArticles((prev) =>
         a.id
-          ? prev.map((x) => (x.id === a.id ? { ...x, title: a.title, category: a.category, body: a.body, published } : x))
-          : [{ id: `kb-${Date.now()}`, title: a.title, category: a.category, body: a.body, published }, ...prev]
+          ? prev.map((x) => (x.id === a.id ? { ...x, ...a, published } : x))
+          : [{ id: `kb-${Date.now()}`, published, ...a }, ...prev],
       );
     }
   };
@@ -192,32 +221,40 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   };
 
   const createChat = async (customer_name: string, customer_email?: string, meta?: CreateChatMeta) => {
-    const base: ChatConversation = {
-      id: `chat-${Date.now()}`, customer_name, customer_email, status: 'waiting', unread: 0, preview: '', messages: [],
-      branch: meta?.branch, ticket_id: meta?.ticket_id, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    };
+    const payload: Record<string, unknown> = { customer_name, customer_email, status: 'waiting', preview: '', unread: 0 };
+    if (meta?.branch) payload.branch = meta.branch;
+    if (meta?.ticket_id) payload.ticket_id = meta.ticket_id;
     if (supabase) {
-      const payload: Record<string, unknown> = { customer_name, customer_email, status: 'waiting', preview: '', unread: 0, branch: meta?.branch || null, ticket_id: meta?.ticket_id || null };
       const { data, error } = await supabase.from('chat_conversations').insert(payload).select('*').single();
-      if (error) {
-        const { data: d2, error: e2 } = await supabase.from('chat_conversations').insert({ customer_name, customer_email, status: 'waiting', preview: '', unread: 0 }).select('*').single();
-        if (e2) throw e2;
-        const c = { ...base, ...(d2 as ChatConversation) };
-        setConversations((p) => [c, ...p]);
-        return c;
+      if (error || !data) {
+        const { data: d2, error: e2 } = await supabase.from('chat_conversations').insert({ customer_name, customer_email, status: 'waiting' }).select('*').single();
+        if (e2 || !d2) throw e2 || new Error('create chat failed');
+        await refreshPlatform();
+        return d2 as ChatConversation;
       }
-      const c = { ...base, ...(data as ChatConversation) };
-      setConversations((p) => [c, ...p]);
-      return c;
+      await refreshPlatform();
+      return data as ChatConversation;
     }
-    setConversations((p) => [base, ...p]);
-    return base;
+    const c: ChatConversation = {
+      id: `chat-${Date.now()}`,
+      customer_name,
+      customer_email,
+      status: 'waiting',
+      preview: '',
+      unread: 0,
+      messages: [],
+      created_at: new Date().toISOString(),
+      branch: meta?.branch,
+      ticket_id: meta?.ticket_id,
+    };
+    setConversations((p) => [c, ...p]);
+    return c;
   };
 
   const sendChatMessage = async (conversationId: string, text: string, sender: 'agent' | 'customer') => {
-    const msg: ChatMessage = { id: `cm-${Date.now()}`, conversation_id: conversationId, sender, text, created_at: new Date().toISOString() };
+    const msg: ChatMessage = { id: `m-${Date.now()}`, text, sender, created_at: new Date().toISOString() };
     if (supabase) {
-      await supabase.from('chat_messages').insert({ conversation_id: conversationId, sender, text });
+      await supabase.from('chat_messages').insert({ conversation_id: conversationId, text, sender });
       await supabase.from('chat_conversations').update({ preview: msg.text.slice(0, 120), status: 'active', unread: sender === 'customer' ? 1 : 0, updated_at: new Date().toISOString() }).eq('id', conversationId);
       await refreshPlatform();
     } else {
@@ -237,28 +274,26 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     } else setConversations((p) => p.filter((c) => c.id !== id));
   };
 
-  const pushNotification = async (title: string, body: string, link?: string) => {
-    const n: AppNotification = { id: `n-${Date.now()}`, user_id: user?.id, title, body, link, read: false, created_at: new Date().toISOString() };
+  const pushNotification = async (title: string, body?: string, link?: string) => {
     if (supabase && user) { await supabase.from('notifications').insert({ user_id: user.id, title, body, link, read: false }); await refreshPlatform(); }
-    else setNotifications((p) => [n, ...p].slice(0, 50));
+    else setNotifications((p) => [{ id: `n-${Date.now()}`, title, body, link, read: false, created_at: new Date().toISOString() }, ...p]);
   };
-
   const markNotificationRead = async (id: string) => {
-    setNotifications((p) => p.map((n) => (n.id === id ? { ...n, read: true } : n)));
     if (supabase) await supabase.from('notifications').update({ read: true }).eq('id', id);
+    setNotifications((p) => p.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
   const markAllNotificationsRead = async () => {
-    setNotifications((p) => p.map((n) => ({ ...n, read: true })));
     if (supabase && user) await supabase.from('notifications').update({ read: true }).eq('user_id', user.id);
+    setNotifications((p) => p.map((n) => ({ ...n, read: true })));
   };
   const deleteNotification = async (id: string) => {
-    setNotifications((p) => p.filter((n) => n.id !== id));
     if (supabase) await supabase.from('notifications').delete().eq('id', id);
+    setNotifications((p) => p.filter((n) => n.id !== id));
   };
   const deleteAllNotifications = async () => {
-    setNotifications([]);
     if (supabase && user) await supabase.from('notifications').delete().eq('user_id', user.id);
     else save(LS.notif, []);
+    setNotifications([]);
   };
 
   const saveAutomation = async (a: Partial<Automation> & { name: string }) => {
@@ -266,7 +301,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       if (a.id) await supabase.from('automations').update(a).eq('id', a.id);
       else await supabase.from('automations').insert({ name: a.name, enabled: a.enabled ?? true, trigger: a.trigger || 'ticket_created', condition_field: a.condition_field, condition_op: a.condition_op || 'contains', condition_value: a.condition_value, action: a.action || 'set_priority', action_value: a.action_value });
       await refreshPlatform();
-    } else setAutomations((prev) => a.id ? prev.map((x) => (x.id === a.id ? { ...x, ...a } as Automation : x)) : [{ id: `auto-${Date.now()}`, enabled: true, trigger: 'ticket_created', action: 'set_priority', ...a } as Automation, ...prev]);
+    } else setAutomations((prev) => a.id ? prev.map((x) => (x.id === a.id ? { ...x, ...a } as Automation : x)) : [{ id: `a-${Date.now()}`, enabled: true, trigger: 'ticket_created', action: 'set_priority', ...a } as Automation, ...prev]);
   };
   const deleteAutomation = async (id: string) => {
     if (supabase) { await supabase.from('automations').delete().eq('id', id); await refreshPlatform(); }
@@ -291,19 +326,60 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     if (supabase) { await supabase.from('quality_reviews').insert(r); await refreshPlatform(); }
     else setReviews((p) => [{ id: `qr-${Date.now()}`, created_at: new Date().toISOString(), ...r }, ...p]);
   };
+
   const saveAnnouncement = async (a: Partial<Announcement> & { title: string; body: string }) => {
-    if (supabase) {
-      const row = {
+    const channel = a.channel || 'both';
+    const severity = a.severity || 'info';
+    const active = a.active ?? true;
+
+    // Optimistic local update so Admin + Portal react immediately
+    if (!a.id) {
+      const tempId = `an-${Date.now()}`;
+      const optimistic: Announcement = {
+        id: tempId,
         title: a.title,
         body: a.body,
-        severity: a.severity || 'info',
-        active: a.active ?? true,
-        channel: a.channel || 'both',
+        severity,
+        active,
+        channel,
+        created_at: new Date().toISOString(),
       };
-      if (a.id) await supabase.from('announcements').update({ ...row, ...a }).eq('id', a.id);
-      else await supabase.from('announcements').insert(row);
+      setAnnouncements((prev) => [optimistic, ...prev]);
+      saveAnnounceChannel(tempId, channel);
+    } else {
+      setAnnouncements((prev) =>
+        prev.map((x) => (x.id === a.id ? ({ ...x, ...a, channel, severity, active } as Announcement) : x)),
+      );
+      saveAnnounceChannel(a.id, channel);
+    }
+
+    if (!supabase) return;
+
+    // DB schema may not have `channel` yet — insert core columns only
+    const row = { title: a.title, body: a.body, severity, active };
+    try {
+      if (a.id) {
+        const { error } = await supabase.from('announcements').update(row).eq('id', a.id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from('announcements').insert(row).select('*').single();
+        if (error) throw error;
+        if (data?.id) {
+          saveAnnounceChannel(data.id, channel);
+          setAnnouncements((prev) =>
+            prev.map((x) =>
+              x.title === a.title && x.body === a.body && String(x.id).startsWith('an-')
+                ? ({ ...x, ...data, channel } as Announcement)
+                : x,
+            ),
+          );
+        }
+      }
       await refreshPlatform();
-    } else setAnnouncements((prev) => a.id ? prev.map((x) => (x.id === a.id ? { ...x, ...a } as Announcement : x)) : [{ id: `an-${Date.now()}`, severity: 'info', active: true, channel: a.channel || 'both', created_at: new Date().toISOString(), ...a } as Announcement, ...prev]);
+    } catch (err) {
+      console.error('saveAnnouncement failed', err);
+      // Keep optimistic local data so the portal still shows the post
+    }
   };
   const deleteAnnouncement = async (id: string) => {
     if (supabase) { await supabase.from('announcements').delete().eq('id', id); await refreshPlatform(); }
@@ -321,8 +397,29 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     else setForms((p) => p.filter((x) => x.id !== id));
   };
   const saveRelease = async (r: { version: string; title: string; notes: string }) => {
-    if (supabase) { await supabase.from('releases').insert({ ...r, released_at: new Date().toISOString() }); await refreshPlatform(); }
-    else setReleases((p) => [{ id: `rel-${Date.now()}`, released_at: new Date().toISOString(), ...r }, ...p]);
+    const optimistic = {
+      id: `rel-${Date.now()}`,
+      released_at: new Date().toISOString(),
+      version: r.version,
+      title: r.title,
+      notes: r.notes,
+    };
+    setReleases((p) => [optimistic, ...p]);
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('releases')
+        .insert({ version: r.version, title: r.title, notes: r.notes, released_at: optimistic.released_at })
+        .select('*')
+        .single();
+      if (error) throw error;
+      if (data?.id) {
+        setReleases((p) => p.map((x) => (x.id === optimistic.id ? (data as Release) : x)));
+      }
+      await refreshPlatform();
+    } catch (err) {
+      console.error('saveRelease failed', err);
+    }
   };
   const deleteRelease = async (id: string) => {
     if (supabase) { await supabase.from('releases').delete().eq('id', id); await refreshPlatform(); }
