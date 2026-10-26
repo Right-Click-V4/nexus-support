@@ -68,7 +68,7 @@ function mergeAnnouncementChannels(list: Announcement[]): Announcement[] {
   const map = loadAnnounceChannels();
   return list.map((a) => ({
     ...a,
-    channel: a.channel || map[a.id] || 'both',
+    channel: a.channel || map[a.id] || map[`title:${a.title}`] || 'both',
   }));
 }
 
@@ -346,11 +346,13 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       };
       setAnnouncements((prev) => [optimistic, ...prev]);
       saveAnnounceChannel(tempId, channel);
+      saveAnnounceChannel(`title:${a.title}`, channel);
     } else {
       setAnnouncements((prev) =>
         prev.map((x) => (x.id === a.id ? ({ ...x, ...a, channel, severity, active } as Announcement) : x)),
       );
       saveAnnounceChannel(a.id, channel);
+      saveAnnounceChannel(`title:${a.title}`, channel);
     }
 
     if (!supabase) return;
@@ -366,6 +368,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         if (data?.id) {
           saveAnnounceChannel(data.id, channel);
+          saveAnnounceChannel(`title:${a.title}`, channel);
           setAnnouncements((prev) =>
             prev.map((x) =>
               x.title === a.title && x.body === a.body && String(x.id).startsWith('an-')
