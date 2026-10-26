@@ -107,17 +107,33 @@ function AgentShell() {
     return <BootLoader label="Loading workspace…" />;
   }
 
-  const admin = accountRole === 'admin' || isAdmin || !!currentAgent?.is_admin;
-  const maintenanceBlocks = maintenanceReady && maintenanceOn && !admin;
+  // Wait for the shared maintenance flag before showing login or the desk.
+  if (!maintenanceReady) {
+    return <BootLoader label="Loading…" />;
+  }
 
-  if (maintenanceBlocks && !user && !authBusy && !adminLogin) {
-    return <MaintenanceScreen onAdminSignIn={() => setAdminLogin(true)} />;
-  }
-  if (maintenanceOn && user && !adminReady && !authBusy) {
-    return <BootLoader label="Checking access…" />;
-  }
-  if (maintenanceBlocks && user && adminReady && !authBusy) {
-    return <MaintenanceScreen onSignOut={() => void signOut()} />;
+  const admin = accountRole === 'admin' || isAdmin || !!currentAgent?.is_admin;
+
+  // Maintenance blocks the whole site (including login) except admins.
+  if (maintenanceOn && !admin) {
+    if (adminLogin || authBusy) {
+      return (
+        <LoginPage
+          audience="agent"
+          onOpenPortal={() => {
+            window.location.hash = 'portal';
+          }}
+        />
+      );
+    }
+    if (user && !adminReady) {
+      return <BootLoader label="Checking access…" />;
+    }
+    return (
+      <MaintenanceScreen
+        onAdminSignIn={!user ? () => setAdminLogin(true) : undefined}
+      />
+    );
   }
 
   // Keep login form mounted while validating so wrong-tab / pending errors show
@@ -293,14 +309,14 @@ function AgentShell() {
 function PortalShell() {
   const { enabled, ready } = useMaintenance();
   const { isAdmin, adminReady } = useIsAdmin();
-  const { user, accountRole, signOut, authBusy } = useAuth();
+  const { user, accountRole, authBusy } = useAuth();
   const admin = accountRole === 'admin' || isAdmin;
 
   if (!ready || authBusy || (user && !adminReady)) {
     return <BootLoader label="Loading portal…" />;
   }
   if (enabled && !admin) {
-    return <MaintenanceScreen onSignOut={user ? () => void signOut() : undefined} />;
+    return <MaintenanceScreen />;
   }
   return (
     <PortalAuthGate
