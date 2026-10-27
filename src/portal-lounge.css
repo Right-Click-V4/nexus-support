@@ -607,3 +607,13 @@ html.nexus-light .portal-overview-glass {
   flex-shrink: 0;
   clear: both;
 }
+
+
+/* community-glass-v1 — light mode transparent community panels */
+html.nexus-light .portal-community-shell {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+html.nexus-dark .portal-community-shell {
+  background: rgba(12, 10, 20, 0.45) !important;
+}

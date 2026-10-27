@@ -160,7 +160,7 @@ interface Props {
   onBack?: () => void;
 }
 
-/* community-media-v2 */
+/* community-media-v2 */ /* community-glass-v1 */
 export default function PortalCommunityChat({ displayName, email, onBack }: Props) {
   const [store, setStore] = useState<Store>(() => loadStore());
   const [activeId, setActiveId] = useState(DEFAULT_GROUP_ID);
@@ -377,10 +377,10 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
   };
 
   return (
-    <div className="portal-community-shell flex flex-1 min-h-0 h-full rounded-xl border overflow-hidden bg-white/25 dark:bg-[#0c0a14]/55 border-white/20 dark:border-violet-500/20 backdrop-blur-md shadow-sm">
+    <div className="portal-community-shell flex flex-1 min-h-0 h-full rounded-xl border overflow-hidden bg-white/10 dark:bg-[#0c0a14]/45 border-white/25 dark:border-violet-500/25 backdrop-blur-md shadow-sm">
       {/* Group list */}
-      <aside className="w-56 shrink-0 border-r border-white/15 dark:border-white/10 bg-white/20 dark:bg-[#0a0812]/60 flex flex-col hidden sm:flex backdrop-blur-sm">
-        <div className="px-3 py-3 border-b border-zinc-200 dark:border-white/10">
+      <aside className="w-56 shrink-0 border-r border-white/20 dark:border-white/10 bg-white/10 dark:bg-[#0a0812]/50 flex flex-col hidden sm:flex backdrop-blur-md">
+        <div className="px-3 py-3 border-b border-white/20 dark:border-white/10">
           <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Groups</div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
@@ -393,7 +393,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                 type="button"
                 onClick={() => { setActiveId(g.id); setShowInfo(false); setQuery(''); }}
                 className={`w-full text-left rounded-lg px-2.5 py-2 transition-colors ${
-                  activeRow ? 'bg-violet-100/80 text-violet-900' : 'hover:bg-zinc-100 text-zinc-700'
+                  activeRow ? 'bg-violet-500/20 text-violet-900 dark:text-violet-100' : 'hover:bg-white/20 text-zinc-800 dark:text-zinc-200'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -413,11 +413,11 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
             );
           })}
         </div>
-        <div className="p-2 border-t border-zinc-200">
+        <div className="p-2 border-t border-white/15 dark:border-white/10">
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-violet-600 hover:bg-violet-50 rounded-lg"
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-white/20 dark:hover:bg-white/10 rounded-lg"
           >
             <Plus size={14} /> New group
           </button>
@@ -425,8 +425,8 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
       </aside>
 
       {/* Main chat */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#0c0a16]/30">
-        <div className="flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/10 bg-[#0c0a16]/55 backdrop-blur">
+      <div className="flex-1 flex flex-col min-w-0 bg-violet-950/10 dark:bg-[#0c0a16]/35">
+        <div className="flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/15 dark:border-white/10 bg-white/15 dark:bg-[#0c0a16]/55 backdrop-blur">
           {onBack && (
             <button type="button" onClick={onBack} className="md:hidden p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100">
               <ArrowLeft size={18} />
@@ -483,7 +483,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#0c0a16]/40">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-transparent">
           {filteredMessages.length === 0 && (
             <div className="text-center py-12 px-4">
               <Users className="mx-auto text-violet-300/50 mb-3" size={32} />
@@ -557,7 +557,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-white/10 bg-[#0c0a16]/55 backdrop-blur">
+        <div className="border-t border-white/15 dark:border-white/10 bg-white/15 dark:bg-[#0c0a16]/55 backdrop-blur">
           {emojiOpen && (
             <div className="px-3 pt-2 flex flex-wrap gap-1 max-h-40 overflow-y-auto">
               {EMOJIS.map((e) => (
@@ -649,7 +649,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                 try { bcRef.current?.postMessage({ type: 'typing', groupId: activeId, peer: { name: displayName || email, email } }); } catch {}
               }}
               placeholder={isMuted ? 'Muted — you can still post' : 'Message the group…'}
-              className="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-violet-500/20 bg-white/55 dark:bg-[#0e0c18]/90 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-white/30 dark:border-violet-500/20 bg-white/25 dark:bg-[#0e0c18]/70 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30 backdrop-blur-sm"
               maxLength={2000}
             />
             <button type="submit" disabled={!draft.trim()} className="px-3.5 py-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white hover:opacity-95 disabled:opacity-40 shrink-0" aria-label="Send">
@@ -661,37 +661,37 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
 
       {/* Info panel permanent-info-rail */}
       {active && (
-        <aside className="w-72 shrink-0 border-l border-white/10 bg-[#0c0a16]/90 text-zinc-100 flex flex-col overflow-y-auto backdrop-blur-md">
-          <div className="px-4 py-5 border-b border-zinc-800 flex flex-col items-center justify-center text-center">
-            <div className="w-14 h-14 rounded-full bg-zinc-800/90 flex items-center justify-center mb-2 ring-1 ring-violet-500/30">
+        <aside className="w-72 shrink-0 border-l border-white/20 dark:border-white/10 bg-white/15 dark:bg-[#0c0a16]/70 text-zinc-800 dark:text-zinc-100 flex flex-col overflow-y-auto backdrop-blur-md">
+          <div className="px-4 py-5 border-b border-white/20 dark:border-zinc-800 flex flex-col items-center justify-center text-center">
+            <div className="w-14 h-14 rounded-full bg-violet-500/15 dark:bg-zinc-800/90 flex items-center justify-center mb-2 ring-1 ring-violet-500/30">
               {active.id === DEFAULT_GROUP_ID ? <Users size={24} className="text-violet-400" /> : <Hash size={24} className="text-zinc-400" />}
             </div>
-            <div className="text-sm font-semibold text-zinc-100">{active.name}</div>
+            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{active.name}</div>
             <div className="text-[11px] text-zinc-400 mt-0.5">
               {active.members.length} member{active.members.length === 1 ? '' : 's'}
             </div>
           </div>
 
-          <div className="px-3 py-3 space-y-1 border-b border-zinc-800">
-            <button type="button" onClick={toggleMute} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-white/5">
+          <div className="px-3 py-3 space-y-1 border-b border-white/20 dark:border-zinc-800">
+            <button type="button" onClick={toggleMute} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-700 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/5">
               {isMuted ? <Bell size={16} /> : <BellOff size={16} />}
               {isMuted ? 'Unmute notifications' : 'Mute notifications'}
             </button>
             <div className="px-3 py-2">
-              <div className="flex items-center gap-2 text-zinc-400 text-xs mb-1.5">
+              <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs mb-1.5">
                 <Search size={14} /> Search in conversation
               </div>
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search messages…"
-                className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-violet-500"
+                className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-white/40 dark:bg-zinc-900/80 border border-white/30 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-violet-500"
               />
             </div>
           </div>
 
-          <div className="px-4 py-3 border-b border-zinc-800">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Chat info</div>
+          <div className="px-4 py-3 border-b border-white/20 dark:border-zinc-800">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500 mb-2">Chat info</div>
             {pinned.length > 0 && (
               <div className="text-sm text-zinc-300 flex items-start gap-2 mb-2">
                 <Pin size={14} className="mt-0.5 text-amber-400 shrink-0" />
@@ -699,21 +699,21 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
               </div>
             )}
             {active.description && (
-              <p className="text-xs text-zinc-400 leading-relaxed">{active.description}</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">{active.description}</p>
             )}
           </div>
 
           {active.id !== DEFAULT_GROUP_ID && (
-            <div className="px-4 py-3 border-b border-zinc-800 space-y-1">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Customize</div>
-              <button type="button" onClick={renameGroup} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-white/5">
+            <div className="px-4 py-3 border-b border-white/20 dark:border-zinc-800 space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500 mb-2">Customize</div>
+              <button type="button" onClick={renameGroup} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-700 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/5">
                 <Pencil size={16} /> Change group name
               </button>
             </div>
           )}
 
-          <div className="px-4 py-3 border-b border-zinc-800">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Members</div>
+          <div className="px-4 py-3 border-b border-white/20 dark:border-zinc-800">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500 mb-2">Members</div>
             <ul className="space-y-2 max-h-40 overflow-y-auto">
               {active.members.length === 0 && (
                 <li className="text-xs text-zinc-500 px-1">No members listed yet</li>
