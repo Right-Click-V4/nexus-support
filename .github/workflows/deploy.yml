@@ -162,11 +162,12 @@ jobs:
             curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/a3f7b260cd8c6e3200bbe03b10c1524df894badc/src/components/PortalCommunityChat.tsx" -o src/components/PortalCommunityChat.tsx
           fi
           python3 scripts/patch_community_ux.py || true
+          python3 scripts/patch_community_panel.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css || true
-          git commit -m "feat(community): dark mode, avatars, media, typing" || true
+          git commit -m "feat(community): transparent panel, permanent info rail, live members" || true
           git push || true
 
       - name: Setup Node
