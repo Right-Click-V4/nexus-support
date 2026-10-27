@@ -593,3 +593,17 @@ html.nexus-light .portal-overview-glass {
 .portal-shell main {
   min-height: 0;
 }
+
+
+/* portal-footer-flow-v2 — always after content, never overlay */
+.portal-footer {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+  flex-shrink: 0;
+  clear: both;
+}
