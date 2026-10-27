@@ -579,3 +579,12 @@ html.nexus-light .portal-overview-glass {
   background: rgba(255, 255, 255, 0.32);
   border-color: rgba(255, 255, 255, 0.45);
 }
+
+/* Community fills remaining panel under topbar + optional marquee */
+.portal-community-shell {
+  min-height: 22rem;
+  height: 100%;
+}
+.portal-shell main {
+  min-height: 0;
+}

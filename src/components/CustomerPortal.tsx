@@ -317,8 +317,17 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
 
         <PortalAnnouncementMarquee />
 
-        <main className="relative z-10 flex-1 overflow-y-auto p-3 lg:p-5">
-          <div className="max-w-5xl mx-auto">
+        <main
+          className={`relative z-10 flex-1 min-h-0 p-3 lg:p-5 flex flex-col ${
+            view === 'community' ? 'overflow-hidden' : 'overflow-y-auto'
+          }`}
+        >
+          <div
+            className={`w-full mx-auto flex flex-col flex-1 min-h-0 ${
+              view === 'community' ? 'max-w-6xl' : 'max-w-5xl min-h-full'
+            }`}
+          >
+            <div className={`flex-1 min-h-0 ${view === 'community' ? 'flex flex-col' : ''}`}>
             {view === 'home' && (
               <PortalHome displayName={displayName} onNavigate={(v) => setView(v)} />
             )}
@@ -478,15 +487,16 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 </div>
               </div>
             )}
-          </div>
+            </div>
 
-          <footer className="portal-footer relative z-10 mt-8 mb-2 px-2 py-3.5 rounded-xl">
+            <footer className="portal-footer relative z-10 mt-auto shrink-0 mb-1 px-2 py-3.5 rounded-xl">
             <div className="text-center">
               <div className="text-[11px] sm:text-xs font-medium tracking-wide portal-footer-brand">
                 NexusOps Customer Portal · © 2026 Lizer &amp; Kirzhian
               </div>
             </div>
-          </footer>
+            </footer>
+          </div>
         </main>
       </div>
     </div>
