@@ -1,19 +1,20 @@
 /**
  * Browser-session lifetime for auth:
- * - Stays logged in across tabs while ANY tab of this origin is open.
- * - Logging out when the user closes ALL windows/tabs (new browser session).
- * - Survives refresh of an existing tab (sessionStorage marker).
+ * - Stay logged in across tabs while ANY tab is open.
+ * - Stay logged in on refresh / hard-refresh (sessionStorage survives reload).
+ * - Log out only when the user opens the site again after closing ALL tabs/windows
+ *   (sessionStorage is empty and no sibling tabs answer BroadcastChannel).
  *
- * Chrome / Edge / Opera: sessionStorage is wiped when the whole browser session ends.
- * A new tab with no siblings answering BroadcastChannel = new browser session → clear auth.
+ * IMPORTANT: Never clear auth tokens on pagehide/beforeunload — those fire on
+ * refresh too, which was causing auto-logout on hard refresh.
  */
 
-const BC_NAME = 'nexus-auth-tabs-v2';
-const LIVE_KEY = 'nexus-auth-live-v2'; // sessionStorage (per-tab; dies with browser session)
-const TABS_KEY = 'nexus-live-tabs-v2';
+const BC_NAME = 'nexus-auth-tabs-v3';
+const LIVE_KEY = 'nexus-auth-live-v3'; // sessionStorage — survives refresh, dies with browser session
+const TABS_KEY = 'nexus-live-tabs-v3';
 const HEARTBEAT_MS = 2500;
 const STALE_MS = 12_000;
-const SIBLING_WAIT_MS = 150;
+const SIBLING_WAIT_MS = 200;
 
 export type TabSessionClearFn = () => void | Promise<void>;
 
@@ -44,7 +45,7 @@ function prune(tabs: Record<string, number>, now = Date.now()): Record<string, n
   return next;
 }
 
-/** Strip every Supabase auth key from localStorage (sync — safe on unload). */
+/** Strip Supabase auth keys from localStorage (call only on confirmed new browser session). */
 export function clearSupabaseAuthStorage() {
   try {
     const toRemove: string[] = [];
@@ -66,12 +67,13 @@ export function clearSupabaseAuthStorage() {
 }
 
 /**
- * Returns true when this load is a brand-new browser session
- * (all previous windows/tabs closed — user must log in again).
+ * True when this load is a brand-new browser session
+ * (all previous windows/tabs were closed — require login again).
+ * False on refresh and when another tab of this origin is still open.
  */
 export function detectNewBrowserSession(): Promise<boolean> {
   try {
-    // Same tab refresh keeps sessionStorage → not a new browser session
+    // Same tab refresh / navigation keeps sessionStorage → keep session
     if (sessionStorage.getItem(LIVE_KEY) === '1') {
       return Promise.resolve(false);
     }
@@ -79,7 +81,7 @@ export function detectNewBrowserSession(): Promise<boolean> {
     /* private mode */
   }
 
-  // Any other live tab heartbeating?
+  // Other tabs still heartbeating?
   try {
     const others = Object.keys(prune(readTabs()));
     if (others.length > 0) {
@@ -89,7 +91,7 @@ export function detectNewBrowserSession(): Promise<boolean> {
     /* ignore */
   }
 
-  // Ask open siblings via BroadcastChannel (Chrome/Edge/Opera)
+  // Ask open siblings via BroadcastChannel
   return new Promise((resolve) => {
     let settled = false;
     let bc: BroadcastChannel | null = null;
@@ -131,9 +133,10 @@ export function markTabSessionLive() {
 }
 
 /**
- * Heartbeats + answers sibling pings. Clears auth storage when this is the last tab closing.
+ * Heartbeats + answers sibling pings.
+ * Does NOT clear auth on unload (that broke hard-refresh).
  */
-export function startTabSession(opts?: {
+export function startTabSession(_opts?: {
   onLastTabClose?: TabSessionClearFn;
 }): { tabId: string; stop: () => void } {
   const tabId =
@@ -169,22 +172,18 @@ export function startTabSession(opts?: {
     /* ignore */
   }
 
-  const onLastClose = () => {
-    const tabs = prune(readTabs());
-    delete tabs[tabId];
-    writeTabs(tabs);
-    if (Object.keys(tabs).length === 0) {
-      clearSupabaseAuthStorage();
-      try {
-        void opts?.onLastTabClose?.();
-      } catch {
-        /* ignore */
-      }
+  // Only unregister this tab id — never wipe auth tokens here (refresh fires pagehide)
+  const onPageHide = () => {
+    try {
+      const tabs = prune(readTabs());
+      delete tabs[tabId];
+      writeTabs(tabs);
+    } catch {
+      /* ignore */
     }
   };
 
-  window.addEventListener('pagehide', onLastClose);
-  window.addEventListener('beforeunload', onLastClose);
+  window.addEventListener('pagehide', onPageHide);
 
   const onVis = () => {
     if (document.visibilityState === 'visible') {
@@ -196,8 +195,7 @@ export function startTabSession(opts?: {
 
   const stop = () => {
     window.clearInterval(interval);
-    window.removeEventListener('pagehide', onLastClose);
-    window.removeEventListener('beforeunload', onLastClose);
+    window.removeEventListener('pagehide', onPageHide);
     document.removeEventListener('visibilitychange', onVis);
     try {
       bc?.close();
