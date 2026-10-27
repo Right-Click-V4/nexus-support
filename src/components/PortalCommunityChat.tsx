@@ -3,6 +3,14 @@ import {
   Send, Users, ArrowLeft, Plus, Search, BellOff, Bell, Pin,
   Pencil, UserPlus, LogOut, MoreHorizontal, X, Hash, Info, Smile, Image as ImageIcon, Film,
 } from 'lucide-react';
+import {
+  DEFAULT_GROUP_ID as CLOUD_DEFAULT_ID,
+  loadLocalStore, saveLocalStore, ensureMember as ensureMemberCloudLocal,
+  communityCloudEnabled, fetchCloudStore, ensureDefaultGroupCloud,
+  upsertMemberCloud, insertMessageCloud, setPinnedCloud, createGroupCloud,
+  renameGroupCloud, removeMemberCloud, subscribeCommunity, subscribeTyping,
+  type Message as CloudMessage, type Store as CloudStore,
+} from '../lib/communityApi';
 
 const LS_KEY = 'nexus-community-groups-v1';
 const DEFAULT_GROUP_ID = 'default-nexus-community';
@@ -174,6 +182,8 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
       saveStore(next);
       return next;
     });
+    void upsertMemberCloud(activeId, displayName, email);
+    if (activeId !== DEFAULT_GROUP_ID) void upsertMemberCloud(DEFAULT_GROUP_ID, displayName, email);
   }, [email, displayName, activeId]);
 
   const groups = store.groups;
@@ -223,7 +233,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
       ...ensureMember(g, displayName, email),
       messages: [...g.messages, msg],
     }));
-    setDraft('');
+    void insertMessageCloud(active.id, msg as any); void upsertMemberCloud(active.id, displayName, email); setDraft('');
   };
 
   const createGroup = (e: React.FormEvent) => {
@@ -508,7 +518,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                   if (!active) return;
                   const msg: Message = { id: `m-${Date.now()}`, author_name: displayName || 'You', author_email: email || 'anon', text: '', created_at: new Date().toISOString(), gif_url: g.url };
                   updateGroup(active.id, (gg) => ({ ...gg, messages: [...gg.messages, msg] }));
-                  setGifOpen(false);
+                  void insertMessageCloud(active.id, msg as any); void upsertMemberCloud(active.id, displayName, email); setGifOpen(false);
                 }} className="rounded-lg overflow-hidden border border-zinc-200 dark:border-white/10" title={g.label}>
                   <img src={g.url} alt={g.label} className="w-full h-14 object-cover" />
                 </button>
