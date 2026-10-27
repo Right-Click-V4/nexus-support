@@ -160,7 +160,7 @@ interface Props {
   onBack?: () => void;
 }
 
-/* community-media-v2 */ /* community-glass-v1 */
+/* community-media-v2 */ /* community-glass-v1 */ /* community-contrast-v1 */
 export default function PortalCommunityChat({ displayName, email, onBack }: Props) {
   const [store, setStore] = useState<Store>(() => loadStore());
   const [activeId, setActiveId] = useState(DEFAULT_GROUP_ID);
@@ -377,9 +377,9 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
   };
 
   return (
-    <div className="portal-community-shell flex flex-1 min-h-0 h-full rounded-xl border overflow-hidden bg-white/10 dark:bg-[#0c0a14]/45 border-white/25 dark:border-violet-500/25 backdrop-blur-md shadow-sm">
+    <div className="portal-community-shell flex flex-1 min-h-0 h-full rounded-xl border overflow-hidden bg-white/5 dark:bg-[#0c0a14]/30 border-white/30 dark:border-violet-500/25 backdrop-blur-sm shadow-sm">
       {/* Group list */}
-      <aside className="w-56 shrink-0 border-r border-white/20 dark:border-white/10 bg-white/10 dark:bg-[#0a0812]/50 flex flex-col hidden sm:flex backdrop-blur-md">
+      <aside className="portal-community-rail portal-community-rail--left w-56 shrink-0 border-r border-white/25 dark:border-white/10 bg-transparent flex flex-col hidden sm:flex backdrop-blur-md">
         <div className="px-3 py-3 border-b border-white/20 dark:border-white/10">
           <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Groups</div>
         </div>
@@ -425,8 +425,8 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
       </aside>
 
       {/* Main chat */}
-      <div className="flex-1 flex flex-col min-w-0 bg-violet-950/10 dark:bg-[#0c0a16]/35">
-        <div className="flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/15 dark:border-white/10 bg-white/15 dark:bg-[#0c0a16]/55 backdrop-blur">
+      <div className="flex-1 flex flex-col min-w-0 bg-transparent">
+        <div className="flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/20 dark:border-white/10 bg-white/10 dark:bg-black/20 backdrop-blur-sm">
           {onBack && (
             <button type="button" onClick={onBack} className="md:hidden p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100">
               <ArrowLeft size={18} />
@@ -506,7 +506,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                   className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm relative shadow-sm ${
                     mine
                       ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white rounded-br-md'
-                      : 'bg-white/70 dark:bg-[#1c1830]/95 border border-white/30 dark:border-violet-500/15 text-zinc-900 dark:text-zinc-100 rounded-bl-md backdrop-blur-sm'
+                      : 'community-msg-other bg-violet-100/95 dark:bg-[#2a2448]/92 border border-violet-200/60 dark:border-violet-500/20 text-zinc-900 dark:text-zinc-100 rounded-bl-md backdrop-blur-sm'
                   }`}
                 >
                   {!mine && (
@@ -515,7 +515,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                   {m.image_data && <img src={m.image_data} alt="" className="rounded-lg max-h-48 mb-1.5" />}
                   {m.gif_url && <img src={m.gif_url} alt="gif" className="rounded-lg max-h-40 mb-1.5" />}
                   {m.text ? <div className="whitespace-pre-wrap break-words">{m.text}</div> : null}
-                  <div className={`flex items-center gap-2 text-[10px] mt-1 ${mine ? 'text-white/60' : 'text-zinc-400'}`}>
+                  <div className={`flex items-center gap-2 text-[10px] mt-1 ${mine ? 'text-white/70' : 'text-zinc-600 dark:text-zinc-400'}`}>
                     <span>
                       {new Date(m.created_at).toLocaleString([], {
                         month: 'short',
@@ -557,7 +557,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-white/15 dark:border-white/10 bg-white/15 dark:bg-[#0c0a16]/55 backdrop-blur">
+        <div className="border-t border-white/20 dark:border-white/10 bg-white/10 dark:bg-black/20 backdrop-blur-sm">
           {emojiOpen && (
             <div className="px-3 pt-2 flex flex-wrap gap-1 max-h-40 overflow-y-auto">
               {EMOJIS.map((e) => (
@@ -661,7 +661,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
 
       {/* Info panel permanent-info-rail */}
       {active && (
-        <aside className="w-72 shrink-0 border-l border-white/20 dark:border-white/10 bg-white/15 dark:bg-[#0c0a16]/70 text-zinc-800 dark:text-zinc-100 flex flex-col overflow-y-auto backdrop-blur-md">
+        <aside className="portal-community-rail portal-community-rail--right w-72 shrink-0 border-l border-white/25 dark:border-white/10 bg-transparent text-zinc-800 dark:text-zinc-100 flex flex-col overflow-y-auto backdrop-blur-md">
           <div className="px-4 py-5 border-b border-white/20 dark:border-zinc-800 flex flex-col items-center justify-center text-center">
             <div className="w-14 h-14 rounded-full bg-violet-500/15 dark:bg-zinc-800/90 flex items-center justify-center mb-2 ring-1 ring-violet-500/30">
               {active.id === DEFAULT_GROUP_ID ? <Users size={24} className="text-violet-400" /> : <Hash size={24} className="text-zinc-400" />}

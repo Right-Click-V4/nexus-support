@@ -37,3 +37,42 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #a1a1aa; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: #71717a; }
+
+
+/* community-contrast-v1 — real glass rails + readable other-user bubbles */
+html.nexus-light .portal-community-shell,
+html.nexus-dark .portal-community-shell {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+html.nexus-dark .portal-community-shell {
+  background: rgba(12, 10, 20, 0.28) !important;
+}
+.portal-community-rail {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.nexus-light .portal-community-rail {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #1e1b4b !important;
+}
+html.nexus-dark .portal-community-rail {
+  background: rgba(8, 6, 18, 0.22) !important;
+  color: #f4f4f5 !important;
+}
+.portal-community-shell .community-msg-other {
+  background: rgba(237, 233, 254, 0.95) !important;
+  color: #1e1b4b !important;
+  border-color: rgba(167, 139, 250, 0.35) !important;
+}
+html.nexus-dark .portal-community-shell .community-msg-other {
+  background: rgba(42, 36, 72, 0.92) !important;
+  color: #f4f4f5 !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+}
+.portal-community-shell .community-msg-other .text-violet-600 {
+  color: #6d28d9 !important;
+}
+html.nexus-dark .portal-community-shell .community-msg-other .text-violet-300,
+html.nexus-dark .portal-community-shell .community-msg-other .dark\:text-violet-300 {
+  color: #c4b5fd !important;
+}

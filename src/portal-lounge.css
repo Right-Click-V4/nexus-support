@@ -272,7 +272,6 @@ html.nexus-dark .portal-home-hero {
 }
 
 /* Beat index.css "sidebar stays dark" rule for light mode */
-html.nexus-light .app-cosmos aside,
 html.nexus-light .app-cosmos aside.portal-sidebar,
 html.nexus-light aside.portal-sidebar {
   background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
@@ -282,20 +281,20 @@ html.nexus-light aside.portal-sidebar {
   backdrop-filter: blur(18px) saturate(1.1) !important;
   -webkit-backdrop-filter: blur(18px) saturate(1.1) !important;
 }
-html.nexus-light .app-cosmos aside .portal-sidebar-title,
-html.nexus-light .app-cosmos aside .portal-nav-item,
-html.nexus-light .app-cosmos aside .portal-sidebar-sub,
-html.nexus-light .app-cosmos aside .portal-sidebar-label {
+html.nexus-light .app-cosmos aside.portal-sidebar .portal-sidebar-title,
+html.nexus-light .app-cosmos aside.portal-sidebar .portal-nav-item,
+html.nexus-light .app-cosmos aside.portal-sidebar .portal-sidebar-sub,
+html.nexus-light .app-cosmos aside.portal-sidebar .portal-sidebar-label {
   color: inherit;
 }
-html.nexus-light .app-cosmos aside .text-zinc-100,
-html.nexus-light .app-cosmos aside .text-zinc-200,
-html.nexus-light .app-cosmos aside .text-zinc-300 {
+html.nexus-light .app-cosmos aside.portal-sidebar .text-zinc-100,
+html.nexus-light .app-cosmos aside.portal-sidebar .text-zinc-200,
+html.nexus-light .app-cosmos aside.portal-sidebar .text-zinc-300 {
   color: #18181b !important;
 }
-html.nexus-light .app-cosmos aside .text-zinc-400,
-html.nexus-light .app-cosmos aside .text-zinc-500,
-html.nexus-light .app-cosmos aside .text-zinc-600 {
+html.nexus-light .app-cosmos aside.portal-sidebar .text-zinc-400,
+html.nexus-light .app-cosmos aside.portal-sidebar .text-zinc-500,
+html.nexus-light .app-cosmos aside.portal-sidebar .text-zinc-600 {
   color: #52525b !important;
 }
 
@@ -616,4 +615,43 @@ html.nexus-light .portal-community-shell {
 }
 html.nexus-dark .portal-community-shell {
   background: rgba(12, 10, 20, 0.45) !important;
+}
+
+
+/* community-contrast-v1 — real glass rails + readable other-user bubbles */
+html.nexus-light .portal-community-shell,
+html.nexus-dark .portal-community-shell {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+html.nexus-dark .portal-community-shell {
+  background: rgba(12, 10, 20, 0.28) !important;
+}
+.portal-community-rail {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.nexus-light .portal-community-rail {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #1e1b4b !important;
+}
+html.nexus-dark .portal-community-rail {
+  background: rgba(8, 6, 18, 0.22) !important;
+  color: #f4f4f5 !important;
+}
+.portal-community-shell .community-msg-other {
+  background: rgba(237, 233, 254, 0.95) !important;
+  color: #1e1b4b !important;
+  border-color: rgba(167, 139, 250, 0.35) !important;
+}
+html.nexus-dark .portal-community-shell .community-msg-other {
+  background: rgba(42, 36, 72, 0.92) !important;
+  color: #f4f4f5 !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+}
+.portal-community-shell .community-msg-other .text-violet-600 {
+  color: #6d28d9 !important;
+}
+html.nexus-dark .portal-community-shell .community-msg-other .text-violet-300,
+html.nexus-dark .portal-community-shell .community-msg-other .dark\:text-violet-300 {
+  color: #c4b5fd !important;
 }
