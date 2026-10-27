@@ -96,7 +96,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/CustomerPortal.tsx
-          git commit -m "feat(portal): freeze sidebar and topbar; main scrolls only" || true
+            git commit -m "feat(portal): freeze sidebar and topbar; main scrolls only" || true
           git push || true
 
       - name: Rename Home to Overview
@@ -167,11 +167,12 @@ jobs:
           python3 scripts/patch_community_media.py || true
           python3 scripts/patch_community_footer_space.py || true
           python3 scripts/patch_footer_flow.py || true
+          python3 scripts/patch_community_glass_marquee.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css src/lib/communityApi.ts || true
-          git commit -m "fix(portal): footer after content; Community full height scroll" || true
+          git commit -m "fix(community): below marquee; transparent light glass" || true
           git push || true
 
       - name: Setup Node
