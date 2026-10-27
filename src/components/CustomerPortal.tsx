@@ -29,15 +29,15 @@ const HELP_ARTICLES = [
 const BRANCH_OPTIONS = INITIAL_BRANCHES.map((b) => b.name);
 
 const VIEW_META: Record<PortalView, { title: string; desc: string; iconColor: string }> = {
-  home: { title: 'Overview', desc: 'How this portal works and how to get support.', iconColor: 'text-violet-500' },
-  submit: { title: 'Submit a request', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-500' },
-  track: { title: 'Track a ticket', desc: 'Look up status updates by ticket ID and email.', iconColor: 'text-emerald-500' },
-  success: { title: 'Request received', desc: 'Your ticket was created successfully.', iconColor: 'text-violet-500' },
-  help: { title: 'Help articles', desc: 'Guides and FAQs you can use without waiting on an agent.', iconColor: 'text-indigo-500' },
-  chat: { title: 'Live chat', desc: 'Talk to a support agent in real time.', iconColor: 'text-fuchsia-500' },
-  account: { title: 'Account', desc: 'Profile details and sign-in information.', iconColor: 'text-pink-500' },
-  mytickets: { title: 'My tickets', desc: 'Review tickets you have opened with support.', iconColor: 'text-blue-500' },
-  community: { title: 'Community', desc: 'Chat with other customers about tips and workarounds.', iconColor: 'text-sky-500' },
+  home: { title: 'Overview', desc: 'How this portal works and how to get support.', iconColor: 'text-violet-700 dark:text-violet-300' },
+  submit: { title: 'Submit a request', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-600 dark:text-amber-400' },
+  track: { title: 'Track a ticket', desc: 'Look up status updates by ticket ID and email.', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+  success: { title: 'Request received', desc: 'Your ticket was created successfully.', iconColor: 'text-violet-700 dark:text-violet-300' },
+  help: { title: 'Help articles', desc: 'Guides and FAQs you can use without waiting on an agent.', iconColor: 'text-indigo-700 dark:text-indigo-300' },
+  chat: { title: 'Live chat', desc: 'Talk to a support agent in real time.', iconColor: 'text-fuchsia-600 dark:text-fuchsia-400' },
+  account: { title: 'Account', desc: 'Profile details and sign-in information.', iconColor: 'text-pink-600 dark:text-pink-400' },
+  mytickets: { title: 'My tickets', desc: 'Review tickets you have opened with support.', iconColor: 'text-blue-600 dark:text-blue-400' },
+  community: { title: 'Community', desc: 'Chat with other customers about tips and workarounds.', iconColor: 'text-sky-600 dark:text-sky-400' },
 };
 
 function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
@@ -52,7 +52,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
   );
 }
 
-/* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */
+/* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -254,7 +254,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   active ? 'portal-nav-active' : 'portal-nav-item'
                 }`}
               >
-                <Icon size={18} className={`shrink-0 ${({ home: "text-violet-400", community: "text-sky-400", submit: "text-amber-400", chat: "text-fuchsia-400", track: "text-emerald-400", mytickets: "text-blue-400", help: "text-indigo-400", account: "text-pink-400" } as Record<string, string>)[item.id] || "text-violet-400"}`} />
+                <Icon size={18} className={`shrink-0 ${({ home: "text-violet-700 dark:text-violet-300", community: "text-sky-600 dark:text-sky-400", submit: "text-amber-600 dark:text-amber-400", chat: "text-fuchsia-600 dark:text-fuchsia-400", track: "text-emerald-600 dark:text-emerald-400", mytickets: "text-blue-600 dark:text-blue-400", help: "text-indigo-700 dark:text-indigo-300", account: "text-pink-600 dark:text-pink-400" } as Record<string, string>)[item.id] || "text-violet-400"}`} />
                 <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
@@ -276,11 +276,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
               <div className="text-[11px] text-zinc-500 truncate">{user?.email}</div>
             </div>
           </div>
-          {requiresAuth && (
-            <button type="button" onClick={() => void signOut()} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:bg-white/5 hover:text-zinc-200">
-              <LogOut size={16} /> Sign out
-            </button>
-          )}
         </div>
       </aside>
 
@@ -313,6 +308,17 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Support online
           </div>
+          {requiresAuth && (
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-violet-500/15 dark:hover:bg-white/10 border border-violet-700/25 dark:border-white/20 transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={15} strokeWidth={2.25} />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          )}
           <ThemeToggle />
         </header>
 

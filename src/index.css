@@ -130,3 +130,37 @@ html.nexus-dark .nexus-topbar {
 .portal-shell main > div {
   flex: 1 0 auto;
 }
+
+
+/* nav-signout-v1 — stronger icons/dividers + lighter overview cards */
+html.nexus-light .portal-sidebar-header,
+html.nexus-light .portal-sidebar-footer {
+  border-color: rgba(76, 29, 149, 0.5) !important;
+}
+html.nexus-dark .portal-sidebar-header,
+html.nexus-dark .portal-sidebar-footer {
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+html.nexus-light .portal-nav-item svg,
+html.nexus-light .portal-nav-active svg {
+  opacity: 1 !important;
+  filter: saturate(1.35) contrast(1.1);
+}
+html.nexus-dark .portal-nav-item svg,
+html.nexus-dark .portal-nav-active svg {
+  opacity: 1 !important;
+  filter: saturate(1.25) brightness(1.15);
+}
+html.nexus-light .portal-overview-glass {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.65) !important;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.05);
+}
+html.nexus-dark .portal-overview-glass {
+  background: rgba(30, 24, 55, 0.42) !important;
+  border-color: rgba(196, 181, 253, 0.22) !important;
+}
+html.nexus-light .portal-overview-glass .rounded-xl,
+html.nexus-light .portal-overview-glass .rounded-2xl {
+  background-color: rgba(255, 255, 255, 0.55);
+}
