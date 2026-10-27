@@ -52,7 +52,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
   );
 }
 
-/* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */
+/* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
