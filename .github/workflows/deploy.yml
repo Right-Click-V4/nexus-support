@@ -113,10 +113,11 @@ jobs:
         run: |
           set -e
           python3 scripts/fix_sidebar_light.py || true
+          python3 scripts/patch_chrome_darker.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/index.css
-          git commit -m "fix: light mode sidebar purple gradient" || true
+          git add src/index.css src/portal-lounge.css || true
+          git commit -m "style: slightly darker topbar and sidebar" || true
           git push || true
 
       - name: Wire announcement marquee
@@ -169,11 +170,12 @@ jobs:
           python3 scripts/patch_footer_flow.py || true
           python3 scripts/patch_community_glass_marquee.py || true
           python3 scripts/patch_community_contrast.py || true
+          python3 scripts/patch_chrome_darker.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css src/index.css src/lib/communityApi.ts || true
-          git commit -m "fix(community): readable bubbles; true glass side panels" || true
+          git commit -m "style: darker chrome; community glass/contrast" || true
           git push || true
 
       - name: Setup Node
