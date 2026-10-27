@@ -43,7 +43,7 @@ jobs:
           if ! grep -q PortalLiveChat src/components/CustomerPortal.tsx 2>/dev/null; then
             echo "Restoring full CustomerPortal..."
             curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/e973f0632f202e8dc0dabbbc65a8be25600c23f9/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx
-            sed -i 's/bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30/' src/components/CustomerPortal.tsx
+            sed -i 's/bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30/portal-sidebar flex-col relative z-30/' src/components/CustomerPortal.tsx
             python3 scripts/patch_cp.py || true
             grep -q PortalLiveChat src/components/CustomerPortal.tsx
             git config user.name "github-actions[bot]"
