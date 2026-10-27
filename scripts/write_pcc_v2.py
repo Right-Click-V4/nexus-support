@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
-parts = [Path(f"scripts/pcc_p{i}.txt").read_text() for i in range(8)]
-Path("src/components/PortalCommunityChat.tsx").write_text("".join(parts))
-print("written", Path("src/components/PortalCommunityChat.tsx").stat().st_size)
+import base64, zlib
+a = Path("scripts/pcc_z0.b64").read_text().strip()
+b = Path("scripts/pcc_z1.b64").read_text().strip()
+raw = zlib.decompress(base64.b64decode(a + b))
+Path("src/components/PortalCommunityChat.tsx").write_bytes(raw)
+print("written", len(raw))
