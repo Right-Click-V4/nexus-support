@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+"""Write enhanced Community chat (transparent + permanent info rail)."""
+from pathlib import Path
+import base64, zlib
+DATA = (
