@@ -172,11 +172,12 @@ jobs:
           python3 scripts/patch_community_contrast.py || true
           python3 scripts/patch_chrome_darker.py || true
           python3 scripts/patch_chrome_footer_v2.py || true
+          python3 scripts/patch_nav_signout.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css src/index.css src/lib/communityApi.ts || true
-          git commit -m "style: chrome outlines; sticky footer short tabs" || true
+          git commit -m "feat: stronger nav icons; Sign out in topbar; lighter overview" || true
           git push || true
 
       - name: Setup Node
