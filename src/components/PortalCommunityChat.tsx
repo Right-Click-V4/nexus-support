@@ -68,6 +68,10 @@ function saveStore(store: Store) {
       })),
     };
     localStorage.setItem(LS_KEY, JSON.stringify(trimmed));
+    try {
+      window.dispatchEvent(new CustomEvent('nexus-community-sync'));
+      new BroadcastChannel('nexus-community-store-v1').postMessage({ type: 'store', store: trimmed });
+    } catch {}
   } catch {}
 }
 
@@ -183,11 +187,10 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
     if (!active) return [];
     const q = query.trim().toLowerCase();
     if (!q) return active.messages;
-    return active.messages.filter(
-      (m) =>
-        m.text.toLowerCase().includes(q) ||
-        m.author_name.toLowerCase().includes(q)
-    );
+    return active.messages.filter((m) => {
+      const hay = [m.text || '', m.author_name || '', m.author_email || '', m.gif_url ? 'gif' : '', m.image_data ? 'photo image' : ''].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
   }, [active, query]);
 
   const pinned = useMemo(
@@ -302,9 +305,9 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
   };
 
   return (
-    <div className="portal-community-shell flex flex-1 min-h-0 h-full bg-white/95 dark:bg-zinc-950/80 rounded-xl border border-zinc-200/80 dark:border-white/10 shadow-sm overflow-hidden">
+    <div className="portal-community-shell flex flex-1 min-h-0 h-full rounded-xl border overflow-hidden bg-white/25 dark:bg-[#0c0a14]/55 border-white/20 dark:border-violet-500/20 backdrop-blur-md shadow-sm">
       {/* Group list */}
-      <aside className="w-56 shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col hidden sm:flex">
+      <aside className="w-56 shrink-0 border-r border-white/15 dark:border-white/10 bg-white/20 dark:bg-[#0a0812]/60 flex flex-col hidden sm:flex backdrop-blur-sm">
         <div className="px-3 py-3 border-b border-zinc-200 flex items-center justify-between gap-2">
           <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Groups</div>
           <button
@@ -359,7 +362,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
 
       {/* Main chat */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-zinc-100 bg-white">
+        <div className="flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/10 bg-white/25 dark:bg-[#161225]/70 backdrop-blur">
           {onBack && (
             <button type="button" onClick={onBack} className="md:hidden p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100">
               <ArrowLeft size={18} />
@@ -384,14 +387,6 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
             title={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? <BellOff size={18} /> : <Bell size={18} />}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowInfo((v) => !v)}
-            className={`p-2 rounded-lg hover:bg-zinc-100 ${showInfo ? 'text-violet-600 bg-violet-50' : 'text-zinc-500'}`}
-            title="Chat info"
-          >
-            <Info size={18} />
           </button>
         </div>
 
@@ -424,7 +419,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-zinc-50/40 dark:bg-[#0a0812]/50">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-transparent">
           {filteredMessages.length === 0 && (
             <div className="text-center py-12 px-4">
               <Users className="mx-auto text-zinc-300 mb-3" size={32} />
@@ -447,7 +442,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                   className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm relative shadow-sm ${
                     mine
                       ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white rounded-br-md'
-                      : 'bg-white dark:bg-[#1c1830] border border-zinc-200/80 dark:border-violet-500/15 text-zinc-800 dark:text-zinc-100 rounded-bl-md'
+                      : 'bg-white/70 dark:bg-[#1c1830]/95 border border-white/30 dark:border-violet-500/15 text-zinc-900 dark:text-zinc-100 rounded-bl-md backdrop-blur-sm'
                   }`}
                 >
                   {!mine && (
@@ -498,7 +493,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-zinc-200/80 dark:border-white/10 bg-white/90 dark:bg-[#14101f]/95">
+        <div className="border-t border-zinc-200/80 dark:border-white/10 bg-white/30 dark:bg-[#14101f]/80 backdrop-blur">
           {emojiOpen && (
             <div className="px-3 pt-2 flex flex-wrap gap-1 max-h-28 overflow-y-auto">
               {EMOJIS.map((e) => (
@@ -545,7 +540,7 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                 try { bcRef.current?.postMessage({ type: 'typing', groupId: activeId, peer: { name: displayName || email, email } }); } catch {}
               }}
               placeholder={isMuted ? 'Muted — you can still post' : 'Message the group…'}
-              className="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-violet-500/20 bg-zinc-50 dark:bg-[#0e0c18] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-violet-500/20 bg-white/55 dark:bg-[#0e0c18]/90 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
               maxLength={2000}
             />
             <button type="submit" disabled={!draft.trim()} className="px-3.5 py-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white hover:opacity-95 disabled:opacity-40 shrink-0" aria-label="Send">
@@ -555,9 +550,9 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
         </div>
       </div>
 
-      {/* Info panel */}
-      {showInfo && active && (
-        <aside className="w-72 shrink-0 border-l border-zinc-200 bg-zinc-950 text-zinc-100 flex flex-col overflow-y-auto">
+      {/* Info panel permanent-info-rail */}
+      {active && (
+        <aside className="w-72 shrink-0 border-l border-white/10 bg-[#0c0a16]/90 text-zinc-100 flex flex-col overflow-y-auto backdrop-blur-md">
           <div className="px-4 py-4 border-b border-zinc-800 flex items-start justify-between">
             <div className="min-w-0">
               <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-2">
@@ -568,9 +563,6 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
                 {active.members.length} members
               </div>
             </div>
-            <button type="button" onClick={() => setShowInfo(false)} className="p-1 text-zinc-500 hover:text-zinc-200">
-              <X size={16} />
-            </button>
           </div>
 
           <div className="px-3 py-3 space-y-1 border-b border-zinc-800">
