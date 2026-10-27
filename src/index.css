@@ -96,3 +96,37 @@ html.nexus-dark .app-cosmos aside.portal-sidebar {
 html.nexus-dark .portal-shell .nexus-topbar {
   background: rgba(8, 6, 22, 0.72) !important;
 }
+
+
+/* chrome-footer-v2 — outlines + sticky footer for short tabs */
+html.nexus-light .portal-sidebar,
+html.nexus-light .app-cosmos aside.portal-sidebar,
+html.nexus-light aside.portal-sidebar,
+.app-cosmos > aside.portal-sidebar {
+  border-right: 1px solid rgba(76, 29, 149, 0.55) !important;
+  box-shadow: 1px 0 0 rgba(91, 33, 182, 0.18);
+}
+html.nexus-light .nexus-topbar,
+html.nexus-light .portal-shell .nexus-topbar {
+  border-bottom: 1px solid rgba(76, 29, 149, 0.5) !important;
+  box-shadow: 0 1px 0 rgba(91, 33, 182, 0.15);
+}
+html.nexus-dark .portal-sidebar,
+html.nexus-dark .app-cosmos aside.portal-sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+html.nexus-dark .portal-shell .nexus-topbar,
+html.nexus-dark .nexus-topbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Short tabs: footer at bottom of main panel; long tabs: after content */
+.portal-shell main {
+  display: flex;
+  flex-direction: column;
+}
+.portal-shell main > div {
+  flex: 1 0 auto;
+}

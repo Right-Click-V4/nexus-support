@@ -52,7 +52,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
   );
 }
 
-/* footer-flow-v2 */ /* community-glass-v1 */
+/* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -326,10 +326,10 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
           {/* Community fills space under marquee (no underlap). Other tabs: natural flow + footer after content. */}
           <div
             className={`w-full mx-auto flex flex-col ${
-              view === 'community' ? 'max-w-6xl flex-1 min-h-0' : 'max-w-5xl'
+              view === 'community' ? 'max-w-6xl flex-1 min-h-0' : 'max-w-5xl min-h-full'
             }`}
           >
-            <div className={view === 'community' ? 'flex-1 min-h-0 flex flex-col' : 'pb-1'}>
+            <div className={view === 'community' ? 'flex-1 min-h-0 flex flex-col' : 'pb-1 flex-1'}>
             {view === 'home' && (
               <PortalHome displayName={displayName} onNavigate={(v) => setView(v)} />
             )}
@@ -492,7 +492,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             </div>
 
             <footer className={`portal-footer relative z-10 shrink-0 px-2 py-3.5 rounded-xl ${
-              view === 'community' ? 'mt-3 mb-1' : 'mt-8 mb-4'
+              view === 'community' ? 'mt-3 mb-1' : 'mt-auto mb-2 pt-6'
             }`}>
             <div className="text-center">
               <div className="text-[11px] sm:text-xs font-medium tracking-wide portal-footer-brand">
