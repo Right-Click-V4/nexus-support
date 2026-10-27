@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stronger nav icons, sidebar dividers, lighter Overview cards, Sign out in topbar."""
+"""Stronger nav icons, sidebar dividers, lighter Overview cards, Sign out in topbar (after theme toggle)."""
 from pathlib import Path
 import re
 
@@ -67,9 +67,25 @@ else:
     else:
         print("sidebar signout miss")
 
+# Theme toggle first, then Sign out
 old_tb = """          <ThemeToggle />
         </header>"""
-new_tb = """          {requiresAuth && (
+new_tb = """          <ThemeToggle />
+          {requiresAuth && (
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-violet-500/15 dark:hover:bg-white/10 border border-violet-700/25 dark:border-white/20 transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={15} strokeWidth={2.25} />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          )}
+        </header>"""
+if "title=\"Sign out\"" in c and "ThemeToggle" in c:
+    # already has sign out in topbar — ensure order via swap pattern
+    wrong = """          {requiresAuth && (
             <button
               type="button"
               onClick={() => void signOut()}
@@ -82,7 +98,17 @@ new_tb = """          {requiresAuth && (
           )}
           <ThemeToggle />
         </header>"""
-if old_tb in c:
+    if wrong in c:
+        c = c.replace(wrong, new_tb, 1)
+        print("topbar order fixed")
+    elif "<ThemeToggle />\n          {requiresAuth" in c:
+        print("topbar order already correct")
+    elif old_tb in c:
+        c = c.replace(old_tb, new_tb, 1)
+        print("topbar signout ok")
+    else:
+        print("topbar signout already present")
+elif old_tb in c:
     c = c.replace(old_tb, new_tb, 1)
     print("topbar signout ok")
 else:
