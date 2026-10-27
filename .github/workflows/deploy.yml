@@ -175,11 +175,12 @@ jobs:
           python3 scripts/patch_nav_signout.py || true
           python3 scripts/patch_swap_signout.py || true
           python3 scripts/patch_labels_titlecase.py || true
+          python3 scripts/patch_submit_form.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/components/Sidebar.tsx src/components/PortalHome.tsx src/portal-lounge.css src/index.css src/lib/communityApi.ts || true
-          git commit -m "feat: title-case nav; Submit Ticket rename" || true
+          git commit -m "feat: Submit Ticket form redesign" || true
           git push || true
 
       - name: Setup Node
