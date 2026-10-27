@@ -135,7 +135,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 }
 
 /* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
-/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */
+/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */ /* priority-required-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -146,7 +146,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const [branch, setBranch] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
+  const [priority, setPriority] = useState<Priority | ''>('');
   const [attachPreview, setAttachPreview] = useState<{ name: string; size: number; mime: string; url: string } | null>(null);
   const [attachError, setAttachError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -229,8 +229,8 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const accountEmail = (user?.email || email || '').trim();
-    if (!name.trim() || !title.trim() || !branch.trim()) {
-      setError('Name, branch, and subject are required');
+    if (!name.trim() || !title.trim() || !branch.trim() || !priority) {
+      setError('Name, branch, subject, and priority are required');
       return;
     }
     if (!accountEmail) {
@@ -243,7 +243,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
       const ticket = await createTicket({
         title: title.trim(),
         description: description.trim(),
-        priority,
+        priority: priority as Priority,
         channel: 'portal',
         customer_name: name.trim(),
         customer_email: accountEmail,
@@ -270,7 +270,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
       setView('success');
       setTitle('');
       setDescription('');
-      setPriority('medium');
+      setPriority('');
       setAttachPreview(null);
       setAttachError('');
     } catch (err: unknown) {
@@ -582,8 +582,16 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                       )}
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Priority</label>
-                      <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className={field}>
+                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Priority *</label>
+                      <select
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value as Priority | '')}
+                        required
+                        className={field}
+                      >
+                        <option value="" disabled>
+                          Select priority…
+                        </option>
                         {([
                           { value: 'low', label: 'Low' },
                           { value: 'medium', label: 'Medium' },
