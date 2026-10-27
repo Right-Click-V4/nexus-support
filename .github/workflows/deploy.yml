@@ -43,7 +43,7 @@ jobs:
           if ! grep -q PortalLiveChat src/components/CustomerPortal.tsx 2>/dev/null; then
             echo "Restoring full CustomerPortal..."
             curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/e973f0632f202e8dc0dabbbc65a8be25600c23f9/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx
-            sed -i 's/bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30/portal-sidebar flex-col relative z-30/' src/components/CustomerPortal.tsx
+            sed -i 's/bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30/' src/components/CustomerPortal.tsx
             python3 scripts/patch_cp.py || true
             grep -q PortalLiveChat src/components/CustomerPortal.tsx
             git config user.name "github-actions[bot]"
@@ -179,11 +179,12 @@ jobs:
           python3 scripts/patch_submit_layout.py || true
           python3 scripts/patch_branch_list.py || true
           python3 scripts/patch_submit_left_subject.py || true
+          python3 scripts/patch_submit_guide.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/components/Sidebar.tsx src/components/PortalHome.tsx src/portal-lounge.css src/index.css src/lib/communityApi.ts || true
-          git commit -m "feat: left Submit form; A-Z subjects with placeholder" || true
+          git commit -m "feat: Submit Ticket subject and priority guide" || true
           git push || true
 
       - name: Setup Node
