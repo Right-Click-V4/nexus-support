@@ -1,3 +1,4 @@
+// tickets-sync-v1
 import {
   createContext,
   useContext,
@@ -218,8 +219,33 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => refresh())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => refresh())
       .subscribe();
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        bc = new BroadcastChannel('nexus-tickets-sync');
+        bc.onmessage = () => {
+          void refresh();
+        };
+      }
+    } catch {
+      bc = null;
+    }
+    const onFocus = () => {
+      void refresh();
+    };
+    window.addEventListener('focus', onFocus);
+    const poll = window.setInterval(() => {
+      void refresh();
+    }, 12_000);
     return () => {
       supabase?.removeChannel(channel);
+      try {
+        bc?.close();
+      } catch {
+        /* ignore */
+      }
+      window.removeEventListener('focus', onFocus);
+      window.clearInterval(poll);
     };
   }, [refresh]);
 
@@ -309,7 +335,18 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         const { error: e2 } = await supabase.from('tickets').insert(payload);
         if (e2) throw e2;
       }
-      await refresh();
+      /* Optimistic: show in agent workspace immediately, then re-fetch */
+      setTickets((prev) => (prev.some((t) => t.id === ticket.id) ? prev : [ticket, ...prev]));
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('nexus-tickets-sync');
+          bc.postMessage({ type: 'ticket_created', id: ticket.id, at: Date.now() });
+          bc.close();
+        }
+      } catch {
+        /* ignore */
+      }
+      void refresh();
     } else {
       setTickets((prev) => [ticket, ...prev]);
     }

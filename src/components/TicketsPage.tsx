@@ -1,3 +1,4 @@
+/* tickets-table-v2 */
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, Download, Trash2, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
@@ -27,6 +28,7 @@ export default function TicketsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'portal' | 'email' | 'chat' | 'phone'>('all');
   const [slaFilter, setSlaFilter] = useState<'all' | 'breach' | 'warn'>('all');
   const [showTrash, setShowTrash] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -44,6 +46,7 @@ export default function TicketsPage() {
       if (showTrash ? !isDeleted : isDeleted) return false;
       if (statusFilter !== 'all' && t.status !== statusFilter) return false;
       if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
+      if (channelFilter !== 'all' && t.channel !== channelFilter) return false;
       if (slaFilter !== 'all') {
         const sla = formatSlaCountdown(t.sla_due_at, t.status);
         if (slaFilter === 'breach' && sla.tone !== 'breach') return false;
@@ -64,7 +67,7 @@ export default function TicketsPage() {
       }
       return true;
     });
-  }, [tickets, search, statusFilter, priorityFilter, slaFilter, showTrash]);
+  }, [tickets, search, statusFilter, priorityFilter, channelFilter, slaFilter, showTrash]);
 
   const selected = selectedId ? tickets.find((t) => t.id === selectedId) : null;
   const breachCount = tickets.filter(
@@ -154,6 +157,17 @@ export default function TicketsPage() {
           <option value="low">Low</option>
         </select>
         <select
+          value={channelFilter}
+          onChange={(e) => setChannelFilter(e.target.value as typeof channelFilter)}
+          className="text-sm px-3 py-2 border border-slate-200 rounded-lg bg-white"
+        >
+          <option value="all">All channels</option>
+          <option value="portal">Portal</option>
+          <option value="email">Email</option>
+          <option value="chat">Chat</option>
+          <option value="phone">Phone</option>
+        </select>
+        <select
           value={slaFilter}
           onChange={(e) => setSlaFilter(e.target.value as 'all' | 'breach' | 'warn')}
           className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white"
@@ -197,13 +211,14 @@ export default function TicketsPage() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr className="text-left text-slate-500">
                 <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">Subject</th>
                 <th className="px-4 py-3 font-medium">Customer</th>
                 <th className="px-4 py-3 font-medium">Branch</th>
                 <th className="px-4 py-3 font-medium">Priority</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">SLA</th>
                 <th className="px-4 py-3 font-medium">Channel</th>
+                <th className="px-4 py-3 font-medium">Submitted</th>
+                <th className="px-4 py-3 font-medium">SLA</th>
                 <th className="px-4 py-3 font-medium">Assignee</th>
                 <th className="px-4 py-3 font-medium w-20"></th>
               </tr>
@@ -215,15 +230,24 @@ export default function TicketsPage() {
                   <tr
                     key={t.id}
                     onClick={() => setSelectedId(t.id)}
-                    className="border-b border-slate-100 hover:bg-brand-50/50 cursor-pointer transition-colors"
+                    className={clsx(
+                      'border-b border-slate-100 hover:bg-brand-50/50 cursor-pointer transition-colors',
+                      t.status === 'new' && t.channel === 'portal' && 'bg-violet-50/80 ring-1 ring-inset ring-violet-200/60',
+                      t.status === 'new' && t.channel !== 'portal' && 'bg-brand-50/40'
+                    )}
                   >
                     <td className="px-4 py-3 font-mono text-xs text-slate-500">{t.id}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800 max-w-xs">
-                      <div className="truncate">{t.title}</div>
+                    <td className="px-4 py-3 font-medium text-slate-800 max-w-[240px]">
+                      <div className="truncate" title={t.title}>{t.title}</div>
+                      {t.description ? (
+                        <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal" title={t.description}>
+                          {t.description}
+                        </div>
+                      ) : null}
                       {(t.tags || []).length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {(t.tags || []).slice(0, 3).map((tag) => (
-                            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-normal">
                               {tag}
                             </span>
                           ))}
@@ -263,7 +287,23 @@ export default function TicketsPage() {
                         {sla.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 capitalize text-slate-600">{t.channel}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={clsx(
+                          'text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded',
+                          t.channel === 'portal' && 'bg-violet-100 text-violet-700',
+                          t.channel === 'email' && 'bg-sky-100 text-sky-700',
+                          t.channel === 'chat' && 'bg-fuchsia-100 text-fuchsia-700',
+                          t.channel === 'phone' && 'bg-amber-100 text-amber-800',
+                          !['portal', 'email', 'chat', 'phone'].includes(t.channel) && 'bg-slate-100 text-slate-600'
+                        )}
+                      >
+                        {t.channel}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap tabular-nums" title={new Date(t.created_at).toLocaleString()}>
+                      {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{t.assignee?.initials || t.assignee?.name || '—'}</td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       {showTrash ? (
