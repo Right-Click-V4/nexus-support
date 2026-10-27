@@ -24,6 +24,7 @@ interface SidebarProps {
   isAdmin?: boolean;
 }
 
+/* labels-titlecase-v1 */
 function BrandMark({ logoUrl, className = 'w-8 h-8' }: { logoUrl?: string; className?: string }) {
   if (logoUrl) {
     return (
@@ -143,7 +144,7 @@ export default function Sidebar({
           <div>
             <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Admin</div>
             <div className="space-y-0.5">
-              {renderNav([{ id: 'admin-features', label: 'Admin features', icon: Shield }])}
+              {renderNav([{ id: 'admin-features', label: 'Admin Features', icon: Shield }])}
             </div>
           </div>
         )}

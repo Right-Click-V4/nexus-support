@@ -44,7 +44,7 @@ const PROCESS = [
   {
     step: '1',
     title: 'Describe the issue',
-    body: 'Open Submit request. Include your branch, a clear subject, and what you already tried.',
+    body: 'Open Submit Ticket. Include your branch, a clear subject, and what you already tried.',
     icon: ClipboardList,
   },
   {
@@ -56,13 +56,13 @@ const PROCESS = [
   {
     step: '3',
     title: 'Track progress',
-    body: 'Use Track ticket or My tickets anytime to see status linked to your email.',
+    body: 'Use Track Ticket or My Tickets anytime to see status linked to your email.',
     icon: Search,
   },
   {
     step: '4',
     title: 'Need it faster?',
-    body: 'Urgent account issues → Live chat. Shared tips → Community first.',
+    body: 'Urgent account issues → Live Chat. Shared tips → Community first.',
     icon: MessageSquare,
   },
 ];
@@ -286,7 +286,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
             <p>
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">Contact support</span>
               {' — '}
-              Submit request or Live chat for account-specific or urgent issues.
+              Submit Ticket or Live Chat for account-specific or urgent issues.
             </p>
             <p>
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">Community</span>

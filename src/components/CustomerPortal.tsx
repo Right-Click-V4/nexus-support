@@ -30,13 +30,13 @@ const BRANCH_OPTIONS = INITIAL_BRANCHES.map((b) => b.name);
 
 const VIEW_META: Record<PortalView, { title: string; desc: string; iconColor: string }> = {
   home: { title: 'Overview', desc: 'How this portal works and how to get support.', iconColor: 'text-violet-700 dark:text-violet-300' },
-  submit: { title: 'Submit a request', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-600 dark:text-amber-400' },
-  track: { title: 'Track a ticket', desc: 'Look up status updates by ticket ID and email.', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+  submit: { title: 'Submit Ticket', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-600 dark:text-amber-400' },
+  track: { title: 'Track a Ticket', desc: 'Look up status updates by ticket ID and email.', iconColor: 'text-emerald-600 dark:text-emerald-400' },
   success: { title: 'Request received', desc: 'Your ticket was created successfully.', iconColor: 'text-violet-700 dark:text-violet-300' },
-  help: { title: 'Help articles', desc: 'Guides and FAQs you can use without waiting on an agent.', iconColor: 'text-indigo-700 dark:text-indigo-300' },
-  chat: { title: 'Live chat', desc: 'Talk to a support agent in real time.', iconColor: 'text-fuchsia-600 dark:text-fuchsia-400' },
+  help: { title: 'Help Articles', desc: 'Guides and FAQs you can use without waiting on an agent.', iconColor: 'text-indigo-700 dark:text-indigo-300' },
+  chat: { title: 'Live Chat', desc: 'Talk to a support agent in real time.', iconColor: 'text-fuchsia-600 dark:text-fuchsia-400' },
   account: { title: 'Account', desc: 'Profile details and sign-in information.', iconColor: 'text-pink-600 dark:text-pink-400' },
-  mytickets: { title: 'My tickets', desc: 'Review tickets you have opened with support.', iconColor: 'text-blue-600 dark:text-blue-400' },
+  mytickets: { title: 'My Tickets', desc: 'Review tickets you have opened with support.', iconColor: 'text-blue-600 dark:text-blue-400' },
   community: { title: 'Community', desc: 'Chat with other customers about tips and workarounds.', iconColor: 'text-sky-600 dark:text-sky-400' },
 };
 
@@ -53,6 +53,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 }
 
 /* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
+/* labels-titlecase-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -212,11 +213,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const navItems: { id: PortalView; label: string; icon: typeof Home }[] = [
     { id: 'home', label: 'Overview', icon: Home },
     { id: 'community', label: 'Community', icon: Users },
-    { id: 'submit', label: 'Submit request', icon: Ticket },
-    { id: 'chat', label: 'Live chat', icon: MessageSquare },
-    { id: 'track', label: 'Track ticket', icon: Search },
-    { id: 'mytickets', label: 'My tickets', icon: User },
-    { id: 'help', label: 'Help articles', icon: BookOpen },
+    { id: 'submit', label: 'Submit Ticket', icon: Ticket },
+    { id: 'chat', label: 'Live Chat', icon: MessageSquare },
+    { id: 'track', label: 'Track Ticket', icon: Search },
+    { id: 'mytickets', label: 'My Tickets', icon: User },
+    { id: 'help', label: 'Help Articles', icon: BookOpen },
     { id: 'account', label: 'Account', icon: User },
   ];
 
@@ -346,7 +347,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             {view === 'submit' && (
               <div className="max-w-lg">
                 <div className="mb-3">
-                  <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">Submit a request</h1>
+                  <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">Submit Ticket</h1>
                   <p className="text-zinc-500 text-sm mt-1">We typically respond within one business day.</p>
                 </div>
                 <form onSubmit={submit} className="portal-glass-card rounded-xl p-4 sm:p-5 space-y-3">
@@ -382,7 +383,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                       {(['low', 'medium', 'high', 'critical'] as Priority[]).map((p) => <option key={p} value={p}>{p}</option>)}
                     </select>
                   </div>
-                  <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Submitting…' : 'Submit request'}</button>
+                  <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Submitting…' : 'Submit Ticket'}</button>
                 </form>
               </div>
             )}
@@ -392,7 +393,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 <h1 className="text-xl font-semibold text-zinc-900">Request received</h1>
                 <p className="text-zinc-500 text-sm">Your ticket ID is <span className="font-mono font-semibold text-violet-700">{created.id}</span>.</p>
                 <div className="flex gap-2 justify-center">
-                  <button type="button" onClick={() => { setTrackId(created.id); setView('track'); }} className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700">Track ticket</button>
+                  <button type="button" onClick={() => { setTrackId(created.id); setView('track'); }} className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700">Track Ticket</button>
                   <button type="button" onClick={() => setView('home')} className="px-4 py-2 border border-zinc-200 text-sm rounded-lg bg-white/80 hover:bg-white">Overview</button>
                 </div>
               </div>
@@ -444,7 +445,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'mytickets' && (
               <div className="max-w-2xl">
-                <h1 className="text-xl font-semibold text-zinc-900 mb-3">My tickets</h1>
+                <h1 className="text-xl font-semibold text-zinc-900 mb-3">My Tickets</h1>
                 {myTickets.length === 0 ? (
                   <div className="rounded-xl border border-zinc-200 bg-white/80 px-4 py-3 text-sm text-zinc-500">No tickets linked to {user?.email} yet.</div>
                 ) : (
@@ -465,7 +466,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'help' && (
               <div className="max-w-2xl">
-                <h1 className="text-xl font-semibold text-zinc-900 mb-3">Help articles</h1>
+                <h1 className="text-xl font-semibold text-zinc-900 mb-3">Help Articles</h1>
                 <div className="space-y-2">
                   {HELP_ARTICLES.map((a) => (
                     <div key={a.title} className="rounded-xl border border-zinc-200 bg-white/80 px-4 py-3">
