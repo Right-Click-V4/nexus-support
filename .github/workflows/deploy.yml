@@ -163,11 +163,12 @@ jobs:
           fi
           python3 scripts/patch_community_ux.py || true
           python3 scripts/patch_community_panel.py || true
+          python3 scripts/patch_community_cloud_min.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css || true
-          git commit -m "feat(community): transparent panel, permanent info rail, live members" || true
+          git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css src/lib/communityApi.ts || true
+          git commit -m "feat(community): Supabase realtime members + messages" || true
           git push || true
 
       - name: Setup Node
