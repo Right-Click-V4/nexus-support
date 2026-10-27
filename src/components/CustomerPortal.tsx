@@ -135,7 +135,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 }
 
 /* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
-/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */
+/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -477,7 +477,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   <div className="lg:col-span-5 space-y-4">
                   <form
                     onSubmit={submit}
-                    className="portal-overview-glass rounded-2xl p-4 sm:p-5 space-y-3.5 relative z-20"
+                    className="portal-overview-glass portal-submit-form-glow rounded-2xl p-4 sm:p-5 space-y-3.5 relative z-20"
                   >
                     {error && (
                       <div className="text-sm text-rose-600 bg-rose-50/80 dark:bg-rose-950/40 dark:text-rose-300 px-3 py-2 rounded-lg">
