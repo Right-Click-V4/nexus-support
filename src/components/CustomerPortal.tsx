@@ -308,6 +308,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Support online
           </div>
+          <ThemeToggle />
           {requiresAuth && (
             <button
               type="button"
@@ -319,7 +320,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
               <span className="hidden sm:inline">Sign out</span>
             </button>
           )}
-          <ThemeToggle />
         </header>
 
         <PortalAnnouncementMarquee />
