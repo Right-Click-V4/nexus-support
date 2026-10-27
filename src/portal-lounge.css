@@ -105,7 +105,7 @@ html.nexus-dark .portal-cosmic-veil {
 
 /* Theme-aware glass sidebar — light = purple gradient like top bar */
 .portal-sidebar {
-  background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
+  background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
   backdrop-filter: blur(18px) saturate(1.15);
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
   border-right: 1px solid rgba(167, 139, 250, 0.4);
@@ -113,18 +113,18 @@ html.nexus-dark .portal-cosmic-veil {
   transition: background 0.85s ease, border-color 0.85s ease, color 0.85s ease;
 }
 html.nexus-dark .portal-sidebar {
-  background: rgba(12, 8, 28, 0.78) !important;
+  background: rgba(8, 5, 20, 0.88) !important;
   border-right-color: rgba(63, 63, 70, 0.45);
   color: #f4f4f5;
 }
 html.nexus-light .app-cosmos > aside.portal-sidebar,
 .app-cosmos > aside.portal-sidebar {
-  background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
+  background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
   border-right: 1px solid rgba(167, 139, 250, 0.4) !important;
   color: #0f0a1e !important;
 }
 html.nexus-dark .app-cosmos > aside.portal-sidebar {
-  background: rgba(12, 8, 28, 0.78) !important;
+  background: rgba(8, 5, 20, 0.88) !important;
   border-right-color: rgba(63, 63, 70, 0.45) !important;
   color: #f4f4f5 !important;
 }
@@ -204,18 +204,18 @@ html.nexus-dark .portal-sidebar-footer .portal-nav-item { color: #a1a1aa; }
 .portal-shell .nexus-topbar {
   flex-shrink: 0;
   position: relative; z-index: 20;
-  background: linear-gradient(105deg, rgba(237, 233, 254, 0.92) 0%, rgba(221, 214, 254, 0.88) 45%, rgba(233, 213, 255, 0.9) 100%);
+  background: linear-gradient(105deg, rgba(196, 181, 253, 0.94) 0%, rgba(167, 139, 250, 0.90) 40%, rgba(221, 214, 254, 0.92) 100%);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(167, 139, 250, 0.35);
   transition: background 0.9s ease, border-color 0.9s ease;
 }
 html.nexus-dark .portal-shell .nexus-topbar {
-  background: rgba(12, 10, 28, 0.55);
+  background: rgba(8, 6, 22, 0.72);
   border-bottom-color: rgba(63, 63, 70, 0.35);
 }
 html.nexus-light .nexus-topbar,
 html.nexus-light .portal-shell .nexus-topbar {
-  background: linear-gradient(105deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.9) 40%, rgba(245, 243, 255, 0.92) 100%) !important;
+  background: linear-gradient(105deg, rgba(196, 181, 253, 0.94) 0%, rgba(167, 139, 250, 0.90) 40%, rgba(221, 214, 254, 0.92) 100%) !important;
   border-bottom: 1px solid rgba(167, 139, 250, 0.35) !important;
   color: #1e1b4b !important;
   backdrop-filter: blur(14px) !important;
@@ -274,7 +274,7 @@ html.nexus-dark .portal-home-hero {
 /* Beat index.css "sidebar stays dark" rule for light mode */
 html.nexus-light .app-cosmos aside.portal-sidebar,
 html.nexus-light aside.portal-sidebar {
-  background: linear-gradient(180deg, rgba(237, 233, 254, 0.95) 0%, rgba(221, 214, 254, 0.92) 50%, rgba(245, 243, 255, 0.94) 100%) !important;
+  background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
   border-color: rgba(167, 139, 250, 0.4) !important;
   border-right: 1px solid rgba(167, 139, 250, 0.4) !important;
   color: #0f0a1e !important;
@@ -654,4 +654,24 @@ html.nexus-dark .portal-community-shell .community-msg-other {
 html.nexus-dark .portal-community-shell .community-msg-other .text-violet-300,
 html.nexus-dark .portal-community-shell .community-msg-other .dark\:text-violet-300 {
   color: #c4b5fd !important;
+}
+
+
+/* chrome-darker-v1 */
+html.nexus-light .portal-sidebar,
+html.nexus-light .app-cosmos aside.portal-sidebar,
+html.nexus-light aside.portal-sidebar,
+.app-cosmos > aside.portal-sidebar {
+  background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
+}
+html.nexus-light .nexus-topbar,
+html.nexus-light .portal-shell .nexus-topbar {
+  background: linear-gradient(105deg, rgba(196, 181, 253, 0.94) 0%, rgba(167, 139, 250, 0.90) 40%, rgba(221, 214, 254, 0.92) 100%) !important;
+}
+html.nexus-dark .portal-sidebar,
+html.nexus-dark .app-cosmos aside.portal-sidebar {
+  background: rgba(8, 5, 20, 0.88) !important;
+}
+html.nexus-dark .portal-shell .nexus-topbar {
+  background: rgba(8, 6, 22, 0.72) !important;
 }

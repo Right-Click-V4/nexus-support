@@ -76,3 +76,23 @@ html.nexus-dark .portal-community-shell .community-msg-other .text-violet-300,
 html.nexus-dark .portal-community-shell .community-msg-other .dark\:text-violet-300 {
   color: #c4b5fd !important;
 }
+
+
+/* chrome-darker-v1 */
+html.nexus-light .portal-sidebar,
+html.nexus-light .app-cosmos aside.portal-sidebar,
+html.nexus-light aside.portal-sidebar,
+.app-cosmos > aside.portal-sidebar {
+  background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
+}
+html.nexus-light .nexus-topbar,
+html.nexus-light .portal-shell .nexus-topbar {
+  background: linear-gradient(105deg, rgba(196, 181, 253, 0.94) 0%, rgba(167, 139, 250, 0.90) 40%, rgba(221, 214, 254, 0.92) 100%) !important;
+}
+html.nexus-dark .portal-sidebar,
+html.nexus-dark .app-cosmos aside.portal-sidebar {
+  background: rgba(8, 5, 20, 0.88) !important;
+}
+html.nexus-dark .portal-shell .nexus-topbar {
+  background: rgba(8, 6, 22, 0.72) !important;
+}
