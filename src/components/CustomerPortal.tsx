@@ -323,11 +323,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
           }`}
         >
           <div
-            className={`w-full mx-auto flex flex-col flex-1 min-h-0 ${
+            className={`w-full mx-auto flex flex-col flex-1 min-h-0 gap-5 ${
               view === 'community' ? 'max-w-6xl' : 'max-w-5xl min-h-full'
             }`}
           >
-            <div className={`flex-1 min-h-0 ${view === 'community' ? 'flex flex-col' : ''}`}>
+            <div className={`flex-1 min-h-0 ${view === 'community' ? 'flex flex-col' : 'pb-2'}`}>
             {view === 'home' && (
               <PortalHome displayName={displayName} onNavigate={(v) => setView(v)} />
             )}
@@ -489,7 +489,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             </div>
 
-            <footer className="portal-footer relative z-10 mt-auto shrink-0 mb-1 px-2 py-3.5 rounded-xl">
+            <footer className="portal-footer relative z-10 mt-6 shrink-0 mb-3 px-2 py-4 rounded-xl">
             <div className="text-center">
               <div className="text-[11px] sm:text-xs font-medium tracking-wide portal-footer-brand">
                 NexusOps Customer Portal · © 2026 Lizer &amp; Kirzhian

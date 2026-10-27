@@ -380,16 +380,8 @@ export default function PortalCommunityChat({ displayName, email, onBack }: Prop
     <div className="portal-community-shell flex flex-1 min-h-0 h-full rounded-xl border overflow-hidden bg-white/25 dark:bg-[#0c0a14]/55 border-white/20 dark:border-violet-500/20 backdrop-blur-md shadow-sm">
       {/* Group list */}
       <aside className="w-56 shrink-0 border-r border-white/15 dark:border-white/10 bg-white/20 dark:bg-[#0a0812]/60 flex flex-col hidden sm:flex backdrop-blur-sm">
-        <div className="px-3 py-3 border-b border-zinc-200 flex items-center justify-between gap-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Groups</div>
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className="p-1.5 rounded-lg text-violet-600 hover:bg-violet-50"
-            title="Create group"
-          >
-            <Plus size={16} />
-          </button>
+        <div className="px-3 py-3 border-b border-zinc-200 dark:border-white/10">
+          <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Groups</div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {groups.map((g) => {

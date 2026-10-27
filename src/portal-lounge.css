@@ -301,6 +301,11 @@ html.nexus-light .app-cosmos aside .text-zinc-600 {
 
 /* Portal footer — transparent glass, picks up background */
 .portal-footer {
+  /* portal-footer-clearance */
+  margin-top: 1.5rem;
+  position: relative;
+  clear: both;
+
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(16px) saturate(1.1);
