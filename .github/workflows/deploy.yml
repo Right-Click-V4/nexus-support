@@ -22,20 +22,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
 
-      - name: Fix portal layout (community + footer)
-        run: |
-          set -e
-          if ! grep -q "DEFAULT_GROUP_ID" src/components/PortalCommunityChat.tsx 2>/dev/null; then
-            echo "Restoring PortalCommunityChat..."
-            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/a3f7b260cd8c6e3200bbe03b10c1524df894badc/src/components/PortalCommunityChat.tsx" -o src/components/PortalCommunityChat.tsx
-          fi
-          python3 scripts/patch_portal_layout.py || true
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css || true
-          git commit -m "fix(portal): community under marquee; footer at bottom of panel" || true
-          git push || true
-
       - name: Boot UI (loader + post-login ceremony)
         run: |
           set -e
@@ -166,6 +152,20 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/context/PlatformContext.tsx src/components/PortalHome.tsx src/components/AnnouncementsPage.tsx src/components/CustomerPortal.tsx || true
           git commit -m "feat: Supabase realtime + poll for announcements across browsers" || true
+          git push || true
+
+      - name: Fix portal layout (community + footer)
+        run: |
+          set -e
+          if ! grep -q "DEFAULT_GROUP_ID" src/components/PortalCommunityChat.tsx 2>/dev/null; then
+            echo "Restoring PortalCommunityChat..."
+            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/a3f7b260cd8c6e3200bbe03b10c1524df894badc/src/components/PortalCommunityChat.tsx" -o src/components/PortalCommunityChat.tsx
+          fi
+          python3 scripts/patch_portal_layout.py || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/portal-lounge.css || true
+          git commit -m "fix(portal): community under marquee; footer at bottom of panel" || true
           git push || true
 
       - name: Setup Node
