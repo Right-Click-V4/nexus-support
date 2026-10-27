@@ -27,7 +27,25 @@ const HELP_ARTICLES = [
   { title: 'API rate limits', body: 'Free plans allow 60 requests/minute. Pro plans allow 600.' },
 ];
 
-const BRANCH_OPTIONS = INITIAL_BRANCHES.map((b) => b.name);
+/** Fixed portal branch list (alphabetical) */
+const BRANCH_OPTIONS = [
+  'Abucay',
+  'Abuyog',
+  'Avenida',
+  'Baybay',
+  'Burauen',
+  'Calbayog',
+  'Carigara',
+  'Catarman',
+  'Catbalogan',
+  'Kananga',
+  'Maasin',
+  'Ormoc',
+  'Palo-Naga',
+  'Palo-Pawing',
+  'Palo-Schisto',
+  'Sogod',
+] as const;
 
 /** Editable later — common ticket subjects for the portal form */
 const SUBJECT_OPTIONS = [
@@ -82,7 +100,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 }
 
 /* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
-/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */
+/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -171,15 +189,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   }, []);
 
 
-  const branchOptions = useMemo(() => {
-    const set = new Set(BRANCH_OPTIONS);
-    tickets.forEach((t) => { if (t.branch) set.add(t.branch); });
-    try {
-      const raw = localStorage.getItem('nexus-branches-v1');
-      if (raw) (JSON.parse(raw) as { name: string }[]).forEach((b) => set.add(b.name));
-    } catch {}
-    return Array.from(set).sort();
-  }, [tickets]);
+  const branchOptions = useMemo(() => [...BRANCH_OPTIONS], []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -432,8 +442,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   <div>
                     <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Branch *</label>
                     <select value={branch} onChange={(e) => setBranch(e.target.value)} required className={field}>
-                      <option value="">Select branch…</option>
-                      {branchOptions.map((b) => <option key={b} value={b}>{b}</option>)}
+                      <option value="" disabled>
+                        Select branch…
+                      </option>
+                      {branchOptions.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
