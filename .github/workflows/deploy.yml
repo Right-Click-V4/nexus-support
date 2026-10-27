@@ -160,7 +160,7 @@ jobs:
           set -e
           if ! grep -q "DEFAULT_GROUP_ID" src/components/PortalCommunityChat.tsx 2>/dev/null; then
             echo "Restoring PortalCommunityChat..."
-            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/a3f7b260cd8c6e3200bbe03b10c1524df894badc/src/components/PortalCommunityChat.tsx
+            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/a3f7b260cd8c6e3200bbe03b10c1524df894badc/src/components/PortalCommunityChat.tsx" -o src/components/PortalCommunityChat.tsx
           fi
           python3 scripts/patch_community_ux.py || true
           python3 scripts/patch_community_panel.py || true
