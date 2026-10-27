@@ -1,4 +1,5 @@
 // tickets-sync-v1
+// tickets-noflicker-v1
 import {
   createContext,
   useContext,
@@ -65,7 +66,7 @@ interface TicketContextValue {
   findTicket: (id: string, email?: string) => Ticket | undefined;
   ticketsForEmail: (email: string) => Ticket[];
   setAgentAdmin: (agentId: string, is_admin: boolean) => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: (opts?: { silent?: boolean }) => Promise<void>;
 }
 
 const TicketContext = createContext<TicketContextValue | null>(null);
@@ -133,12 +134,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const usingSupabase = isSupabaseConfigured;
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
     if (!isSupabaseConfigured || !supabase) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    const silent = opts?.silent === true;
+    /* Only show full-page loading on the first load — never flash the table away on poll/focus/realtime */
+    if (!silent) setLoading(true);
     try {
       const [tRes, aRes, cRes] = await Promise.all([
         supabase.from('tickets').select('*').order('created_at', { ascending: false }),
@@ -213,30 +216,31 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return;
+    const soft = () => {
+      void refresh({ silent: true });
+    };
     const channel = supabase
       .channel('nexus-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => refresh())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => refresh())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, soft)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, soft)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, soft)
       .subscribe();
     let bc: BroadcastChannel | null = null;
     try {
       if (typeof BroadcastChannel !== 'undefined') {
         bc = new BroadcastChannel('nexus-tickets-sync');
-        bc.onmessage = () => {
-          void refresh();
-        };
+        bc.onmessage = () => soft();
       }
     } catch {
       bc = null;
     }
+    let focusTimer: number | undefined;
     const onFocus = () => {
-      void refresh();
+      window.clearTimeout(focusTimer);
+      focusTimer = window.setTimeout(() => soft(), 400);
     };
     window.addEventListener('focus', onFocus);
-    const poll = window.setInterval(() => {
-      void refresh();
-    }, 12_000);
+    const poll = window.setInterval(soft, 30_000);
     return () => {
       supabase?.removeChannel(channel);
       try {
@@ -245,6 +249,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         /* ignore */
       }
       window.removeEventListener('focus', onFocus);
+      window.clearTimeout(focusTimer);
       window.clearInterval(poll);
     };
   }, [refresh]);
@@ -346,7 +351,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       } catch {
         /* ignore */
       }
-      void refresh();
+      void refresh({ silent: true });
     } else {
       setTickets((prev) => [ticket, ...prev]);
     }
