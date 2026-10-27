@@ -59,7 +59,7 @@ const SUBJECT_OPTIONS = [
 
 const VIEW_META: Record<PortalView, { title: string; desc: string; iconColor: string }> = {
   home: { title: 'Overview', desc: 'How this portal works and how to get support.', iconColor: 'text-violet-700 dark:text-violet-300' },
-  submit: { title: 'Submit Ticket', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-600 dark:text-amber-400' },
+  submit: { title: 'Submit a Ticket', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-600 dark:text-amber-400' },
   track: { title: 'Track a Ticket', desc: 'Look up status updates by ticket ID and email.', iconColor: 'text-emerald-600 dark:text-emerald-400' },
   success: { title: 'Request received', desc: 'Your ticket was created successfully.', iconColor: 'text-violet-700 dark:text-violet-300' },
   help: { title: 'Help Articles', desc: 'Guides and FAQs you can use without waiting on an agent.', iconColor: 'text-indigo-700 dark:text-indigo-300' },
@@ -82,7 +82,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 }
 
 /* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
-/* labels-titlecase-v1 */ /* submit-form-v1 */
+/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -115,11 +115,15 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   useEffect(() => {
-    if (!isCustomerSession || !user) return;
-    const display = (user.user_metadata?.full_name as string) || '';
-    if (display) setName((n) => n || display);
-    if (user.email) setEmail((e) => e || user.email || '');
-  }, [isCustomerSession, user]);
+    if (!user) return;
+    // Locked identity — always mirror the registered account name (prevents shared-account spoofing)
+    const display =
+      (user.user_metadata?.full_name as string)?.trim() ||
+      user.email?.split('@')[0] ||
+      'Customer';
+    setName(display);
+    if (user.email) setEmail(user.email);
+  }, [user]);
 
 
   // Hard-reload this portal tab when Admin publishes/deletes an announcement
@@ -275,7 +279,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const navItems: { id: PortalView; label: string; icon: typeof Home }[] = [
     { id: 'home', label: 'Overview', icon: Home },
     { id: 'community', label: 'Community', icon: Users },
-    { id: 'submit', label: 'Submit Ticket', icon: Ticket },
+    { id: 'submit', label: 'Submit a Ticket', icon: Ticket },
     { id: 'chat', label: 'Live Chat', icon: MessageSquare },
     { id: 'track', label: 'Track Ticket', icon: Search },
     { id: 'mytickets', label: 'My Tickets', icon: User },
@@ -407,16 +411,23 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'chat' && <PortalLiveChat onBack={() => setView('home')} />}
             {view === 'submit' && (
-              <div className="max-w-lg">
-                <div className="mb-3">
-                  <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">Submit Ticket</h1>
-                  <p className="text-zinc-500 text-sm mt-1">We typically respond within one business day.</p>
+              <div className="w-full max-w-lg mr-auto">
+                <div className="mb-4">
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Submit a Ticket</h1>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm sm:text-base mt-1.5">We typically respond within one business day.</p>
                 </div>
                 <form onSubmit={submit} className="portal-glass-card rounded-xl p-4 sm:p-5 space-y-3.5">
                   {error && <div className="text-sm text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-300 px-3 py-2 rounded-lg">{error}</div>}
                   <div>
-                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Your name *</label>
-                    <input value={name} onChange={(e) => setName(e.target.value)} required className={field} />
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Your name</label>
+                    <input
+                      value={name}
+                      readOnly
+                      required
+                      className={`${field} opacity-90 cursor-not-allowed bg-zinc-100/80 dark:bg-white/5`}
+                      title="Filled from your account — cannot be changed"
+                    />
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Locked to your registered account name.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Branch *</label>
@@ -511,7 +522,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                       ))}
                     </select>
                   </div>
-                  <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Submitting…' : 'Submit Ticket'}</button>
+                  <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Submitting…' : 'Submit a Ticket'}</button>
                 </form>
               </div>
             )}
