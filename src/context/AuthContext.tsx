@@ -136,15 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setLoading(false);
     };
 
-    const tabCtl = startTabSession({
-      onLastTabClose: () => {
-        try {
-          void supabase.auth.signOut({ scope: 'local' });
-        } catch {
-          /* ignore */
-        }
-      },
-    });
+    // Tab session: keep auth across refresh; clear only on new browser session (see boot)
+    const tabCtl = startTabSession();
 
     const boot = async () => {
       // New browser window/session (all prior tabs closed) → force login
@@ -267,8 +260,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.removeItem('nexus-live-tabs-v1');
       localStorage.removeItem('nexus-live-tabs-v2');
+      localStorage.removeItem('nexus-live-tabs-v3');
       localStorage.removeItem('nexus-last-tab-close-v1');
       sessionStorage.removeItem('nexus-auth-live-v2');
+      sessionStorage.removeItem('nexus-auth-live-v3');
     } catch {
       /* ignore */
     }
