@@ -1,3 +1,4 @@
+/* menu-page20-v1 */
 /* action-unify-v1 */
 /* status-colors-space-v1 */
 /* mytickets-menu-guide-v1 */
@@ -7,7 +8,7 @@
 /* mytickets-guide-v1 */
 /* mytickets-table-v1 */
 /* closed-sla-v1 */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, CheckCircle2, Ticket, BookOpen, ArrowLeft, MessageSquare,
   LogOut, User, Star, Home, ExternalLink, Users, ImagePlus, X,
@@ -159,6 +160,16 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const [myTicketsDateFrom, setMyTicketsDateFrom] = useState('');
   const [myTicketsDateTo, setMyTicketsDateTo] = useState('');
   const [myTicketMenuId, setMyTicketMenuId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!myTicketMenuId) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest && t.closest('[data-myticket-menu]')) return;
+      setMyTicketMenuId(null);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [myTicketMenuId]);
   const [followUpTicket, setFollowUpTicket] = useState<TicketType | null>(null);
   const [followUpText, setFollowUpText] = useState('');
   const [followUpBusy, setFollowUpBusy] = useState(false);
@@ -881,7 +892,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
               </div>
             )}
             {view === 'mytickets' && (() => {
-              const PAGE_SIZE = 8;
+              const PAGE_SIZE = 20;
               const filtered = myTickets.filter((t) => {
                 if (myTicketsDateFrom) {
                   const from = new Date(myTicketsDateFrom);
@@ -982,7 +993,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                               <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                                 {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </td>
-                              <td className="px-4 py-3 text-right relative">
+                              <td className="px-4 py-3 text-right relative" data-myticket-menu>
                                 <button
                                   type="button"
                                   className="inline-flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-500/10"
@@ -995,7 +1006,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                   <MoreVertical size={16} />
                                 </button>
                                 {myTicketMenuId === t.id && (
-                                  <div className="portal-mytickets-action-menu absolute right-full top-1/2 -translate-y-1/2 mr-1 z-[100] w-44 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xl py-1 text-left">
+                                  <div className="portal-mytickets-action-menu absolute right-0 top-full mt-1 z-[100] w-40 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xl py-1 text-left">
                                     <button
                                       type="button"
                                       className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
