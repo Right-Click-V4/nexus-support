@@ -8,8 +8,8 @@ import {
 } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
-import type {
 import { notifyCustomer } from '../lib/agentNotify';
+import type {
   KnowledgeArticle,
   ChatConversation,
   ChatMessage,
