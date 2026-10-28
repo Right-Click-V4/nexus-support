@@ -1,3 +1,4 @@
+/* fix-platform-import-v1 */
 import {
   createContext,
   useContext,
