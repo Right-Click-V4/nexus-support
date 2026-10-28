@@ -1,3 +1,4 @@
+/* res-view-msg-v1 */
 /* resolution-plan-v1 */
 /* closed-sla-v1 */
 /* ticket-save-ui-v1 */
@@ -29,13 +30,28 @@ const RESOLUTION_PLANS = [
 ] as const;
 
 function planFromTags(tags?: string[] | null): string {
-  const hit = (tags || []).find((t) => t.startsWith('plan:'));
-  return hit ? hit.slice(5) : '';
+  const hit = (tags || []).find((t) => t.startsWith('plan:') && !t.startsWith('plan_note:'));
+  if (!hit) return '';
+  const v = hit.slice(5);
+  return v.startsWith('Other') ? 'Other' : v;
 }
 
-function tagsWithPlan(tags: string[] | undefined, plan: string): string[] {
-  const base = (tags || []).filter((t) => !t.startsWith('plan:'));
-  if (plan.trim()) base.push(`plan:${plan.trim()}`);
+function planNoteFromTags(tags?: string[] | null): string {
+  const note = (tags || []).find((t) => t.startsWith('plan_note:'));
+  if (note) return note.slice(10);
+  const hit = (tags || []).find((t) => t.startsWith('plan:Other|'));
+  return hit ? hit.slice('plan:Other|'.length) : '';
+}
+
+function tagsWithPlan(tags: string[] | undefined, plan: string, otherNote = ''): string[] {
+  const base = (tags || []).filter((t) => !t.startsWith('plan:') && !t.startsWith('plan_note:'));
+  if (!plan.trim()) return base;
+  if (plan === 'Other') {
+    base.push('plan:Other');
+    if (otherNote.trim()) base.push(`plan_note:${otherNote.trim()}`);
+  } else {
+    base.push(`plan:${plan.trim()}`);
+  }
   return base;
 }
 import { uploadAttachment } from '../lib/storage';
@@ -52,6 +68,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   const [priority, setPriority] = useState<Priority>(ticket.priority);
   const [assigneeId, setAssigneeId] = useState(ticket.assignee_id || '');
   const [resolutionPlan, setResolutionPlan] = useState(() => planFromTags(ticket.tags));
+  const [resolutionOther, setResolutionOther] = useState(() => planNoteFromTags(ticket.tags));
   const [branch, setBranch] = useState(ticket.branch || '');
   const [editingBranch, setEditingBranch] = useState(false);
   const [editingPriority, setEditingPriority] = useState(false);
@@ -83,6 +100,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
 
   useEffect(() => {
     setResolutionPlan(planFromTags(ticket.tags));
+    setResolutionOther(planNoteFromTags(ticket.tags));
   }, [ticket.id, ticket.tags]);
 
   const branchOptions = useMemo(() => {
@@ -108,7 +126,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
         priority,
         assignee_id: assigneeId || null,
         branch: branch.trim() || undefined,
-        tags: tagsWithPlan(ticket.tags, resolutionPlan),
+        tags: tagsWithPlan(ticket.tags, resolutionPlan, resolutionOther),
       });
       setShowSaved(true);
     } catch (e) {
@@ -333,22 +351,35 @@ export default function TicketDetail({ ticket, onClose }: Props) {
             <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Resolution Plan</div>
             <select
               value={resolutionPlan}
-              onChange={(e) => setResolutionPlan(e.target.value)}
+              onChange={(e) => {
+                setResolutionPlan(e.target.value);
+                if (e.target.value !== 'Other') setResolutionOther('');
+              }}
               className="ticket-input w-full px-3 py-2 text-sm rounded-lg"
             >
-              <option value="">Select how you plan to resolve…</option>
+              <option value="" disabled>
+                Select how you plan to resolve…
+              </option>
               {RESOLUTION_PLANS.filter(Boolean).map((opt) => (
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
+            {resolutionPlan === 'Other' && (
+              <div className="mt-2.5">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">Describe other plan</label>
+                <textarea
+                  value={resolutionOther}
+                  onChange={(e) => setResolutionOther(e.target.value)}
+                  rows={2}
+                  placeholder="Explain how you will resolve this ticket…"
+                  className="ticket-input w-full px-3 py-2 text-sm rounded-lg resize-y"
+                />
+              </div>
+            )}
             <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
               How the agent intends to fix this ticket (Call, Remote Access, on-site, etc.).
             </p>
           </div>
-
-          <button type="button" onClick={save} disabled={saving} className="w-full sm:w-auto px-5 py-2.5 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700 disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
 
           <hr className="border-slate-200" />
 
@@ -421,6 +452,9 @@ export default function TicketDetail({ ticket, onClose }: Props) {
             </div>
           </div>
 
+          <button type="button" onClick={save} disabled={saving} className="w-full sm:w-auto px-5 py-2.5 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700 disabled:opacity-50">
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
 
         </div>
       </div>
