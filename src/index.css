@@ -825,3 +825,24 @@ html.nexus-dark .portal-mytickets-action-col,
 .dark .portal-mytickets-action-col {
   background: rgba(24, 20, 42, 0.98);
 }
+
+
+/* mytickets-menu-guide-v1 */
+.portal-mytickets-guide {
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+html.nexus-dark .portal-mytickets-guide,
+.dark .portal-mytickets-guide {
+  background: rgba(24, 20, 42, 0.42) !important;
+  border-color: rgba(167, 139, 250, 0.22) !important;
+}
+.portal-mytickets-action-menu {
+  pointer-events: auto;
+}
+.portal-mytickets-panel .overflow-x-auto {
+  overflow-x: auto;
+  overflow-y: visible;
+}

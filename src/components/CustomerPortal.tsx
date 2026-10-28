@@ -1,3 +1,4 @@
+/* mytickets-menu-guide-v1 */
 /* mytickets-wider-v1 */
 /* mytickets-jsx-fix-v1 */
 /* mytickets-actions-v1 */
@@ -912,7 +913,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-                  <div className="xl:col-span-9 portal-mytickets-panel min-h-[480px] flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <div className="xl:col-span-9 portal-mytickets-panel min-h-[480px] flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-visible">
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200/70 dark:border-white/10">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       {filtered.length} ticket{filtered.length !== 1 ? 's' : ''}
@@ -961,7 +962,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                             <th className="px-4 py-2.5 font-semibold">Status</th>
                             <th className="px-4 py-2.5 font-semibold">Priority</th>
                             <th className="px-4 py-2.5 font-semibold">Submitted</th>
-                            <th className="px-4 py-2.5 font-semibold text-right sticky right-0 z-10 bg-inherit portal-mytickets-action-col">Action</th>
+                            <th className="px-4 py-2.5 font-semibold text-right sticky right-0 z-[5] bg-inherit portal-mytickets-action-col">Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -979,7 +980,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                               <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                                 {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </td>
-                              <td className="px-4 py-3 text-right relative sticky right-0 z-10 portal-mytickets-action-col">
+                              <td className="px-4 py-3 text-right relative sticky right-0 z-[5] portal-mytickets-action-col">
                                 <button
                                   type="button"
                                   className="inline-flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-500/10"
@@ -992,7 +993,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                   <MoreVertical size={16} />
                                 </button>
                                 {myTicketMenuId === t.id && (
-                                  <div className="absolute right-2 top-full z-20 mt-1 w-44 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-lg py-1 text-left">
+                                  <div className="portal-mytickets-action-menu absolute right-full top-1/2 -translate-y-1/2 mr-1 z-[100] w-44 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xl py-1 text-left">
                                     <button
                                       type="button"
                                       className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
@@ -1064,11 +1065,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                         </p>
                       </div>
                     </div>
-                    <ul className="space-y-3">
+                    <ul className="space-y-3.5">
                       {statusGuide.map((s) => (
-                        <li key={s.key} className="flex gap-3">
-                          <span className={`mt-0.5 shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${s.color}`}>{s.label}</span>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">{s.meaning}</p>
+                        <li key={s.key} className="grid grid-cols-[6.5rem_1fr] gap-x-3 items-start">
+                          <span className={`inline-flex justify-center items-center text-[10px] font-semibold px-2 py-1 rounded-full capitalize leading-none ${s.color}`}>{s.label}</span>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-0.5">{s.meaning}</p>
                         </li>
                       ))}
                     </ul>
