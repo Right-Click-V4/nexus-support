@@ -135,7 +135,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 }
 
 /* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
-/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */ /* priority-required-v1 */ /* submit-success-modal-v1 */
+/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */ /* priority-required-v1 */ /* submit-success-modal-v1 */ /* modal-glow-v2 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -760,19 +760,19 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   aria-label="Close"
                   onClick={() => setCreated(null)}
                 />
-                <div className="relative w-full max-w-sm rounded-2xl border border-white/20 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-2xl shadow-violet-950/30 px-6 py-7 text-center space-y-4">
-                  <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                    <CheckCircle2 className="text-emerald-500" size={36} strokeWidth={2} />
+                <div className="portal-success-modal relative w-full max-w-sm rounded-2xl px-6 py-7 text-center space-y-4">
+                  <div className="portal-success-modal-icon mx-auto w-14 h-14 rounded-full flex items-center justify-center">
+                    <CheckCircle2 size={36} strokeWidth={2} />
                   </div>
                   <div>
-                    <h2 id="ticket-received-title" className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
+                    <h2 id="ticket-received-title" className="portal-success-modal-title text-xl font-semibold tracking-tight">
                       Request received
                     </h2>
-                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                    <p className="portal-success-modal-body mt-2 text-sm leading-relaxed">
                       Your ticket ID is{' '}
-                      <span className="font-mono font-semibold text-violet-700 dark:text-violet-300">{created.id}</span>.
+                      <span className="portal-success-modal-id font-mono font-semibold">{created.id}</span>.
                     </p>
-                    <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="portal-success-modal-hint mt-1.5 text-xs">
                       We typically respond within one business day. You can track status anytime.
                     </p>
                   </div>
@@ -784,7 +784,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                         setCreated(null);
                         setView('track');
                       }}
-                      className="px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition-colors"
+                      className="portal-success-modal-primary px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
                     >
                       Track Ticket
                     </button>
@@ -794,7 +794,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                         setCreated(null);
                         setView('home');
                       }}
-                      className="px-4 py-2.5 border border-zinc-200 dark:border-white/15 text-sm rounded-xl bg-white/80 dark:bg-white/5 text-zinc-800 dark:text-zinc-100 hover:bg-white dark:hover:bg-white/10 transition-colors"
+                      className="portal-success-modal-secondary px-4 py-2.5 text-sm rounded-xl transition-colors"
                     >
                       Overview
                     </button>
@@ -802,7 +802,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   <button
                     type="button"
                     onClick={() => setCreated(null)}
-                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
+                    className="portal-success-modal-dismiss text-xs underline-offset-2 hover:underline"
                   >
                     Stay on Submit a Ticket
                   </button>
