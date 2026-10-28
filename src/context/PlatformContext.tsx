@@ -451,6 +451,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
 
 
+
   useEffect(() => {
     const isCustomerPortal = () => {
       try {
