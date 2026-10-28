@@ -1,3 +1,4 @@
+/* customer-new-expand-v1 */
 // trash-confirm-v1
 // status-outline-v1
 // ticket-unread-v1
@@ -513,6 +514,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const messages = [...(ticket.messages || []), msg];
     const updates: Parameters<typeof updateTicket>[1] = { messages };
     if (!ticket.first_response_at && kind === 'public') updates.first_response_at = msg.created_at;
+    if (kind === 'public') {
+      updates.tags = Array.from(new Set([...(ticket.tags || []).filter((t) => t !== 'customer_unread'), 'customer_unread']));
+    }
     await updateTicket(ticketId, updates);
     if (kind === 'public') {
       const assignee = ticket.assignee_id ? agents.find((a) => a.id === ticket.assignee_id) : null;

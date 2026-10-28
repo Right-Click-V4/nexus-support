@@ -1,3 +1,4 @@
+/* customer-new-expand-v1 */
 /* res-view-msg-v1 */
 /* resolution-plan-v1 */
 /* closed-sla-v1 */
@@ -126,7 +127,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
         priority,
         assignee_id: assigneeId || null,
         branch: branch.trim() || undefined,
-        tags: tagsWithPlan(ticket.tags, resolutionPlan, resolutionOther),
+        tags: Array.from(new Set([...tagsWithPlan(ticket.tags, resolutionPlan, resolutionOther), 'customer_unread'])),
       });
       setShowSaved(true);
     } catch (e) {
