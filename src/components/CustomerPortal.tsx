@@ -1,3 +1,4 @@
+/* mytickets-jsx-fix-v1 */
 /* mytickets-actions-v1 */
 /* mytickets-guide-v1 */
 /* mytickets-table-v1 */
@@ -1068,7 +1069,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                     </ul>
                   </aside>
                 </div>
-              </div>
 
                 {followUpTicket && (
                   <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={() => !followUpBusy && setFollowUpTicket(null)}>
@@ -1121,6 +1121,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                     </div>
                   </div>
                 )}
+              </div>
               );
             })()}
 
