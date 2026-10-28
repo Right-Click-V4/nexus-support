@@ -1,3 +1,4 @@
+/* mytickets-actions-v1 */
 /* mytickets-guide-v1 */
 /* mytickets-table-v1 */
 /* closed-sla-v1 */
@@ -5,7 +6,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Search, CheckCircle2, Ticket, BookOpen, ArrowLeft, MessageSquare,
   LogOut, User, Star, Home, ExternalLink, Users, ImagePlus, X,
-  Flag, ListTree, Lightbulb, Clock3, ClipboardList,
+  Flag, ListTree, Lightbulb, Clock3, ClipboardList, MoreVertical, Info, Send,
 } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
@@ -126,7 +127,7 @@ const VIEW_META: Record<PortalView, { title: string; desc: string; iconColor: st
   help: { title: 'Help Articles', desc: 'Guides and FAQs you can use without waiting on an agent.', iconColor: 'text-indigo-700 dark:text-indigo-300' },
   chat: { title: 'Live Chat', desc: 'Talk to a support agent in real time.', iconColor: 'text-fuchsia-600 dark:text-fuchsia-400' },
   account: { title: 'Account', desc: 'Profile details and sign-in information.', iconColor: 'text-pink-600 dark:text-pink-400' },
-  mytickets: { title: 'My Tickets', desc: 'Review tickets you have opened with support.', iconColor: 'text-blue-600 dark:text-blue-400' },
+  mytickets: { title: 'My Tickets', desc: 'Review tickets you have opened with support.', iconColor: 'text-emerald-600 dark:text-emerald-400' },
   community: { title: 'Community', desc: 'Chat with other customers about tips and workarounds.', iconColor: 'text-sky-600 dark:text-sky-400' },
 };
 
@@ -152,6 +153,10 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const [myTicketsPage, setMyTicketsPage] = useState(1);
   const [myTicketsDateFrom, setMyTicketsDateFrom] = useState('');
   const [myTicketsDateTo, setMyTicketsDateTo] = useState('');
+  const [myTicketMenuId, setMyTicketMenuId] = useState<string | null>(null);
+  const [followUpTicket, setFollowUpTicket] = useState<TicketType | null>(null);
+  const [followUpText, setFollowUpText] = useState('');
+  const [followUpBusy, setFollowUpBusy] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [branch, setBranch] = useState('');
@@ -376,7 +381,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   active ? 'portal-nav-active' : 'portal-nav-item'
                 }`}
               >
-                <Icon size={18} className={`shrink-0 ${({ home: "text-violet-700 dark:text-violet-300", community: "text-sky-600 dark:text-sky-400", submit: "text-amber-600 dark:text-amber-400", chat: "text-fuchsia-600 dark:text-fuchsia-400", track: "text-emerald-600 dark:text-emerald-400", mytickets: "text-blue-600 dark:text-blue-400", help: "text-indigo-700 dark:text-indigo-300", account: "text-pink-600 dark:text-pink-400" } as Record<string, string>)[item.id] || "text-violet-400"}`} />
+                <Icon size={18} className={`shrink-0 ${({ home: "text-violet-700 dark:text-violet-300", community: "text-sky-600 dark:text-sky-400", submit: "text-amber-600 dark:text-amber-400", chat: "text-fuchsia-600 dark:text-fuchsia-400", track: "text-emerald-600 dark:text-emerald-400", mytickets: "text-emerald-600 dark:text-emerald-400", help: "text-indigo-700 dark:text-indigo-300", account: "text-pink-600 dark:text-pink-400" } as Record<string, string>)[item.id] || "text-violet-400"}`} />
                 <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
@@ -892,7 +897,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 { key: 'new', label: 'New', color: 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200', meaning: 'Just submitted and not yet reviewed \u2014 it will move to Open or Pending soon.' },
               ];
               return (
-              <div className="w-full max-w-6xl space-y-4">
+              <div className="w-full space-y-5">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">My Tickets</h1>
                   <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-300 max-w-2xl">
@@ -900,8 +905,8 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                  <div className="lg:col-span-8 portal-mytickets-panel rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+                  <div className="xl:col-span-8 portal-mytickets-panel min-h-[420px] flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200/70 dark:border-white/10">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       {filtered.length} ticket{filtered.length !== 1 ? 's' : ''}
@@ -950,6 +955,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                             <th className="px-4 py-2.5 font-semibold">Status</th>
                             <th className="px-4 py-2.5 font-semibold">Priority</th>
                             <th className="px-4 py-2.5 font-semibold">Submitted</th>
+                            <th className="px-4 py-2.5 font-semibold text-right">Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -966,6 +972,45 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                               <td className="px-4 py-3 capitalize text-zinc-700 dark:text-zinc-200">{t.priority}</td>
                               <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                                 {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </td>
+                              <td className="px-4 py-3 text-right relative">
+                                <button
+                                  type="button"
+                                  className="inline-flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-500/10"
+                                  aria-label="Ticket actions"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMyTicketMenuId((id) => (id === t.id ? null : t.id));
+                                  }}
+                                >
+                                  <MoreVertical size={16} />
+                                </button>
+                                {myTicketMenuId === t.id && (
+                                  <div className="absolute right-2 top-full z-20 mt-1 w-44 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-lg py-1 text-left">
+                                    <button
+                                      type="button"
+                                      className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
+                                      onClick={() => {
+                                        setMyTicketMenuId(null);
+                                        setTrackId(t.id);
+                                        setTracked(t);
+                                      }}
+                                    >
+                                      View
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
+                                      onClick={() => {
+                                        setMyTicketMenuId(null);
+                                        setFollowUpTicket(t);
+                                        setFollowUpText('');
+                                      }}
+                                    >
+                                      Send Follow-Up
+                                    </button>
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           ))}
@@ -1001,12 +1046,17 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   )}
                   </div>
 
-                  <aside className="lg:col-span-4 portal-mytickets-guide rounded-2xl border border-zinc-200/80 dark:border-white/10 p-4 sm:p-5 space-y-3">
-                    <div>
-                      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Status guidelines</h2>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                        What each status means for your ticket.
-                      </p>
+                  <aside className="xl:col-span-4 portal-mytickets-guide rounded-2xl border border-zinc-200/80 dark:border-white/10 p-4 sm:p-5 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 dark:bg-emerald-400/15 flex items-center justify-center shrink-0">
+                        <Info size={18} className="text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Status Guidelines</h2>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                          What each status means for your ticket.
+                        </p>
+                      </div>
                     </div>
                     <ul className="space-y-3">
                       {statusGuide.map((s) => (
@@ -1019,6 +1069,58 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   </aside>
                 </div>
               </div>
+
+                {followUpTicket && (
+                  <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={() => !followUpBusy && setFollowUpTicket(null)}>
+                    <div className="w-full max-w-md rounded-2xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Send size={16} className="text-emerald-600 dark:text-emerald-400" />
+                        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Send Follow-Up</h3>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">{followUpTicket.id} · {followUpTicket.title}</p>
+                      <textarea
+                        value={followUpText}
+                        onChange={(e) => setFollowUpText(e.target.value)}
+                        rows={4}
+                        placeholder="Add an update or extra details for support\u2026"
+                        className="w-full text-sm rounded-xl border border-zinc-200 dark:border-white/15 bg-zinc-50 dark:bg-zinc-950/50 px-3 py-2 text-zinc-900 dark:text-zinc-100 mb-3"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button type="button" disabled={followUpBusy} onClick={() => setFollowUpTicket(null)} className="px-3 py-2 text-xs font-medium rounded-lg border border-zinc-200 dark:border-white/15">Cancel</button>
+                        <button
+                          type="button"
+                          disabled={followUpBusy || !followUpText.trim()}
+                          onClick={() => {
+                            void (async () => {
+                              if (!followUpTicket || !followUpText.trim()) return;
+                              setFollowUpBusy(true);
+                              try {
+                                const prev = followUpTicket.messages || [];
+                                const msg = {
+                                  id: `msg-${Date.now()}`,
+                                  text: followUpText.trim(),
+                                  kind: 'public' as const,
+                                  author: displayName || user?.email || 'Customer',
+                                  created_at: new Date().toISOString(),
+                                };
+                                await updateTicket(followUpTicket.id, { messages: [...prev, msg] });
+                                setFollowUpText('');
+                                setFollowUpTicket(null);
+                              } catch (err) {
+                                console.error(err);
+                              } finally {
+                                setFollowUpBusy(false);
+                              }
+                            })();
+                          }}
+                          className="px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40"
+                        >
+                          {followUpBusy ? 'Sending\u2026' : 'Send'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               );
             })()}
 
