@@ -1,3 +1,4 @@
+/* resolution-plan-v1 */
 /* closed-sla-v1 */
 /* ticket-save-ui-v1 */
 /* status-outline-v1 */
@@ -10,6 +11,33 @@ import { useTickets } from '../context/TicketContext';
 import { usePlatform } from '../context/PlatformContext';
 import { INITIAL_BRANCHES } from '../data';
 import type { Ticket, Priority, Status, TicketMessage, TicketAttachment } from '../types';
+
+const RESOLUTION_PLANS = [
+  '',
+  'Call',
+  'Remote Access',
+  'Screen Share',
+  'On-site Visit',
+  'Email / Chat Support',
+  'Knowledge Base Guide',
+  'Software Update / Patch',
+  'Hardware Replacement',
+  'Account Reset',
+  'Escalation to Vendor',
+  'Internal Investigation',
+  'Other',
+] as const;
+
+function planFromTags(tags?: string[] | null): string {
+  const hit = (tags || []).find((t) => t.startsWith('plan:'));
+  return hit ? hit.slice(5) : '';
+}
+
+function tagsWithPlan(tags: string[] | undefined, plan: string): string[] {
+  const base = (tags || []).filter((t) => !t.startsWith('plan:'));
+  if (plan.trim()) base.push(`plan:${plan.trim()}`);
+  return base;
+}
 import { uploadAttachment } from '../lib/storage';
 
 interface Props {
@@ -23,6 +51,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   const [status, setStatus] = useState<Status>(ticket.status);
   const [priority, setPriority] = useState<Priority>(ticket.priority);
   const [assigneeId, setAssigneeId] = useState(ticket.assignee_id || '');
+  const [resolutionPlan, setResolutionPlan] = useState(() => planFromTags(ticket.tags));
   const [branch, setBranch] = useState(ticket.branch || '');
   const [editingBranch, setEditingBranch] = useState(false);
   const [editingPriority, setEditingPriority] = useState(false);
@@ -52,6 +81,10 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   }, [ticket.id]);
 
 
+  useEffect(() => {
+    setResolutionPlan(planFromTags(ticket.tags));
+  }, [ticket.id, ticket.tags]);
+
   const branchOptions = useMemo(() => {
     const set = new Set(INITIAL_BRANCHES.map((b) => b.name));
     try {
@@ -75,6 +108,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
         priority,
         assignee_id: assigneeId || null,
         branch: branch.trim() || undefined,
+        tags: tagsWithPlan(ticket.tags, resolutionPlan),
       });
       setShowSaved(true);
     } catch (e) {
@@ -293,6 +327,23 @@ export default function TicketDetail({ ticket, onClose }: Props) {
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="ticket-meta-block rounded-xl border border-slate-200 dark:border-white/10 p-3.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Resolution Plan</div>
+            <select
+              value={resolutionPlan}
+              onChange={(e) => setResolutionPlan(e.target.value)}
+              className="ticket-input w-full px-3 py-2 text-sm rounded-lg"
+            >
+              <option value="">Select how you plan to resolve…</option>
+              {RESOLUTION_PLANS.filter(Boolean).map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+              How the agent intends to fix this ticket (Call, Remote Access, on-site, etc.).
+            </p>
           </div>
 
           <button type="button" onClick={save} disabled={saving} className="w-full sm:w-auto px-5 py-2.5 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700 disabled:opacity-50">
