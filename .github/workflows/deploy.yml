@@ -206,13 +206,14 @@ jobs:
           python3 scripts/patch_tickets_page30.py || true
           python3 scripts/patch_resolution_plan.py || true
           python3 scripts/patch_res_view_msg.py || true
+          python3 scripts/patch_customer_new_expand.py || true
           python3 scripts/patch_tickets_sync.py || true
           python3 scripts/patch_tickets_noflicker.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/components/Sidebar.tsx src/components/PortalHome.tsx src/components/TicketsPage.tsx src/components/TicketDetail.tsx src/context/TicketContext.tsx src/types.ts src/portal-lounge.css src/index.css src/lib/communityApi.ts || true
-          git commit -m "feat: Resolution Other + customer conversation" || true
+          git commit -m "feat: My Tickets New badge + expandable View" || true
           git push || true
 
       - name: Setup Node
