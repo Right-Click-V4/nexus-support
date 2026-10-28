@@ -1,3 +1,4 @@
+// status-outline-v1
 // ticket-unread-v1
 // tickets-sync-v1
 // tickets-noflicker-v1
@@ -118,7 +119,8 @@ function filterAgents(list: Agent[]): Agent[] {
   return list.filter((a) => {
     const role = (a.role || '').toLowerCase();
     if (role.includes('customer')) return false;
-    if (a.approval_status === 'rejected') return false;
+    const st = (a.approval_status || 'approved').toLowerCase();
+    if (st === 'rejected' || st === 'pending') return false;
     const key = (a.email || a.name || a.id).toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);

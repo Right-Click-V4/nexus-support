@@ -1,3 +1,4 @@
+/* status-outline-v1 */
 /* ticket-panel-v1 */
 /* ticket-unread-v1 */
 /* details-tickets-theme-v1 */
@@ -243,8 +244,11 @@ export default function TicketsPage() {
                     onClick={() => setSelectedId(t.id)}
                     className={clsx(
                       'tickets-row border-b cursor-pointer transition-colors',
-                      t.status === 'new' && t.channel === 'portal' && 'tickets-row-new-portal',
-                      t.status === 'new' && t.channel !== 'portal' && 'tickets-row-new'
+                      (t.status === 'open' || t.status === 'new') && 'tickets-row-open',
+                      t.status === 'pending' && 'tickets-row-pending',
+                      t.status === 'on-hold' && 'tickets-row-onhold',
+                      t.status === 'resolved' && 'tickets-row-resolved',
+                      ((t.tags || []).includes('unread') || t.status === 'new') && 'tickets-row-unread'
                     )}
                   >
                     <td className="px-4 py-3 font-mono text-xs tickets-muted">{t.id}</td>

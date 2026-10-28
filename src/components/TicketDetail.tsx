@@ -1,3 +1,4 @@
+/* status-outline-v1 */
 /* ticket-detail-layout-v1 */
 /* ticket-panel-v1 */
 /* ticket-unread-v1 */
@@ -261,8 +262,11 @@ export default function TicketDetail({ ticket, onClose }: Props) {
 
             <div className="ticket-meta-block rounded-xl border border-slate-200 dark:border-white/10 p-3.5">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Status</div>
-              <select value={status} onChange={(e) => setStatus(e.target.value as Status)} className="ticket-input w-full px-3 py-2 text-sm rounded-lg">
-                <option value="new">New</option>
+              <select
+                value={status === 'new' ? 'open' : status}
+                onChange={(e) => setStatus(e.target.value as Status)}
+                className="ticket-input w-full px-3 py-2 text-sm rounded-lg"
+              >
                 <option value="open">Open</option>
                 <option value="pending">Pending</option>
                 <option value="on-hold">On Hold</option>
@@ -274,7 +278,12 @@ export default function TicketDetail({ ticket, onClose }: Props) {
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Assignee</div>
               <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className="ticket-input w-full px-3 py-2 text-sm rounded-lg">
                 <option value="">Unassigned</option>
-                {agents.map((a) => (
+                {agents
+                  .filter((a) => {
+                    const st = (a.approval_status || 'approved').toLowerCase();
+                    return st === 'approved' || st === '';
+                  })
+                  .map((a) => (
                   <option key={a.id} value={a.id}>{a.name}{a.is_admin ? ' (Admin)' : ''}</option>
                 ))}
               </select>
