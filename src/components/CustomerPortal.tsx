@@ -1,3 +1,4 @@
+/* mytickets-guide-v1 */
 /* mytickets-table-v1 */
 /* closed-sla-v1 */
 import { useState, useMemo, useEffect } from 'react';
@@ -882,8 +883,16 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
               const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
               const page = Math.min(myTicketsPage, totalPages);
               const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+              const statusGuide = [
+                { key: 'open', label: 'Open', color: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200', meaning: 'Your ticket was received and is waiting in the queue for an agent to pick it up.' },
+                { key: 'pending', label: 'Pending', color: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200', meaning: 'An agent or tech support is actively working on your ticket and following up.' },
+                { key: 'on-hold', label: 'On Hold', color: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-500/30 dark:text-zinc-200', meaning: 'Work is paused \u2014 often waiting on more details from you or a third party.' },
+                { key: 'resolved', label: 'Resolved', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200', meaning: 'The issue was addressed. You can still reply if something is still wrong.' },
+                { key: 'closed', label: 'Closed', color: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200', meaning: 'The ticket is closed (for example past SLA or fully completed). Contact support if you need it reopened.' },
+                { key: 'new', label: 'New', color: 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200', meaning: 'Just submitted and not yet reviewed \u2014 it will move to Open or Pending soon.' },
+              ];
               return (
-              <div className="max-w-5xl mx-auto w-full space-y-4">
+              <div className="w-full max-w-6xl space-y-4">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">My Tickets</h1>
                   <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-300 max-w-2xl">
@@ -891,7 +900,8 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   </p>
                 </div>
 
-                <div className="portal-mytickets-panel rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                  <div className="lg:col-span-8 portal-mytickets-panel rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200/70 dark:border-white/10">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       {filtered.length} ticket{filtered.length !== 1 ? 's' : ''}
@@ -946,10 +956,10 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                           {slice.map((t) => (
                             <tr key={t.id} className="border-b border-zinc-100/80 dark:border-white/5 hover:bg-violet-500/5 transition-colors">
                               <td className="px-4 py-3 font-mono text-xs text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{t.id}</td>
-                              <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50 max-w-[220px]">
+                              <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50 max-w-[200px]">
                                 <div className="truncate" title={t.title}>{t.title}</div>
                               </td>
-                              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{t.branch || '—'}</td>
+                              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{t.branch || '\u2014'}</td>
                               <td className="px-4 py-3">
                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusColor[t.status] || ''}`}>{t.status}</span>
                               </td>
@@ -989,10 +999,29 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                       </div>
                     </div>
                   )}
+                  </div>
+
+                  <aside className="lg:col-span-4 portal-mytickets-guide rounded-2xl border border-zinc-200/80 dark:border-white/10 p-4 sm:p-5 space-y-3">
+                    <div>
+                      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Status guidelines</h2>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                        What each status means for your ticket.
+                      </p>
+                    </div>
+                    <ul className="space-y-3">
+                      {statusGuide.map((s) => (
+                        <li key={s.key} className="flex gap-3">
+                          <span className={`mt-0.5 shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${s.color}`}>{s.label}</span>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">{s.meaning}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </aside>
                 </div>
               </div>
               );
             })()}
+
             {view === 'help' && (
               <div className="max-w-2xl">
                 <h1 className="text-xl font-semibold text-zinc-900 mb-3">Help Articles</h1>

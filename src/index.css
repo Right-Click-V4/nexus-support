@@ -796,3 +796,16 @@ html.nexus-dark .portal-mytickets-input,
   color: #f1f5f9;
   border-color: rgba(167, 139, 250, 0.25);
 }
+
+
+/* mytickets-guide-v1 — status guide panel */
+.portal-mytickets-guide {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+html.nexus-dark .portal-mytickets-guide,
+.dark .portal-mytickets-guide {
+  background: rgba(24, 20, 42, 0.45);
+  border-color: rgba(167, 139, 250, 0.2);
+}
