@@ -1,3 +1,4 @@
+// trash-confirm-v1
 // status-outline-v1
 // ticket-unread-v1
 // tickets-sync-v1
@@ -439,6 +440,32 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       });
     }
   };
+
+
+  const purgeExpiredTrash = async (list: Ticket[]) => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const expired = list.filter((t) => t.deleted_at && new Date(t.deleted_at).getTime() < cutoff);
+    if (!expired.length) return;
+    for (const t of expired) {
+      try {
+        if (supabase) {
+          await supabase.from('tickets').delete().eq('id', t.id);
+        }
+      } catch (e) {
+        console.warn('trash purge failed', t.id, e);
+      }
+    }
+    if (expired.length) {
+      setTickets((prev) => prev.filter((t) => !expired.some((e) => e.id === t.id)));
+    }
+  };
+
+
+  useEffect(() => {
+    if (!tickets.length) return;
+    void purgeExpiredTrash(tickets);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickets.length]);
 
   const softDeleteTicket = async (id: string) => {
     await updateTicket(id, { deleted_at: new Date().toISOString() });

@@ -1,3 +1,4 @@
+/* trash-confirm-v1 */
 /* closed-sla-v1 */
 /* status-outline-v1 */
 /* ticket-panel-v1 */
@@ -37,6 +38,8 @@ export default function TicketsPage() {
   const [channelFilter, setChannelFilter] = useState<'all' | 'portal' | 'email' | 'chat' | 'phone'>('all');
   const [slaFilter, setSlaFilter] = useState<'all' | 'breach' | 'warn'>('all');
   const [showTrash, setShowTrash] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'delete' | 'restore'; id: string } | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [, setTick] = useState(0);
@@ -50,7 +53,18 @@ export default function TicketsPage() {
     return tickets.filter((t) => {
       const isDeleted = !!t.deleted_at;
       if (showTrash ? !isDeleted : isDeleted) return false;
-      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+      if (statusFilter !== 'all') {
+        const slaTone = formatSlaCountdown(t.sla_due_at, t.status).tone;
+        const isClosedView =
+          t.status === 'closed' || (slaTone === 'breach' && t.status !== 'resolved');
+        if (statusFilter === 'closed') {
+          if (!isClosedView) return false;
+        } else if (t.status === 'new' && statusFilter === 'open') {
+          // ok
+        } else if (t.status !== statusFilter) {
+          if (!(t.status === 'new' && statusFilter === 'open')) return false;
+        }
+      }
       if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
       if (channelFilter !== 'all' && t.channel !== channelFilter) return false;
       if (slaFilter !== 'all') {
@@ -114,15 +128,31 @@ export default function TicketsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const softDelete = async (id: string, e: React.MouseEvent) => {
+  const softDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Move this ticket to trash?')) return;
-    await softDeleteTicket(id);
+    setConfirmAction({ type: 'delete', id });
   };
 
-  const restore = async (id: string, e: React.MouseEvent) => {
+  const restore = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await updateTicket(id, { deleted_at: null });
+    setConfirmAction({ type: 'restore', id });
+  };
+
+  const runConfirm = async () => {
+    if (!confirmAction) return;
+    setConfirmBusy(true);
+    try {
+      if (confirmAction.type === 'delete') {
+        await softDeleteTicket(confirmAction.id);
+      } else {
+        await updateTicket(confirmAction.id, { deleted_at: null });
+      }
+      setConfirmAction(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setConfirmBusy(false);
+    }
   };
 
   return (
@@ -377,6 +407,46 @@ export default function TicketsPage() {
       </div>
 
       {showCreate && <CreateTicketModal onClose={() => setShowCreate(false)} />}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={() => !confirmBusy && setConfirmAction(null)}>
+          <div
+            className="ticket-confirm-modal w-full max-w-sm rounded-2xl border shadow-2xl px-6 py-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-2">
+              {confirmAction.type === 'delete' ? 'Move to trash?' : 'Restore ticket?'}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">
+              {confirmAction.type === 'delete'
+                ? 'This ticket will move to Trash. Items in Trash are permanently deleted after 30 days.'
+                : 'This ticket will return to the active Tickets list.'}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                disabled={confirmBusy}
+                onClick={() => setConfirmAction(null)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-white/15 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={confirmBusy}
+                onClick={() => void runConfirm()}
+                className={
+                  confirmAction.type === 'delete'
+                    ? 'px-4 py-2 text-sm font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50'
+                    : 'px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50'
+                }
+              >
+                {confirmBusy ? 'Please wait…' : confirmAction.type === 'delete' ? 'Delete' : 'Restore'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

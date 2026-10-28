@@ -690,3 +690,38 @@ html.nexus-dark .tickets-row-closed,
   background: rgba(239, 68, 68, 0.28) !important;
   box-shadow: inset 4px 0 0 0 #ef4444 !important;
 }
+
+
+/* trash-confirm-v1 — stronger light-mode status colors + bolder outlines */
+.tickets-row-open {
+  box-shadow: inset 5px 0 0 0 #2563eb !important;
+  background: rgba(37, 99, 235, 0.14) !important;
+}
+.tickets-row-pending {
+  box-shadow: inset 5px 0 0 0 #ea580c !important;
+  background: rgba(234, 88, 12, 0.16) !important;
+}
+.tickets-row-onhold {
+  box-shadow: inset 5px 0 0 0 #ca8a04 !important;
+  background: rgba(202, 138, 4, 0.18) !important;
+}
+.tickets-row-resolved {
+  box-shadow: inset 5px 0 0 0 #16a34a !important;
+  background: rgba(22, 163, 74, 0.14) !important;
+}
+.tickets-row-closed {
+  box-shadow: inset 5px 0 0 0 #dc2626 !important;
+  background: rgba(220, 38, 38, 0.16) !important;
+}
+
+.ticket-confirm-modal {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+html.nexus-dark .ticket-confirm-modal,
+.dark .ticket-confirm-modal {
+  background: rgba(24, 20, 42, 0.98);
+  border-color: rgba(167, 139, 250, 0.25);
+  color: #f1f5f9;
+}
