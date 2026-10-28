@@ -1,3 +1,4 @@
+/* closed-sla-v1 */
 import { useState, useMemo, useEffect } from 'react';
 import {
   Search, CheckCircle2, Ticket, BookOpen, ArrowLeft, MessageSquare,
@@ -331,7 +332,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     { id: 'community', label: 'Community', icon: Users },
     { id: 'submit', label: 'Submit a Ticket', icon: Ticket },
     { id: 'chat', label: 'Live Chat', icon: MessageSquare },
-    { id: 'track', label: 'Track Ticket', icon: Search },
     { id: 'mytickets', label: 'My Tickets', icon: User },
     { id: 'help', label: 'Help Articles', icon: BookOpen },
     { id: 'account', label: 'Account', icon: User },
@@ -628,7 +628,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                         { n: '1', t: 'Fill the form', d: 'Name is locked to your account. Choose branch, subject, details, and priority.' },
                         { n: '2', t: 'We create a ticket ID', d: 'You get a unique ID (for example NX-2841) right after submit.' },
                         { n: '3', t: 'Support triages', d: 'Agents use subject + priority to route your request to the right queue.' },
-                        { n: '4', t: 'Track progress', d: 'Open Track Ticket or My Tickets anytime with your ID and account email.' },
+                        { n: '4', t: 'Track progress', d: 'Open My Tickets anytime to follow status with your ticket ID and account email.' },
                       ].map((s) => (
                         <li key={s.n} className="flex gap-3 items-start rounded-xl border border-white/25 dark:border-white/10 bg-white/20 dark:bg-black/15 px-3 py-2.5">
                           <span className="shrink-0 w-6 h-6 rounded-full bg-brand-600/90 text-white text-[11px] font-bold flex items-center justify-center">{s.n}</span>
@@ -684,7 +684,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                             Submitting one creates a clear record for our team with your branch and priority.
                           </p>
                           <p>
-                            After you send it, you get a ticket ID to follow under <span className="font-medium">Track Ticket</span> or <span className="font-medium">My Tickets</span>.
+                            After you send it, you get a ticket ID to follow under <span className="font-medium">My Tickets</span>.
                           </p>
                           <ul className="list-disc pl-4 space-y-1 text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400">
                             <li>Match the closest <span className="font-medium text-zinc-800 dark:text-zinc-200">Subject</span>.</li>
@@ -788,11 +788,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                       onClick={() => {
                         setTrackId(created.id);
                         setCreated(null);
-                        setView('track');
+                        setView('mytickets');
                       }}
                       className="portal-success-modal-primary px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
                     >
-                      Track Ticket
+                      My Tickets
                     </button>
                     <button
                       type="button"
@@ -868,7 +868,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 ) : (
                   <div className="space-y-2">
                     {myTickets.map((t) => (
-                      <button key={t.id} type="button" onClick={() => { setTrackId(t.id); setTracked(t); setView('track'); }} className="w-full text-left rounded-xl border border-zinc-200 bg-white/80 px-4 py-3 hover:border-violet-300 transition-colors">
+                      <button key={t.id} type="button" onClick={() => { setTrackId(t.id); setTracked(t); setView('mytickets'); }} className="w-full text-left rounded-xl border border-zinc-200 bg-white/80 px-4 py-3 hover:border-violet-300 transition-colors">
                         <div className="flex justify-between gap-2">
                           <span className="font-mono text-xs text-zinc-400">{t.id}</span>
                           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusColor[t.status] || ''}`}>{t.status}</span>

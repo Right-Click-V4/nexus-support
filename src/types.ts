@@ -1,5 +1,5 @@
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
-export type Status = 'new' | 'open' | 'pending' | 'resolved' | 'on-hold';
+export type Status = 'new' | 'open' | 'pending' | 'resolved' | 'on-hold' | 'closed';
 export type Channel = 'email' | 'chat' | 'phone' | 'portal' | 'social';
 export type AgentStatus = 'online' | 'busy' | 'away' | 'offline';
 

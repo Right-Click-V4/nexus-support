@@ -1,3 +1,4 @@
+/* closed-sla-v1 */
 /* ticket-save-ui-v1 */
 /* status-outline-v1 */
 /* ticket-detail-layout-v1 */
@@ -274,6 +275,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
                 <option value="pending">Pending</option>
                 <option value="on-hold">On Hold</option>
                 <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
               </select>
             </div>
 

@@ -1256,3 +1256,15 @@ html.nexus-dark .ticket-success-modal,
   60% { transform: scale(1.12); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+
+/* closed-sla-v1 — red outline for SLA-breached / closed tickets */
+.tickets-row-closed {
+  box-shadow: inset 4px 0 0 0 #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+html.nexus-dark .tickets-row-closed,
+.dark .tickets-row-closed {
+  background: rgba(239, 68, 68, 0.28) !important;
+  box-shadow: inset 4px 0 0 0 #ef4444 !important;
+}

@@ -1,3 +1,4 @@
+/* closed-sla-v1 */
 /* status-outline-v1 */
 /* ticket-panel-v1 */
 /* ticket-unread-v1 */
@@ -25,6 +26,7 @@ const statusStyles: Record<string, string> = {
   pending: 'bg-violet-50 text-violet-700 border-violet-200',
   resolved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   'on-hold': 'bg-slate-50 text-slate-600 border-slate-200',
+  closed: 'bg-rose-50 text-rose-700 border-rose-200',
 };
 
 export default function TicketsPage() {
@@ -156,6 +158,7 @@ export default function TicketsPage() {
           <option value="pending">Pending</option>
           <option value="on-hold">On hold</option>
           <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
         </select>
         <select
           value={priorityFilter}
@@ -244,10 +247,14 @@ export default function TicketsPage() {
                     onClick={() => setSelectedId(t.id)}
                     className={clsx(
                       'tickets-row border-b cursor-pointer transition-colors',
-                      (t.status === 'open' || t.status === 'new') && 'tickets-row-open',
-                      t.status === 'pending' && 'tickets-row-pending',
-                      t.status === 'on-hold' && 'tickets-row-onhold',
-                      t.status === 'resolved' && 'tickets-row-resolved',
+                      (sla.tone === 'breach' && t.status !== 'resolved') || t.status === 'closed'
+                        ? 'tickets-row-closed'
+                        : clsx(
+                            (t.status === 'open' || t.status === 'new') && 'tickets-row-open',
+                            t.status === 'pending' && 'tickets-row-pending',
+                            t.status === 'on-hold' && 'tickets-row-onhold',
+                            t.status === 'resolved' && 'tickets-row-resolved',
+                          ),
                       ((t.tags || []).includes('unread') || t.status === 'new') && 'tickets-row-unread'
                     )}
                   >
@@ -293,8 +300,22 @@ export default function TicketsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={clsx('text-xs font-medium px-2 py-0.5 rounded border capitalize', statusStyles[t.status === 'new' ? 'open' : t.status] || statusStyles.open)}>
-                        {(t.status === 'new' ? 'open' : t.status).replace('-', ' ')}
+                      <span className={clsx(
+                        'text-xs font-medium px-2 py-0.5 rounded border capitalize',
+                        statusStyles[
+                          (sla.tone === 'breach' && t.status !== 'resolved') || t.status === 'closed'
+                            ? 'closed'
+                            : t.status === 'new'
+                              ? 'open'
+                              : t.status
+                        ] || statusStyles.open
+                      )}>
+                        {((sla.tone === 'breach' && t.status !== 'resolved') || t.status === 'closed'
+                          ? 'closed'
+                          : t.status === 'new'
+                            ? 'open'
+                            : t.status
+                        ).replace('-', ' ')}
                       </span>
                     </td>
                     <td className="px-4 py-3">
