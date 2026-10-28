@@ -1,3 +1,4 @@
+/* status-colors-space-v1 */
 /* mytickets-menu-guide-v1 */
 /* mytickets-wider-v1 */
 /* mytickets-jsx-fix-v1 */
@@ -333,11 +334,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   };
 
   const statusColor: Record<string, string> = {
-    new: 'bg-violet-100 text-violet-700',
-    open: 'bg-amber-100 text-amber-700',
-    pending: 'bg-violet-100 text-violet-700',
-    'on-hold': 'bg-zinc-100 text-zinc-600',
-    resolved: 'bg-emerald-100 text-emerald-700',
+    new: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/60 dark:border-violet-400/40',
+    open: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/60 dark:border-violet-400/40',
+    pending: 'bg-orange-100 text-orange-800 dark:bg-orange-500/25 dark:text-orange-200 border border-orange-300/60 dark:border-orange-400/40',
+    'on-hold': 'bg-yellow-100 text-yellow-900 dark:bg-yellow-500/25 dark:text-yellow-100 border border-yellow-300/60 dark:border-yellow-400/40',
+    resolved: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/25 dark:text-emerald-200 border border-emerald-300/60 dark:border-emerald-400/40',
+    closed: 'bg-red-100 text-red-800 dark:bg-red-500/25 dark:text-red-200 border border-red-300/60 dark:border-red-400/40',
   };
 
   const navItems: { id: PortalView; label: string; icon: typeof Home }[] = [
@@ -896,13 +898,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
               const page = Math.min(myTicketsPage, totalPages);
               const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
               const statusGuide = [
-                { key: 'open', label: 'Open', color: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200', meaning: 'Your ticket was received and is waiting in the queue for an agent to pick it up.' },
-                { key: 'pending', label: 'Pending', color: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200', meaning: 'An agent or tech support is actively working on your ticket and following up.' },
-                { key: 'on-hold', label: 'On Hold', color: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-500/30 dark:text-zinc-200', meaning: 'Work is paused \u2014 often waiting on more details from you or a third party.' },
-                { key: 'resolved', label: 'Resolved', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200', meaning: 'The issue was addressed. You can still reply if something is still wrong.' },
-                { key: 'closed', label: 'Closed', color: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200', meaning: 'The ticket is closed (for example past SLA or fully completed). Contact support if you need it reopened.' },
-                { key: 'new', label: 'New', color: 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200', meaning: 'Just submitted and not yet reviewed \u2014 it will move to Open or Pending soon.' },
-              ];
+                { key: 'open', label: 'Open', color: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/50 dark:border-violet-400/40', meaning: 'Your ticket was received and is waiting in the queue for an agent to pick it up.' },
+                { key: 'pending', label: 'Pending', color: 'bg-orange-100 text-orange-800 dark:bg-orange-500/25 dark:text-orange-200 border border-orange-300/50 dark:border-orange-400/40', meaning: 'An agent or tech support is actively working on your ticket and following up.' },
+                { key: 'on-hold', label: 'On Hold', color: 'bg-yellow-100 text-yellow-900 dark:bg-yellow-500/25 dark:text-yellow-100 border border-yellow-300/50 dark:border-yellow-400/40', meaning: 'Work is paused — often waiting on more details from you or a third party.' },
+                { key: 'resolved', label: 'Resolved', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/25 dark:text-emerald-200 border border-emerald-300/50 dark:border-emerald-400/40', meaning: 'The issue was addressed. You can still reply if something is still wrong.' },
+                { key: 'closed', label: 'Closed', color: 'bg-red-100 text-red-800 dark:bg-red-500/25 dark:text-red-200 border border-red-300/50 dark:border-red-400/40', meaning: 'The ticket is closed (for example past SLA or fully completed). Contact support if you need it reopened.' },
+              ]
               return (
               <div className="w-full space-y-5">
                 <div>
@@ -913,7 +914,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-                  <div className="xl:col-span-9 portal-mytickets-panel min-h-[480px] flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-visible">
+                  <div className="xl:col-span-9 portal-mytickets-panel flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-visible">
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200/70 dark:border-white/10">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       {filtered.length} ticket{filtered.length !== 1 ? 's' : ''}
