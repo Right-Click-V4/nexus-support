@@ -1,3 +1,4 @@
+/* ticket-unread-v1 */
 /* details-tickets-theme-v1 */
 /* tickets-table-v2 */
 import { useEffect, useMemo, useState } from 'react';
@@ -239,8 +240,15 @@ export default function TicketsPage() {
                   >
                     <td className="px-4 py-3 font-mono text-xs tickets-muted">{t.id}</td>
                     <td className="px-4 py-3 max-w-[240px]">
-                      <div className="tickets-subject truncate font-bold tracking-wide" title={t.title}>
-                        {t.title}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="tickets-subject truncate font-bold tracking-wide" title={t.title}>
+                          {t.title}
+                        </div>
+                        {((t.tags || []).includes('unread') || t.status === 'new') && (
+                          <span className="ticket-new-badge shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
+                            New
+                          </span>
+                        )}
                       </div>
                       {t.description ? (
                         <div className="tickets-desc text-[11px] truncate mt-0.5 font-normal" title={t.description}>
@@ -272,8 +280,8 @@ export default function TicketsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={clsx('text-xs font-medium px-2 py-0.5 rounded border capitalize', statusStyles[t.status])}>
-                        {t.status.replace('-', ' ')}
+                      <span className={clsx('text-xs font-medium px-2 py-0.5 rounded border capitalize', statusStyles[t.status === 'new' ? 'open' : t.status] || statusStyles.open)}>
+                        {(t.status === 'new' ? 'open' : t.status).replace('-', ' ')}
                       </span>
                     </td>
                     <td className="px-4 py-3">

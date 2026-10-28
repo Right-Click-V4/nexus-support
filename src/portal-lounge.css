@@ -1068,3 +1068,35 @@ html.nexus-dark .tickets-muted,
 .dark .tickets-muted {
   color: #94a3b8;
 }
+
+
+/* ticket-unread-v1 — detail drawer under topbar + New badge */
+.ticket-new-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+html.nexus-dark .ticket-new-badge,
+.dark .ticket-new-badge {
+  background: rgba(52, 211, 153, 0.2);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.4);
+}
+.ticket-detail-panel {
+  background: #ffffff;
+  color: #0f172a;
+}
+html.nexus-dark .ticket-detail-panel,
+.dark .ticket-detail-panel {
+  background: rgba(22, 18, 40, 0.98);
+  color: #f1f5f9;
+}
+.ticket-detail-header {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+html.nexus-dark .ticket-detail-header,
+.dark .ticket-detail-header {
+  background: rgba(15, 12, 30, 0.98);
+  border-color: rgba(167, 139, 250, 0.2);
+}

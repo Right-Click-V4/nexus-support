@@ -1,4 +1,5 @@
-import { useMemo, useState, useRef } from 'react';
+/* ticket-unread-v1 */
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { X, Trash2, MessageSquare, Clock, Paperclip, Download } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { usePlatform } from '../context/PlatformContext';
@@ -27,6 +28,21 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = !!currentAgent?.is_admin;
+  /* Clear New/unread indicator when agent opens the ticket */
+  useEffect(() => {
+    const tags = ticket.tags || [];
+    const needs =
+      tags.includes('unread') ||
+      ticket.status === 'new';
+    if (!needs) return;
+    const nextTags = tags.filter((t) => t !== 'unread');
+    void updateTicket(ticket.id, {
+      ...(ticket.status === 'new' ? { status: 'open' as Status } : {}),
+      tags: nextTags,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.id]);
+
 
   const branchOptions = useMemo(() => {
     const set = new Set(INITIAL_BRANCHES.map((b) => b.name));
@@ -128,9 +144,9 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={onClose}>
+    <div className="fixed top-14 left-0 right-0 bottom-0 z-[70] flex justify-end bg-black/40" onClick={onClose}>
       <div className="w-full max-w-md bg-white h-full shadow-2xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 ticket-detail-header px-5 py-4 flex items-center justify-between z-10 border-b">
           <div>
             <div className="text-xs font-mono text-slate-400">{ticket.id}</div>
             <h2 className="text-lg font-semibold text-slate-900 leading-tight">{ticket.title}</h2>

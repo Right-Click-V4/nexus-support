@@ -1,3 +1,4 @@
+// ticket-unread-v1
 // tickets-sync-v1
 // tickets-noflicker-v1
 import {
@@ -300,13 +301,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       title: data.title,
       description: data.description || '',
       priority,
-      status: 'new',
+      status: 'open',
       channel: data.channel,
       assignee_id: autoAssignee,
       customer_name: data.customer_name,
       customer_email: data.customer_email || '',
       branch: data.branch?.trim() || undefined,
-      tags,
+      tags: Array.from(new Set([...(tags || []), 'unread'])),
       created_at: now,
       updated_at: now,
       notes: [],
