@@ -1118,3 +1118,58 @@ html.nexus-dark .ticket-detail-page .ticket-detail-header,
   background: rgba(15, 12, 30, 0.6);
   border-color: rgba(167, 139, 250, 0.18);
 }
+
+
+/* ticket-detail-layout-v1 — themed inputs + meta blocks */
+.ticket-input {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+.ticket-input::placeholder {
+  color: #94a3b8;
+}
+html.nexus-dark .ticket-input,
+.dark .ticket-input {
+  background: rgba(15, 12, 30, 0.75);
+  border-color: rgba(167, 139, 250, 0.28);
+  color: #f1f5f9;
+}
+html.nexus-dark .ticket-input::placeholder,
+.dark .ticket-input::placeholder {
+  color: #94a3b8;
+}
+html.nexus-dark .ticket-input option,
+.dark .ticket-input option {
+  background: #1e1b2e;
+  color: #f1f5f9;
+}
+.ticket-meta-block {
+  background: rgba(248, 250, 252, 0.8);
+}
+html.nexus-dark .ticket-meta-block,
+.dark .ticket-meta-block {
+  background: rgba(15, 12, 30, 0.45);
+}
+.ticket-thread-public {
+  background: rgba(14, 165, 233, 0.1);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  color: #0f172a;
+}
+html.nexus-dark .ticket-thread-public,
+.dark .ticket-thread-public {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.25);
+  color: #e2e8f0;
+}
+.ticket-thread-internal {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+html.nexus-dark .ticket-thread-internal,
+.dark .ticket-thread-internal {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}

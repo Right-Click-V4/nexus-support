@@ -1,7 +1,8 @@
+/* ticket-detail-layout-v1 */
 /* ticket-panel-v1 */
 /* ticket-unread-v1 */
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { X, Trash2, MessageSquare, Clock, Paperclip, Download, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Clock, Download, MessageSquare, Paperclip, Pencil, Trash2, X } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { usePlatform } from '../context/PlatformContext';
 import { INITIAL_BRANCHES } from '../data';
@@ -20,6 +21,8 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   const [priority, setPriority] = useState<Priority>(ticket.priority);
   const [assigneeId, setAssigneeId] = useState(ticket.assignee_id || '');
   const [branch, setBranch] = useState(ticket.branch || '');
+  const [editingBranch, setEditingBranch] = useState(false);
+  const [editingPriority, setEditingPriority] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [replyText, setReplyText] = useState('');
   const [saving, setSaving] = useState(false);
@@ -209,48 +212,76 @@ export default function TicketDetail({ ticket, onClose }: Props) {
 
           <hr className="border-slate-200" />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Branch</label>
-            <select value={branch} onChange={(e) => setBranch(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white">
-              <option value="">Unassigned</option>
-              {branchOptions.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="ticket-meta-block rounded-xl border border-slate-200 dark:border-white/10 p-3.5">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Branch</div>
+                {!editingBranch ? (
+                  <button type="button" onClick={() => setEditingBranch(true)} className="inline-flex items-center gap-1 text-[11px] font-medium text-violet-600 dark:text-violet-300 hover:underline">
+                    <Pencil size={12} /> Edit
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => setEditingBranch(false)} className="text-[11px] font-medium text-slate-500 hover:underline">Done</button>
+                )}
+              </div>
+              {editingBranch ? (
+                <select value={branch} onChange={(e) => setBranch(e.target.value)} className="ticket-input w-full px-3 py-2 text-sm rounded-lg">
+                  <option value="">Unassigned</option>
+                  {branchOptions.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="text-sm font-semibold text-slate-900 dark:text-slate-50">{branch || '—'}</div>
+              )}
+            </div>
+
+            <div className="ticket-meta-block rounded-xl border border-slate-200 dark:border-white/10 p-3.5">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Priority</div>
+                {!editingPriority ? (
+                  <button type="button" onClick={() => setEditingPriority(true)} className="inline-flex items-center gap-1 text-[11px] font-medium text-violet-600 dark:text-violet-300 hover:underline">
+                    <Pencil size={12} /> Edit
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => setEditingPriority(false)} className="text-[11px] font-medium text-slate-500 hover:underline">Done</button>
+                )}
+              </div>
+              {editingPriority ? (
+                <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="ticket-input w-full px-3 py-2 text-sm rounded-lg">
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              ) : (
+                <div className="text-sm font-semibold capitalize text-slate-900 dark:text-slate-50">{priority}</div>
+              )}
+            </div>
+
+            <div className="ticket-meta-block rounded-xl border border-slate-200 dark:border-white/10 p-3.5">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Status</div>
+              <select value={status} onChange={(e) => setStatus(e.target.value as Status)} className="ticket-input w-full px-3 py-2 text-sm rounded-lg">
+                <option value="new">New</option>
+                <option value="open">Open</option>
+                <option value="pending">Pending</option>
+                <option value="on-hold">On Hold</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+
+            <div className="ticket-meta-block rounded-xl border border-slate-200 dark:border-white/10 p-3.5">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Assignee</div>
+              <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className="ticket-input w-full px-3 py-2 text-sm rounded-lg">
+                <option value="">Unassigned</option>
+                {agents.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}{a.is_admin ? ' (Admin)' : ''}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value as Status)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white">
-              <option value="new">New</option>
-              <option value="open">Open</option>
-              <option value="pending">Pending</option>
-              <option value="on-hold">On Hold</option>
-              <option value="resolved">Resolved</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
-            <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white">
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Assignee</label>
-            <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white">
-              <option value="">Unassigned</option>
-              {agents.map((a) => (
-                <option key={a.id} value={a.id}>{a.name}{a.is_admin ? ' (Admin)' : ''}</option>
-              ))}
-            </select>
-          </div>
-
-          <button type="button" onClick={save} disabled={saving} className="w-full py-2.5 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700 disabled:opacity-50">
+          <button type="button" onClick={save} disabled={saving} className="w-full sm:w-auto px-5 py-2.5 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700 disabled:opacity-50">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
 
@@ -299,7 +330,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
               </div>
             )}
             <div className="flex gap-2">
-              <input value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleReply()} placeholder="Public reply…" className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/30" />
+              <input value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleReply()} placeholder="Public reply…" className="ticket-input flex-1 px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/30" />
               <button type="button" onClick={handleReply} disabled={!replyText.trim()} className="px-3 py-2 text-sm font-medium bg-sky-600 text-white rounded-lg disabled:opacity-40">Send</button>
             </div>
           </div>
@@ -312,7 +343,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
             <div className="space-y-2 mb-3 max-h-48 overflow-y-auto">
               {thread.length === 0 && <p className="text-xs text-slate-400">No messages yet</p>}
               {thread.map((n) => (
-                <div key={n.id} className={`rounded-lg px-3 py-2 text-sm ${n.kind === 'public' ? 'bg-sky-50 border border-sky-100' : 'bg-slate-50'}`}>
+                <div key={n.id} className={`ticket-thread-msg rounded-lg px-3 py-2 text-sm ${n.kind === 'public' ? 'ticket-thread-public' : 'ticket-thread-internal'}`}>
                   <span className="text-[10px] font-semibold uppercase text-slate-400">{n.kind === 'public' ? 'Public' : 'Internal'}</span>
                   <div className="text-slate-700">{n.text}</div>
                   <div className="text-[10px] text-slate-400 mt-1">{n.author} · {new Date(n.created_at).toLocaleString()}</div>
@@ -320,7 +351,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
               ))}
             </div>
             <div className="flex gap-2">
-              <input value={noteText} onChange={(e) => setNoteText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNote()} placeholder="Internal note…" className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg" />
+              <input value={noteText} onChange={(e) => setNoteText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNote()} placeholder="Internal note…" className="ticket-input flex-1 px-3 py-2 text-sm rounded-lg" />
               <button type="button" onClick={handleAddNote} disabled={!noteText.trim()} className="px-3 py-2 text-sm font-medium bg-slate-100 hover:bg-slate-200 rounded-lg disabled:opacity-40">Note</button>
             </div>
           </div>
