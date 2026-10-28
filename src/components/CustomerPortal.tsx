@@ -1,3 +1,4 @@
+/* portal-bell-v1 */
 /* view-detail-polish-v1 */
 /* fix-expand-fragment-v1 */
 /* customer-new-expand-v1 */
@@ -15,7 +16,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, CheckCircle2, Ticket, BookOpen, ArrowLeft, MessageSquare,
   LogOut, User, Star, Home, ExternalLink, Users, ImagePlus, X,
-  Flag, ListTree, Lightbulb, Clock3, ClipboardList, MoreVertical, Info, Send,
+  Flag, ListTree, Lightbulb, Clock3, ClipboardList, MoreVertical, Info, Send, Bell,
 } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
@@ -157,13 +158,23 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
-  const { addSurvey, surveys } = usePlatform();
+  const {
+    addSurvey,
+    surveys,
+    notifications,
+    unreadCount: platformUnread,
+    markNotificationRead,
+    markAllNotificationsRead,
+    conversations,
+  } = usePlatform();
   const [view, setView] = useState<PortalView>('home');
   const [myTicketsPage, setMyTicketsPage] = useState(1);
   const [myTicketsDateFrom, setMyTicketsDateFrom] = useState('');
   const [myTicketsDateTo, setMyTicketsDateTo] = useState('');
   const [myTicketMenuId, setMyTicketMenuId] = useState<string | null>(null);
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
+  const [portalNotifOpen, setPortalNotifOpen] = useState(false);
+  const portalNotifRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!myTicketMenuId) return;
     const onDoc = (e: MouseEvent) => {
@@ -174,6 +185,17 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, [myTicketMenuId]);
+  /* portal-notif-outside */
+  useEffect(() => {
+    if (!portalNotifOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (portalNotifRef.current && !portalNotifRef.current.contains(e.target as Node)) {
+        setPortalNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [portalNotifOpen]);
   const [followUpTicket, setFollowUpTicket] = useState<TicketType | null>(null);
   const [followUpText, setFollowUpText] = useState('');
   const [followUpBusy, setFollowUpBusy] = useState(false);
@@ -373,6 +395,94 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const btnPrimary =
     'w-full py-2.5 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors';
 
+  const portalNotifs = useMemo(() => {
+    const items: {
+      id: string;
+      title: string;
+      body?: string;
+      link: PortalView;
+      read: boolean;
+      created_at: string;
+      kind: 'platform' | 'ticket' | 'chat';
+      ticketId?: string;
+    }[] = [];
+    for (const n of notifications) {
+      const linkRaw = (n.link || '').toLowerCase();
+      let link: PortalView = 'mytickets';
+      if (linkRaw.includes('chat') || linkRaw.includes('live')) link = 'chat';
+      else if (linkRaw.includes('ticket') || linkRaw.includes('myticket')) link = 'mytickets';
+      items.push({
+        id: n.id,
+        title: n.title,
+        body: n.body,
+        link,
+        read: !!n.read,
+        created_at: n.created_at,
+        kind: 'platform',
+      });
+    }
+    for (const t of myTickets) {
+      if (!(t.tags || []).includes('customer_unread')) continue;
+      items.push({
+        id: `ticket-${t.id}`,
+        title: 'Ticket updated',
+        body: t.title || t.id,
+        link: 'mytickets',
+        read: false,
+        created_at: t.updated_at || t.created_at,
+        kind: 'ticket',
+        ticketId: t.id,
+      });
+    }
+    const email = (user?.email || '').toLowerCase();
+    for (const conv of conversations) {
+      if (!email) continue;
+      const cust = ((conv as { customer_email?: string }).customer_email || '').toLowerCase();
+      const blob = JSON.stringify(conv).toLowerCase();
+      if (cust !== email && !blob.includes(email)) continue;
+      if (conv.status === 'ended') continue;
+      const msgs = conv.messages || [];
+      const last = msgs[msgs.length - 1];
+      if (!last || last.sender !== 'agent') continue;
+      items.push({
+        id: `chat-${conv.id}`,
+        title: 'New live chat message',
+        body: (last.text || '').slice(0, 120),
+        link: 'chat',
+        read: false,
+        created_at: last.created_at || (conv as { updated_at?: string }).updated_at || new Date().toISOString(),
+        kind: 'chat',
+      });
+    }
+    items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const seen = new Set<string>();
+    return items.filter((x) => {
+      if (seen.has(x.id)) return false;
+      seen.add(x.id);
+      return true;
+    });
+  }, [notifications, myTickets, conversations, user?.email]);
+
+  const portalUnread = portalNotifs.filter((n) => !n.read).length;
+
+  const openPortalNotif = async (n: (typeof portalNotifs)[0]) => {
+    setPortalNotifOpen(false);
+    if (n.kind === 'platform') {
+      void markNotificationRead(n.id);
+    }
+    if (n.kind === 'ticket' && n.ticketId) {
+      const t = myTickets.find((x) => x.id === n.ticketId);
+      if (t) {
+        void updateTicket(t.id, {
+          tags: (t.tags || []).filter((x) => x !== 'customer_unread'),
+        });
+        setExpandedTicketId(t.id);
+      }
+    }
+    setView(n.link);
+  };
+
+
   if (!isCustomerSession) {
     return <PortalAuthGate onBackToAgent={onBackToAgent}>{null}</PortalAuthGate>;
   }
@@ -455,6 +565,67 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
           <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Support online
+          </div>
+          <div className="relative z-[50]" ref={portalNotifRef}>
+            <button
+              type="button"
+              onClick={() => setPortalNotifOpen((v) => !v)}
+              className="relative p-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-violet-500/15 dark:hover:bg-white/10 transition-colors"
+              title="Notifications"
+              aria-label="Notifications"
+            >
+              <Bell size={18} strokeWidth={2.2} />
+              {portalUnread > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-semibold flex items-center justify-center">
+                  {portalUnread > 9 ? '9+' : portalUnread}
+                </span>
+              )}
+            </button>
+            {portalNotifOpen && (
+              <div className="absolute right-0 mt-2 w-80 max-w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-100 dark:border-white/10">
+                  <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">Notifications</span>
+                  {portalUnread > 0 && (
+                    <button
+                      type="button"
+                      className="text-[11px] text-violet-600 dark:text-violet-400 font-medium"
+                      onClick={() => {
+                        void markAllNotificationsRead();
+                        for (const t of myTickets) {
+                          if ((t.tags || []).includes('customer_unread')) {
+                            void updateTicket(t.id, {
+                              tags: (t.tags || []).filter((x) => x !== 'customer_unread'),
+                            });
+                          }
+                        }
+                      }}
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-72 overflow-y-auto">
+                  {portalNotifs.length === 0 ? (
+                    <div className="px-3 py-8 text-center text-xs text-zinc-400">No notifications yet</div>
+                  ) : (
+                    portalNotifs.slice(0, 30).map((n) => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => void openPortalNotif(n)}
+                        className={`w-full text-left px-3 py-2.5 border-b border-zinc-50 dark:border-white/5 text-xs hover:bg-violet-50/60 dark:hover:bg-white/5 transition-colors ${
+                          n.read ? 'opacity-60' : 'bg-violet-50/40 dark:bg-violet-500/10'
+                        }`}
+                      >
+                        <div className="font-semibold text-zinc-800 dark:text-zinc-100">{n.title}</div>
+                        {n.body && <div className="text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-2">{n.body}</div>}
+                        <div className="text-[10px] text-zinc-400 mt-1 tabular-nums">{new Date(n.created_at).toLocaleString()}</div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <ThemeToggle />
           {requiresAuth && (
@@ -1054,7 +1225,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                             {expandedTicketId === t.id && (
                               <tr key={t.id + '-detail'} className="border-b border-zinc-100/80 dark:border-white/5 bg-violet-500/[0.04]">
                                 <td colSpan={7} className="px-4 py-4">
-                                  <div className="rounded-xl border border-zinc-200/70 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] p-4 sm:p-5 space-y-4 text-left shadow-sm">
+                                  <div className="rounded-xl border border-zinc-200/70 dark:border-white/10 bg-white/50 dark:bg-zinc-950/80 p-4 sm:p-5 space-y-4 text-left shadow-sm">
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                       <div>
                                         <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{t.title}</div>
@@ -1095,7 +1266,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
 
                                       return (
 
-                                        <div className="rounded-lg border border-violet-300/40 dark:border-violet-400/25 bg-violet-500/10 px-3.5 py-3">
+                                        <div className="rounded-lg border border-violet-300/40 dark:border-violet-400/25 bg-violet-500/10 dark:bg-violet-950/50 px-3.5 py-3">
 
                                           <div className="text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300 mb-1">Resolution Plan</div>
 
@@ -1147,7 +1318,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                         .filter((m) => m.kind === 'public')
                                         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                                         .map((m) => (
-                                          <div key={m.id} className="rounded-xl px-3.5 py-3 text-sm bg-white/70 dark:bg-white/[0.06] border border-zinc-200/70 dark:border-white/10 shadow-sm">
+                                          <div key={m.id} className="rounded-xl px-3.5 py-3 text-sm bg-white/80 dark:bg-zinc-900/90 border border-zinc-200/70 dark:border-white/12 shadow-sm">
                                             <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1.5">
                                               <div className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{m.author}</div>
                                               <div className="text-[10px] text-zinc-500 tabular-nums">{new Date(m.created_at).toLocaleString()}</div>

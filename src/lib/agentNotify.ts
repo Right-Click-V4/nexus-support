@@ -92,3 +92,37 @@ export function onAgentNotify(handler: () => void) {
   window.addEventListener(EVENT, fn);
   return () => window.removeEventListener(EVENT, fn);
 }
+
+
+const CUSTOMER_KEY = 'nexus-customer-notif-v1';
+const CUSTOMER_EVENT = 'nexus-customer-notify';
+
+/** Notify a customer by email (local). link: mytickets | chat */
+export async function notifyCustomer(payload: {
+  email?: string | null;
+  title: string;
+  body: string;
+  link?: string;
+}) {
+  const email = (payload.email || '').trim().toLowerCase();
+  if (!email) return;
+  const created_at = new Date().toISOString();
+  const item = {
+    id: uid(),
+    customer_email: email,
+    title: payload.title,
+    body: payload.body,
+    link: payload.link || 'mytickets',
+    read: false,
+    created_at,
+  };
+  try {
+    const raw = localStorage.getItem(CUSTOMER_KEY);
+    const prev = raw ? JSON.parse(raw) : [];
+    const next = [item, ...(Array.isArray(prev) ? prev : [])].slice(0, 80);
+    localStorage.setItem(CUSTOMER_KEY, JSON.stringify(next));
+  } catch {}
+  try {
+    window.dispatchEvent(new CustomEvent(CUSTOMER_EVENT, { detail: item }));
+  } catch {}
+}

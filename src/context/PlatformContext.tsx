@@ -9,6 +9,7 @@ import {
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import type {
+import { notifyCustomer } from '../lib/agentNotify';
   KnowledgeArticle,
   ChatConversation,
   ChatMessage,
@@ -623,12 +624,21 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   const sendChatMessage = async (conversationId: string, text: string, sender: 'agent' | 'customer') => {
     const msg: ChatMessage = { id: `m-${Date.now()}`, text, sender, created_at: new Date().toISOString() };
+    const conv = conversations.find((x) => x.id === conversationId);
     if (supabase) {
       await supabase.from('chat_messages').insert({ conversation_id: conversationId, text, sender });
       await supabase.from('chat_conversations').update({ preview: msg.text.slice(0, 120), status: 'active', unread: sender === 'customer' ? 1 : 0, updated_at: new Date().toISOString() }).eq('id', conversationId);
       await refreshPlatform();
     } else {
       setConversations((prev) => prev.map((c) => c.id === conversationId ? { ...c, messages: [...(c.messages || []), msg], preview: msg.text, status: 'active' as const, unread: sender === 'customer' ? (c.unread || 0) + 1 : 0 } : c));
+    }
+    if (sender === 'agent' && conv?.customer_email) {
+      void notifyCustomer({
+        email: conv.customer_email,
+        title: 'New live chat message',
+        body: text.slice(0, 120),
+        link: 'chat',
+      });
     }
   };
 

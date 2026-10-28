@@ -17,7 +17,7 @@ import { computeSlaDue } from '../types';
 import { INITIAL_TICKETS, INITIAL_AGENTS, INITIAL_CUSTOMERS, nextTicketId } from '../data';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
-import { notifyAgents } from '../lib/agentNotify';
+import { notifyAgents, notifyCustomer } from '../lib/agentNotify';
 import { pushAudit } from '../lib/audit';
 import { pickAssignee } from '../lib/assign';
 import { applyTicketCreatedAutomations } from '../lib/automations';
@@ -439,6 +439,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         link: 'tickets',
         userId: (assignee as Agent & { user_id?: string })?.user_id || undefined,
       });
+      if (ticket?.customer_email) {
+        void notifyCustomer({
+          email: ticket.customer_email,
+          title: 'Ticket updated',
+          body: `${ticket.title || id} was updated by support.`,
+          link: 'mytickets',
+        });
+      }
     }
   };
 
@@ -526,6 +534,15 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         link: 'tickets',
         userId: (assignee as Agent & { user_id?: string })?.user_id || undefined,
       });
+
+      if (ticket.customer_email) {
+        void notifyCustomer({
+          email: ticket.customer_email,
+          title: 'New reply on your ticket',
+          body: ticket.title || ticketId,
+          link: 'mytickets',
+        });
+      }
     }
   };
 
