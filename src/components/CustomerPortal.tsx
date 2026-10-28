@@ -1,3 +1,4 @@
+/* fix-expand-fragment-v1 */
 /* customer-new-expand-v1 */
 /* menu-page20-v1 */
 /* action-unify-v1 */
@@ -982,6 +983,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                         </thead>
                         <tbody>
                           {slice.map((t) => (
+                            <>
                             <tr key={t.id} className="border-b border-zinc-100/80 dark:border-white/5 hover:bg-violet-500/5 transition-colors">
                               <td className="px-4 py-3 font-mono text-xs text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{t.id}</td>
                               <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50 max-w-[240px]">
@@ -1096,6 +1098,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                 </td>
                               </tr>
                             )}
+                            </>
                           ))}
                         </tbody>
                       </table>
