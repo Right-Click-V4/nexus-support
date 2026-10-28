@@ -1,3 +1,4 @@
+/* action-unify-v1 */
 /* status-colors-space-v1 */
 /* mytickets-menu-guide-v1 */
 /* mytickets-wider-v1 */
@@ -334,12 +335,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   };
 
   const statusColor: Record<string, string> = {
-    new: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/60 dark:border-violet-400/40',
-    open: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/60 dark:border-violet-400/40',
-    pending: 'bg-orange-100 text-orange-800 dark:bg-orange-500/25 dark:text-orange-200 border border-orange-300/60 dark:border-orange-400/40',
-    'on-hold': 'bg-yellow-100 text-yellow-900 dark:bg-yellow-500/25 dark:text-yellow-100 border border-yellow-300/60 dark:border-yellow-400/40',
-    resolved: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/25 dark:text-emerald-200 border border-emerald-300/60 dark:border-emerald-400/40',
-    closed: 'bg-red-100 text-red-800 dark:bg-red-500/25 dark:text-red-200 border border-red-300/60 dark:border-red-400/40',
+    new: 'bg-violet-500 text-white dark:bg-violet-500 dark:text-white border border-violet-600/50',
+    open: 'bg-violet-500 text-white dark:bg-violet-500 dark:text-white border border-violet-600/50',
+    pending: 'bg-orange-500 text-white dark:bg-orange-500 dark:text-white border border-orange-600/50',
+    'on-hold': 'bg-yellow-400 text-yellow-950 dark:bg-yellow-400 dark:text-yellow-950 border border-yellow-500/60',
+    resolved: 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-white border border-emerald-600/50',
+    closed: 'bg-red-500 text-white dark:bg-red-500 dark:text-white border border-red-600/50',
   };
 
   const navItems: { id: PortalView; label: string; icon: typeof Home }[] = [
@@ -898,11 +899,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
               const page = Math.min(myTicketsPage, totalPages);
               const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
               const statusGuide = [
-                { key: 'open', label: 'Open', color: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/50 dark:border-violet-400/40', meaning: 'Your ticket was received and is waiting in the queue for an agent to pick it up.' },
-                { key: 'pending', label: 'Pending', color: 'bg-orange-100 text-orange-800 dark:bg-orange-500/25 dark:text-orange-200 border border-orange-300/50 dark:border-orange-400/40', meaning: 'An agent or tech support is actively working on your ticket and following up.' },
-                { key: 'on-hold', label: 'On Hold', color: 'bg-yellow-100 text-yellow-900 dark:bg-yellow-500/25 dark:text-yellow-100 border border-yellow-300/50 dark:border-yellow-400/40', meaning: 'Work is paused — often waiting on more details from you or a third party.' },
-                { key: 'resolved', label: 'Resolved', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/25 dark:text-emerald-200 border border-emerald-300/50 dark:border-emerald-400/40', meaning: 'The issue was addressed. You can still reply if something is still wrong.' },
-                { key: 'closed', label: 'Closed', color: 'bg-red-100 text-red-800 dark:bg-red-500/25 dark:text-red-200 border border-red-300/50 dark:border-red-400/40', meaning: 'The ticket is closed (for example past SLA or fully completed). Contact support if you need it reopened.' },
+                { key: 'open', label: 'Open', color: 'bg-violet-500 text-white border border-violet-600/40', meaning: 'Your ticket was received and is waiting in the queue for an agent to pick it up.' },
+                { key: 'pending', label: 'Pending', color: 'bg-orange-500 text-white border border-orange-600/40', meaning: 'An agent or tech support is actively working on your ticket and following up.' },
+                { key: 'on-hold', label: 'On Hold', color: 'bg-yellow-400 text-yellow-950 border border-yellow-500/50', meaning: 'Work is paused — often waiting on more details from you or a third party.' },
+                { key: 'resolved', label: 'Resolved', color: 'bg-emerald-500 text-white border border-emerald-600/40', meaning: 'The issue was addressed. You can still reply if something is still wrong.' },
+                { key: 'closed', label: 'Closed', color: 'bg-red-500 text-white border border-red-600/40', meaning: 'The ticket is closed (for example past SLA or fully completed). Contact support if you need it reopened.' },
               ]
               return (
               <div className="w-full space-y-5">
@@ -963,7 +964,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                             <th className="px-4 py-2.5 font-semibold">Status</th>
                             <th className="px-4 py-2.5 font-semibold">Priority</th>
                             <th className="px-4 py-2.5 font-semibold">Submitted</th>
-                            <th className="px-4 py-2.5 font-semibold text-right sticky right-0 z-[5] bg-inherit portal-mytickets-action-col">Action</th>
+                            <th className="px-4 py-2.5 font-semibold text-right">Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -981,7 +982,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                               <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                                 {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </td>
-                              <td className="px-4 py-3 text-right relative sticky right-0 z-[5] portal-mytickets-action-col">
+                              <td className="px-4 py-3 text-right relative">
                                 <button
                                   type="button"
                                   className="inline-flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-500/10"

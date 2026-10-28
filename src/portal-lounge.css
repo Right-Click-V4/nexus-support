@@ -1389,20 +1389,7 @@ html.nexus-dark .portal-mytickets-guide,
 }
 
 
-/* mytickets-wider-v1 — sticky Action column */
-.portal-mytickets-action-col {
-  background: rgba(30, 20, 55, 0.95);
-  box-shadow: -6px 0 12px rgba(0, 0, 0, 0.15);
-}
-html.nexus-light .portal-mytickets-action-col,
-html:not(.nexus-dark):not(.dark) .portal-mytickets-action-col {
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: -6px 0 12px rgba(15, 23, 42, 0.06);
-}
-html.nexus-dark .portal-mytickets-action-col,
-.dark .portal-mytickets-action-col {
-  background: rgba(24, 20, 42, 0.98);
-}
+/* action-unify-v1: sticky Action styles removed */
 
 
 /* mytickets-menu-guide-v1 */
@@ -1423,4 +1410,22 @@ html.nexus-dark .portal-mytickets-guide,
 .portal-mytickets-panel .overflow-x-auto {
   overflow-x: auto;
   overflow-y: visible;
+}
+
+
+/* action-unify-v1 — guide matches table panel; no sticky Action tint */
+.portal-mytickets-guide {
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+html.nexus-dark .portal-mytickets-guide,
+.dark .portal-mytickets-guide {
+  background: rgba(24, 20, 42, 0.45) !important;
+  border-color: rgba(167, 139, 250, 0.2) !important;
+}
+.portal-mytickets-action-col {
+  background: transparent !important;
+  box-shadow: none !important;
 }
