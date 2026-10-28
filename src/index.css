@@ -725,3 +725,74 @@ html.nexus-dark .ticket-confirm-modal,
   border-color: rgba(167, 139, 250, 0.25);
   color: #f1f5f9;
 }
+
+
+/* mytickets-table-v1 + light contrast fixes for ticket detail / confirm */
+html.nexus-light .ticket-detail-page,
+html:not(.nexus-dark):not(.dark) .ticket-detail-page {
+  color: #0f172a !important;
+}
+html.nexus-light .ticket-detail-page .ticket-detail-panel,
+html:not(.nexus-dark):not(.dark) .ticket-detail-page .ticket-detail-panel {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+html.nexus-light .ticket-detail-page .ticket-detail-header,
+html:not(.nexus-dark):not(.dark) .ticket-detail-page .ticket-detail-header {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.nexus-light .ticket-detail-page h2,
+html.nexus-light .ticket-detail-page .text-slate-900,
+html.nexus-light .ticket-detail-page .text-slate-800,
+html.nexus-light .ticket-detail-page .text-slate-700,
+html:not(.nexus-dark):not(.dark) .ticket-detail-page h2 {
+  color: #0f172a !important;
+}
+html.nexus-light .ticket-detail-page .text-slate-500,
+html.nexus-light .ticket-detail-page .text-slate-400,
+html.nexus-light .ticket-detail-page .text-slate-600 {
+  color: #475569 !important;
+}
+html.nexus-light .ticket-detail-page .ticket-meta-block {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.nexus-light .ticket-confirm-modal,
+html:not(.nexus-dark):not(.dark) .ticket-confirm-modal {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+html.nexus-light .ticket-confirm-modal h3,
+html:not(.nexus-dark):not(.dark) .ticket-confirm-modal h3 {
+  color: #0f172a !important;
+}
+html.nexus-light .ticket-confirm-modal p,
+html:not(.nexus-dark):not(.dark) .ticket-confirm-modal p {
+  color: #334155 !important;
+}
+
+.portal-mytickets-panel {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+html.nexus-dark .portal-mytickets-panel,
+.dark .portal-mytickets-panel {
+  background: rgba(24, 20, 42, 0.45);
+  border-color: rgba(167, 139, 250, 0.2);
+}
+.portal-mytickets-input {
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+}
+html.nexus-dark .portal-mytickets-input,
+.dark .portal-mytickets-input {
+  background: rgba(15, 12, 30, 0.7);
+  color: #f1f5f9;
+  border-color: rgba(167, 139, 250, 0.25);
+}
