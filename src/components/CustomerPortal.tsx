@@ -1,3 +1,4 @@
+/* view-detail-polish-v1 */
 /* fix-expand-fragment-v1 */
 /* customer-new-expand-v1 */
 /* menu-page20-v1 */
@@ -1053,11 +1054,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                             {expandedTicketId === t.id && (
                               <tr key={t.id + '-detail'} className="border-b border-zinc-100/80 dark:border-white/5 bg-violet-500/[0.04]">
                                 <td colSpan={7} className="px-4 py-4">
-                                  <div className="rounded-xl border border-zinc-200/70 dark:border-white/10 p-4 space-y-3 text-left">
+                                  <div className="rounded-xl border border-zinc-200/70 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] p-4 sm:p-5 space-y-4 text-left shadow-sm">
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                       <div>
                                         <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{t.title}</div>
-                                        <div className="text-xs text-zinc-500 mt-0.5 font-mono">{t.id} · {t.branch || 'No branch'} · {t.priority} · {t.status}</div>
+                                        <div className="text-xs text-zinc-500 mt-0.5 font-mono">{t.id} · {t.branch || 'No branch'}</div>
                                       </div>
                                       <button
                                         type="button"
@@ -1079,18 +1080,79 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                       <div><span className="text-zinc-500">Status</span><div className="font-medium capitalize text-zinc-800 dark:text-zinc-100">{t.status}</div></div>
                                       <div><span className="text-zinc-500">Priority</span><div className="font-medium capitalize text-zinc-800 dark:text-zinc-100">{t.priority}</div></div>
                                     </div>
-                                    <div className="pt-2 border-t border-zinc-200/70 dark:border-white/10 space-y-2">
-                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Conversation</div>
+
+                                    {(() => {
+
+                                      const planTag = (t.tags || []).find((x) => x.startsWith('plan:') && !x.startsWith('plan_note:'));
+
+                                      const planNote = (t.tags || []).find((x) => x.startsWith('plan_note:'));
+
+                                      const plan = planTag ? planTag.slice(5) : '';
+
+                                      const note = planNote ? planNote.slice(10) : '';
+
+                                      if (!plan) return null;
+
+                                      return (
+
+                                        <div className="rounded-lg border border-violet-300/40 dark:border-violet-400/25 bg-violet-500/10 px-3.5 py-3">
+
+                                          <div className="text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300 mb-1">Resolution Plan</div>
+
+                                          <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{plan}</div>
+
+                                          {note && <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 whitespace-pre-wrap">{note}</p>}
+
+                                        </div>
+
+                                      );
+
+                                    })()}
+
+
+                                    {(t.attachments || []).length > 0 && (
+
+                                      <div className="rounded-lg border border-zinc-200/60 dark:border-white/10 px-3.5 py-3 space-y-2">
+
+                                        <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Attachments</div>
+
+                                        <ul className="space-y-1.5">
+
+                                          {(t.attachments || []).map((a) => (
+
+                                            <li key={a.id}>
+
+                                              <a href={a.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-sky-600 dark:text-sky-400 hover:underline break-all">{a.name}</a>
+
+                                              <span className="text-[10px] text-zinc-500 ml-2">{a.size ? `${Math.round(a.size / 1024)} KB` : ''}</span>
+
+                                            </li>
+
+                                          ))}
+
+                                        </ul>
+
+                                      </div>
+
+                                    )}
+
+
+                                    <div className="pt-1 space-y-2.5">
+
+                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Agent Response</div>
                                       {(t.messages || []).filter((m) => m.kind === 'public').length === 0 && (
-                                        <p className="text-xs text-zinc-500">No public replies yet.</p>
+                                        <p className="text-xs text-zinc-500">No agent response yet. Support will reply here when they message you.</p>
                                       )}
                                       {(t.messages || [])
                                         .filter((m) => m.kind === 'public')
                                         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                                         .map((m) => (
-                                          <div key={m.id} className="rounded-lg px-3 py-2 text-sm bg-white/50 dark:bg-white/5 border border-zinc-200/60 dark:border-white/10">
-                                            <div className="text-zinc-800 dark:text-zinc-100 whitespace-pre-wrap">{m.text}</div>
-                                            <div className="text-[10px] text-zinc-500 mt-1">{m.author} · {new Date(m.created_at).toLocaleString()}</div>
+                                          <div key={m.id} className="rounded-xl px-3.5 py-3 text-sm bg-white/70 dark:bg-white/[0.06] border border-zinc-200/70 dark:border-white/10 shadow-sm">
+                                            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1.5">
+                                              <div className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{m.author}</div>
+                                              <div className="text-[10px] text-zinc-500 tabular-nums">{new Date(m.created_at).toLocaleString()}</div>
+                                            </div>
+                                            <div className="text-sm text-zinc-700 dark:text-zinc-200 whitespace-pre-wrap leading-relaxed">{m.text}</div>
                                           </div>
                                         ))}
                                     </div>
