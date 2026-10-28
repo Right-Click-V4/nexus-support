@@ -1,9 +1,10 @@
+/* ticket-save-ui-v1 */
 /* status-outline-v1 */
 /* ticket-detail-layout-v1 */
 /* ticket-panel-v1 */
 /* ticket-unread-v1 */
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Clock, Download, MessageSquare, Paperclip, Pencil, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Download, MessageSquare, Paperclip, Pencil, Trash2, X } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { usePlatform } from '../context/PlatformContext';
 import { INITIAL_BRANCHES } from '../data';
@@ -27,6 +28,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   const [noteText, setNoteText] = useState('');
   const [replyText, setReplyText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [attachError, setAttachError] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -73,7 +75,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
         assignee_id: assigneeId || null,
         branch: branch.trim() || undefined,
       });
-      onClose();
+      setShowSaved(true);
     } catch (e) {
       console.error(e);
     } finally {
@@ -149,6 +151,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
+    <>
     <div className="ticket-detail-page w-full max-w-5xl mx-auto space-y-4 pb-8">
       <div className="flex flex-wrap items-center gap-3">
         <button
@@ -365,24 +368,32 @@ export default function TicketDetail({ ticket, onClose }: Props) {
             </div>
           </div>
 
-          <hr className="border-slate-200" />
 
-          {isAdmin ? (
-            !confirmDelete ? (
-              <button type="button" onClick={() => setConfirmDelete(true)} className="w-full py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg flex items-center justify-center gap-2">
-                <Trash2 size={16} /> Delete ticket
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button type="button" onClick={handleDelete} disabled={saving} className="flex-1 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg disabled:opacity-50">Confirm delete</button>
-                <button type="button" onClick={() => setConfirmDelete(false)} className="flex-1 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-              </div>
-            )
-          ) : (
-            <p className="text-xs text-slate-400 text-center">Ticket delete is admin-only. Soft-close by setting status to Resolved.</p>
-          )}
         </div>
       </div>
     </div>
+
+      {showSaved && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowSaved(false)}>
+          <div
+            className="ticket-success-modal w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl px-6 py-8 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ticket-success-check mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+              <Check size={28} strokeWidth={3} className="text-emerald-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-1">Updated Successfully</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Ticket changes have been saved.</p>
+            <button
+              type="button"
+              onClick={() => setShowSaved(false)}
+              className="w-full py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
