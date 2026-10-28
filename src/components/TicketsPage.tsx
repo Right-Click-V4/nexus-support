@@ -1,3 +1,4 @@
+/* tickets-page30-v1 */
 /* trash-confirm-v1 */
 /* closed-sla-v1 */
 /* status-outline-v1 */
@@ -41,6 +42,7 @@ export default function TicketsPage() {
   const [confirmAction, setConfirmAction] = useState<{ type: 'delete' | 'restore'; id: string } | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [ticketPage, setTicketPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
@@ -88,6 +90,17 @@ export default function TicketsPage() {
       return true;
     });
   }, [tickets, search, statusFilter, priorityFilter, channelFilter, slaFilter, showTrash]);
+
+  const PAGE_SIZE = 30;
+  const totalTicketPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(ticketPage, totalTicketPages);
+  const pagedTickets = useMemo(
+    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filtered, safePage],
+  );
+  useEffect(() => {
+    setTicketPage(1);
+  }, [search, statusFilter, priorityFilter, channelFilter, slaFilter, showTrash]);
 
   const selected = selectedId ? tickets.find((t) => t.id === selectedId) : null;
 
@@ -269,7 +282,7 @@ export default function TicketsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((t) => {
+              {pagedTickets.map((t) => {
                 const sla = formatSlaCountdown(t.sla_due_at, t.status);
                 return (
                   <tr
@@ -379,7 +392,7 @@ export default function TicketsPage() {
                     <td className="px-4 py-3 text-[11px] tickets-muted whitespace-nowrap tabular-nums" title={new Date(t.created_at).toLocaleString()}>
                       {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="px-4 py-3 tickets-cell">{t.assignee?.initials || t.assignee?.name || '—'}</td>
+                    <td className="px-4 py-3 tickets-cell">{(t.assignee?.name ? t.assignee.name.trim().split(/\s+/)[0] : null) || t.assignee?.initials || '—'}</td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       {showTrash ? (
                         <button type="button" onClick={(e) => void restore(t.id, e)} className="p-1.5 text-slate-400 hover:text-emerald-600" title="Restore">
@@ -402,8 +415,32 @@ export default function TicketsPage() {
         )}
       </div>
 
-      <div className="text-xs text-slate-500">
-        Showing {filtered.length} of {tickets.filter((t) => !!t.deleted_at === showTrash).length} tickets
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+        <span>
+          Showing {filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} tickets
+          {tickets.filter((t) => !!t.deleted_at === showTrash).length !== filtered.length
+            ? ` (filtered from ${tickets.filter((t) => !!t.deleted_at === showTrash).length})`
+            : ''}
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="tabular-nums">Page {safePage} of {totalTicketPages}</span>
+          <button
+            type="button"
+            disabled={safePage <= 1}
+            onClick={() => setTicketPage((p) => Math.max(1, p - 1))}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/15 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-white/5"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            disabled={safePage >= totalTicketPages}
+            onClick={() => setTicketPage((p) => Math.min(totalTicketPages, p + 1))}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/15 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-white/5"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {showCreate && <CreateTicketModal onClose={() => setShowCreate(false)} />}
