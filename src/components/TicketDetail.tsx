@@ -1,6 +1,7 @@
+/* ticket-panel-v1 */
 /* ticket-unread-v1 */
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { X, Trash2, MessageSquare, Clock, Paperclip, Download } from 'lucide-react';
+import { X, Trash2, MessageSquare, Clock, Paperclip, Download, ArrowLeft } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { usePlatform } from '../context/PlatformContext';
 import { INITIAL_BRANCHES } from '../data';
@@ -144,19 +145,36 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
-    <div className="fixed top-14 left-0 right-0 bottom-0 z-[70] flex justify-end bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-md bg-white h-full shadow-2xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 ticket-detail-header px-5 py-4 flex items-center justify-between z-10 border-b">
-          <div>
-            <div className="text-xs font-mono text-slate-400">{ticket.id}</div>
-            <h2 className="text-lg font-semibold text-slate-900 leading-tight">{ticket.title}</h2>
+    <div className="ticket-detail-page w-full max-w-5xl mx-auto space-y-4 pb-8">
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg border border-slate-200 dark:border-white/15 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-white/10 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Back to Tickets
+        </button>
+        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">{ticket.id}</div>
+        {((ticket.tags || []).includes('unread') || ticket.status === 'new') && (
+          <span className="ticket-new-badge text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">New</span>
+        )}
+      </div>
+
+      <div className="ticket-detail-panel rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="ticket-detail-header px-5 sm:px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50 leading-tight tracking-tight">
+              {ticket.title}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Submitted {new Date(ticket.created_at).toLocaleString()}
+              {ticket.channel ? ` · ${ticket.channel}` : ''}
+            </p>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
-            <X size={20} />
-          </button>
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="p-5 sm:p-6 space-y-6">
           {ticket.sla_due_at && (
             <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${
               slaBreached ? 'bg-rose-50 text-rose-700' : 'bg-slate-50 text-slate-600'

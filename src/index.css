@@ -522,3 +522,21 @@ html.nexus-dark .ticket-detail-header,
   background: rgba(15, 12, 30, 0.98);
   border-color: rgba(167, 139, 250, 0.2);
 }
+
+
+/* ticket-panel-v1 — full-page ticket detail under Tickets tab */
+.ticket-detail-page .ticket-detail-panel {
+  background: #ffffff;
+  color: #0f172a;
+}
+html.nexus-dark .ticket-detail-page .ticket-detail-panel,
+.dark .ticket-detail-page .ticket-detail-panel {
+  background: rgba(24, 20, 42, 0.92);
+  color: #f1f5f9;
+  border-color: rgba(167, 139, 250, 0.22);
+}
+html.nexus-dark .ticket-detail-page .ticket-detail-header,
+.dark .ticket-detail-page .ticket-detail-header {
+  background: rgba(15, 12, 30, 0.6);
+  border-color: rgba(167, 139, 250, 0.18);
+}

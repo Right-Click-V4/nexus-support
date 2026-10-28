@@ -1,3 +1,4 @@
+/* ticket-panel-v1 */
 /* ticket-unread-v1 */
 /* details-tickets-theme-v1 */
 /* tickets-table-v2 */
@@ -72,6 +73,14 @@ export default function TicketsPage() {
   }, [tickets, search, statusFilter, priorityFilter, channelFilter, slaFilter, showTrash]);
 
   const selected = selectedId ? tickets.find((t) => t.id === selectedId) : null;
+
+  if (selected) {
+    return (
+      <div className="space-y-4">
+        <TicketDetail ticket={selected} onClose={() => setSelectedId(null)} />
+      </div>
+    );
+  }
   const breachCount = tickets.filter(
     (t) => !t.deleted_at && t.status !== 'resolved' && formatSlaCountdown(t.sla_due_at, t.status).tone === 'breach'
   ).length;
@@ -343,7 +352,6 @@ export default function TicketsPage() {
       </div>
 
       {showCreate && <CreateTicketModal onClose={() => setShowCreate(false)} />}
-      {selected && <TicketDetail ticket={selected} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }
