@@ -1,3 +1,4 @@
+/* details-tickets-theme-v1 */
 /* tickets-table-v2 */
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, Download, Trash2, RotateCcw } from 'lucide-react';
@@ -203,13 +204,13 @@ export default function TicketsPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="tickets-table-panel rounded-xl border shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-10 text-center text-slate-400 text-sm">Loading tickets...</div>
+          <div className="p-10 text-center tickets-muted text-sm">Loading tickets...</div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr className="text-left text-slate-500">
+            <thead className="tickets-table-head border-b">
+              <tr className="text-left">
                 <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Subject</th>
                 <th className="px-4 py-3 font-medium">Customer</th>
@@ -231,16 +232,18 @@ export default function TicketsPage() {
                     key={t.id}
                     onClick={() => setSelectedId(t.id)}
                     className={clsx(
-                      'border-b border-slate-100 hover:bg-brand-50/50 cursor-pointer transition-colors',
-                      t.status === 'new' && t.channel === 'portal' && 'bg-violet-50/80 ring-1 ring-inset ring-violet-200/60',
-                      t.status === 'new' && t.channel !== 'portal' && 'bg-brand-50/40'
+                      'tickets-row border-b cursor-pointer transition-colors',
+                      t.status === 'new' && t.channel === 'portal' && 'tickets-row-new-portal',
+                      t.status === 'new' && t.channel !== 'portal' && 'tickets-row-new'
                     )}
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-slate-500">{t.id}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800 max-w-[240px]">
-                      <div className="truncate" title={t.title}>{t.title}</div>
+                    <td className="px-4 py-3 font-mono text-xs tickets-muted">{t.id}</td>
+                    <td className="px-4 py-3 max-w-[240px]">
+                      <div className="tickets-subject truncate font-bold tracking-wide" title={t.title}>
+                        {t.title}
+                      </div>
                       {t.description ? (
-                        <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal" title={t.description}>
+                        <div className="tickets-desc text-[11px] truncate mt-0.5 font-normal" title={t.description}>
                           {t.description}
                         </div>
                       ) : null}
@@ -255,12 +258,12 @@ export default function TicketsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-slate-800 font-medium">{t.customer_name}</div>
+                      <div className="tickets-cell font-medium">{t.customer_name}</div>
                       {t.customer_email && (
-                        <div className="text-[11px] text-slate-400 truncate max-w-[140px]">{t.customer_email}</div>
+                        <div className="text-[11px] tickets-muted truncate max-w-[140px]">{t.customer_email}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 text-xs max-w-[120px] truncate" title={t.branch || ''}>
+                    <td className="px-4 py-3 tickets-cell text-xs max-w-[120px] truncate" title={t.branch || ''}>
                       {t.branch || '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -301,10 +304,10 @@ export default function TicketsPage() {
                         {t.channel}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap tabular-nums" title={new Date(t.created_at).toLocaleString()}>
+                    <td className="px-4 py-3 text-[11px] tickets-muted whitespace-nowrap tabular-nums" title={new Date(t.created_at).toLocaleString()}>
                       {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{t.assignee?.initials || t.assignee?.name || '—'}</td>
+                    <td className="px-4 py-3 tickets-cell">{t.assignee?.initials || t.assignee?.name || '—'}</td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       {showTrash ? (
                         <button type="button" onClick={(e) => void restore(t.id, e)} className="p-1.5 text-slate-400 hover:text-emerald-600" title="Restore">
@@ -323,7 +326,7 @@ export default function TicketsPage() {
           </table>
         )}
         {!loading && filtered.length === 0 && (
-          <div className="p-10 text-center text-slate-400 text-sm">No tickets match.</div>
+          <div className="p-10 text-center tickets-muted text-sm">No tickets match.</div>
         )}
       </div>
 

@@ -19,6 +19,11 @@ import ThemeToggle from './ThemeToggle';
 import PortalSpaceLoungeBg from './PortalSpaceLoungeBg';
 
 interface Props { onBackToAgent?: () => void; }
+function capitalizeSentences(text: string): string {
+  if (!text) return text;
+  return text.replace(/(^|[.!?\n]\s+)([a-z])/g, (_m, lead: string, ch: string) => lead + ch.toUpperCase());
+}
+
 type PortalView = 'home' | 'submit' | 'track' | 'success' | 'help' | 'chat' | 'account' | 'mytickets' | 'community';
 
 const HELP_ARTICLES = [
@@ -135,7 +140,7 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
 }
 
 /* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
-/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */ /* priority-required-v1 */ /* submit-success-modal-v1 */ /* modal-glow-v2 */
+/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */ /* priority-required-v1 */ /* submit-success-modal-v1 */ /* modal-glow-v2 */ /* details-tickets-theme-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -242,7 +247,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     try {
       const ticket = await createTicket({
         title: title.trim(),
-        description: description.trim(),
+        description: capitalizeSentences(description.trim()),
         priority: priority as Priority,
         channel: 'portal',
         customer_name: name.trim(),
@@ -522,7 +527,8 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                       <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Details</label>
                       <textarea
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={(e) => setDescription(capitalizeSentences(e.target.value))}
+                        onBlur={(e) => setDescription(capitalizeSentences(e.target.value))}
                         rows={4}
                         placeholder="Describe what happened, steps to reproduce, and any error messages…"
                         className={field}

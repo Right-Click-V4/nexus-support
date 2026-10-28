@@ -974,3 +974,97 @@ html.nexus-dark .portal-submit-form-glow {
     0 0 56px 14px rgba(167, 139, 250, 0.28),
     0 10px 28px rgba(0, 0, 0, 0.25) !important;
 }
+
+
+/* details-tickets-theme-v1 — agent Tickets table readable in light/dark */
+.tickets-table-panel {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+html.nexus-dark .tickets-table-panel,
+.dark .tickets-table-panel {
+  background: rgba(24, 20, 42, 0.92);
+  border-color: rgba(167, 139, 250, 0.22);
+  color: #f1f5f9;
+}
+.tickets-table-head {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+html.nexus-dark .tickets-table-head,
+.dark .tickets-table-head {
+  background: rgba(15, 12, 30, 0.95);
+  border-color: rgba(167, 139, 250, 0.18);
+  color: #c4b5fd;
+}
+.tickets-table-head th {
+  font-weight: 600;
+  color: inherit;
+}
+.tickets-row {
+  border-color: #f1f5f9;
+  background: transparent;
+}
+.tickets-row:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
+html.nexus-dark .tickets-row,
+.dark .tickets-row {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+html.nexus-dark .tickets-row:hover,
+.dark .tickets-row:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+.tickets-row-new-portal {
+  background: rgba(139, 92, 246, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.25);
+}
+html.nexus-dark .tickets-row-new-portal,
+.dark .tickets-row-new-portal {
+  background: rgba(139, 92, 246, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.35);
+}
+.tickets-row-new {
+  background: rgba(99, 102, 241, 0.05);
+}
+html.nexus-dark .tickets-row-new,
+.dark .tickets-row-new {
+  background: rgba(99, 102, 241, 0.1);
+}
+.tickets-subject {
+  color: #1e293b;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+html.nexus-dark .tickets-subject,
+.dark .tickets-subject {
+  color: #f8fafc;
+}
+.tickets-desc {
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+}
+html.nexus-dark .tickets-desc,
+.dark .tickets-desc {
+  color: #94a3b8;
+}
+.tickets-cell {
+  color: #334155;
+}
+html.nexus-dark .tickets-cell,
+.dark .tickets-cell {
+  color: #e2e8f0;
+}
+.tickets-muted {
+  color: #64748b;
+}
+html.nexus-dark .tickets-muted,
+.dark .tickets-muted {
+  color: #94a3b8;
+}
