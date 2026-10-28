@@ -809,3 +809,19 @@ html.nexus-dark .portal-mytickets-guide,
   background: rgba(24, 20, 42, 0.45);
   border-color: rgba(167, 139, 250, 0.2);
 }
+
+
+/* mytickets-wider-v1 — sticky Action column */
+.portal-mytickets-action-col {
+  background: rgba(30, 20, 55, 0.95);
+  box-shadow: -6px 0 12px rgba(0, 0, 0, 0.15);
+}
+html.nexus-light .portal-mytickets-action-col,
+html:not(.nexus-dark):not(.dark) .portal-mytickets-action-col {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: -6px 0 12px rgba(15, 23, 42, 0.06);
+}
+html.nexus-dark .portal-mytickets-action-col,
+.dark .portal-mytickets-action-col {
+  background: rgba(24, 20, 42, 0.98);
+}

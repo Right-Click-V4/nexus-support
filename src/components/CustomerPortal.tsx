@@ -1,3 +1,4 @@
+/* mytickets-wider-v1 */
 /* mytickets-jsx-fix-v1 */
 /* mytickets-actions-v1 */
 /* mytickets-guide-v1 */
@@ -464,7 +465,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
           {/* Community fills space under marquee (no underlap). Other tabs: natural flow + footer after content. */}
           <div
             className={`w-full mx-auto flex flex-col ${
-              view === 'community' ? 'max-w-6xl flex-1 min-h-0' : 'max-w-5xl min-h-full'
+              view === 'community'
+                ? 'max-w-6xl flex-1 min-h-0'
+                : view === 'mytickets'
+                  ? 'max-w-[1600px] min-h-full'
+                  : 'max-w-5xl min-h-full'
             }`}
           >
             <div className={view === 'community' ? 'flex-1 min-h-0 flex flex-col' : 'pb-1 flex-1'}>
@@ -907,7 +912,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-                  <div className="xl:col-span-8 portal-mytickets-panel min-h-[420px] flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <div className="xl:col-span-9 portal-mytickets-panel min-h-[480px] flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200/70 dark:border-white/10">
                     <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       {filtered.length} ticket{filtered.length !== 1 ? 's' : ''}
@@ -947,7 +952,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
+                      <table className="w-full text-sm min-w-[900px]">
                         <thead>
                           <tr className="text-left text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400 border-b border-zinc-200/70 dark:border-white/10">
                             <th className="px-4 py-2.5 font-semibold">ID</th>
@@ -956,7 +961,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                             <th className="px-4 py-2.5 font-semibold">Status</th>
                             <th className="px-4 py-2.5 font-semibold">Priority</th>
                             <th className="px-4 py-2.5 font-semibold">Submitted</th>
-                            <th className="px-4 py-2.5 font-semibold text-right">Action</th>
+                            <th className="px-4 py-2.5 font-semibold text-right sticky right-0 z-10 bg-inherit portal-mytickets-action-col">Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -974,7 +979,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                               <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                                 {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </td>
-                              <td className="px-4 py-3 text-right relative">
+                              <td className="px-4 py-3 text-right relative sticky right-0 z-10 portal-mytickets-action-col">
                                 <button
                                   type="button"
                                   className="inline-flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-500/10"
@@ -1047,7 +1052,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   )}
                   </div>
 
-                  <aside className="xl:col-span-4 portal-mytickets-guide rounded-2xl border border-zinc-200/80 dark:border-white/10 p-4 sm:p-5 space-y-3">
+                  <aside className="xl:col-span-3 portal-mytickets-guide rounded-2xl border border-zinc-200/80 dark:border-white/10 p-4 sm:p-5 space-y-3">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-xl bg-emerald-500/15 dark:bg-emerald-400/15 flex items-center justify-center shrink-0">
                         <Info size={18} className="text-emerald-600 dark:text-emerald-400" />
