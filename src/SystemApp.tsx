@@ -1,3 +1,4 @@
+/* followup-agent-toast-v1 */
 /* workspace-switcher-v1 */
 /* agent-topbar-icons-v1 */
 /* agent-chrome-meta-v1 */
@@ -60,6 +61,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import AgentAvatar from './components/AgentAvatar';
 import ThemeToggle from './components/ThemeToggle';
+import { onAgentNotify } from './lib/agentNotify';
 
 export function getModeFromHash(): 'agent' | 'portal' | 'notfound' {
   const h = (window.location.hash || '').replace(/^#/, '').toLowerCase().split('?')[0];
@@ -137,6 +139,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
 export function AgentShell() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [notifOpen, setNotifOpen] = useState(false);
+  const [agentToast, setAgentToast] = useState<{ title: string; body: string } | null>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const { tickets, usingSupabase, currentAgent } = useTickets();
   const { user, loading: authLoading, authBusy, requiresAuth, signOut, accountRole } = useAuth();
@@ -147,12 +150,42 @@ export function AgentShell() {
   const {
     notifications,
     unreadCount,
+    refreshPlatform,
     markNotificationRead,
     markAllNotificationsRead,
     deleteNotification,
     deleteAllNotifications,
     conversations,
   } = usePlatform();
+
+  useEffect(() => {
+    const onEvt = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      let title = 'Follow-up requested';
+      let body = 'A customer asked for an update on their ticket.';
+      if (detail && !Array.isArray(detail) && detail.title) {
+        title = detail.title;
+        body = detail.body || body;
+      } else if (Array.isArray(detail) && detail[0]?.title) {
+        title = detail[0].title;
+        body = detail[0].body || body;
+      } else {
+        try {
+          const raw = localStorage.getItem('nexus-notif-v1');
+          const list = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(list) && list[0]?.title) {
+            title = list[0].title;
+            body = list[0].body || body;
+          }
+        } catch { /* ignore */ }
+      }
+      setAgentToast({ title, body });
+      window.setTimeout(() => setAgentToast(null), 7000);
+      void refreshPlatform?.();
+    };
+    window.addEventListener('nexus-agent-notify', onEvt);
+    return () => window.removeEventListener('nexus-agent-notify', onEvt);
+  }, [refreshPlatform]);
 
   /* Badge: New or unopened (unread tag) tickets only — clears when agent opens the ticket */
   const openCount = tickets.filter(
@@ -255,6 +288,29 @@ export function AgentShell() {
 
   return (
     <PostLoginShell ready={agentReady} label="Opening agent workspace…" variant="agent">
+      
+      {agentToast && (
+        <div className="agent-toast-followup fixed top-4 right-4 z-[200] max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-violet-400/40 bg-zinc-950/95 text-white shadow-2xl shadow-violet-900/40 backdrop-blur-md px-4 py-3">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 w-8 h-8 rounded-lg bg-violet-500/25 text-violet-200 flex items-center justify-center shrink-0">
+              <Bell size={16} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-white leading-snug">{agentToast.title}</div>
+              <div className="text-xs text-zinc-300 mt-1 whitespace-pre-line leading-relaxed">{agentToast.body}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAgentToast(null)}
+              className="text-zinc-400 hover:text-white text-lg leading-none px-1"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="app-cosmos flex min-h-screen">
         <Sidebar
           active={activeNav}

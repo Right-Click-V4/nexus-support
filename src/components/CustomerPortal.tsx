@@ -1,3 +1,4 @@
+/* followup-agent-notify-v1 */
 /* portal-staff-preview-v1 */
 /* workspace-switcher-portal-v1 */
 /* notif-above-marquee-v1 */
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
+import { notifyAgents } from '../lib/agentNotify';
 import { usePlatform } from '../context/PlatformContext';
 import type { Priority, Ticket as TicketType, TicketAttachment } from '../types';
 import { MAX_ATTACHMENT_BYTES } from '../types';
@@ -1446,14 +1448,35 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                               setFollowUpBusy(true);
                               try {
                                 const prev = followUpTicket.messages || [];
+                                const customerLabel = displayName || user?.email || 'Customer';
+                                const note = followUpText.trim();
                                 const msg = {
                                   id: `msg-${Date.now()}`,
-                                  text: followUpText.trim(),
+                                  text: note,
                                   kind: 'public' as const,
-                                  author: displayName || user?.email || 'Customer',
+                                  author: customerLabel,
                                   created_at: new Date().toISOString(),
                                 };
-                                await updateTicket(followUpTicket.id, { messages: [...prev, msg] });
+                                await updateTicket(followUpTicket.id, {
+                                  messages: [...prev, msg],
+                                  tags: Array.from(
+                                    new Set([...(followUpTicket.tags || []), 'follow_up', 'unread']),
+                                  ),
+                                });
+                                const subject = followUpTicket.title || 'Support request';
+                                const desc = (followUpTicket.description || '').trim().slice(0, 280);
+                                const bodyLines = [
+                                  `${customerLabel} wants a follow-up update on this ticket.`,
+                                  `Ticket: ${followUpTicket.id}`,
+                                  `Subject: ${subject}`,
+                                  desc ? `Details: ${desc}` : null,
+                                  note ? `Customer note: ${note}` : null,
+                                ].filter(Boolean);
+                                await notifyAgents({
+                                  title: 'Follow-up requested',
+                                  body: bodyLines.join('\n'),
+                                  link: 'tickets',
+                                });
                                 setFollowUpText('');
                                 setFollowUpTicket(null);
                               } catch (err) {

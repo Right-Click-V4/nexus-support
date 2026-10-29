@@ -1,3 +1,4 @@
+/* followup-agent-notify-v1 */
 /* fix-platform-import-v1 */
 import {
   createContext,
@@ -9,7 +10,7 @@ import {
 } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
-import { notifyCustomer } from '../lib/agentNotify';
+import { notifyCustomer, onAgentNotify } from '../lib/agentNotify';
 import type {
   KnowledgeArticle,
   ChatConversation,
@@ -242,6 +243,35 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);
+
+  /* Real-time agent notifications (follow-ups, etc.) */
+  useEffect(() => {
+    const unsub = onAgentNotify(() => {
+      void refreshPlatform();
+    });
+    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    if (isSupabaseConfigured && supabase && user?.id) {
+      channel = supabase
+        .channel(`nexus-agent-notifs-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications' },
+          () => {
+            void refreshPlatform();
+          },
+        )
+        .subscribe();
+    }
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'nexus-notif-v1') void refreshPlatform();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      unsub();
+      window.removeEventListener('storage', onStorage);
+      if (channel && supabase) void supabase.removeChannel(channel);
+    };
+  }, [refreshPlatform, user?.id]);
 
   // Lightweight announcements/releases refresh — works across normal + incognito tabs
   const refreshAnnouncementsLight = useCallback(async () => {

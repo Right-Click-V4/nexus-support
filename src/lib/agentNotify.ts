@@ -67,7 +67,7 @@ export async function notifyAgents(payload: NotifyPayload) {
           );
         }
       }
-      window.dispatchEvent(new CustomEvent(EVENT));
+      window.dispatchEvent(new CustomEvent(EVENT, { detail: { title, body, link } }));
       return;
     } catch (e) {
       console.warn('notifyAgents supabase failed, using local', e);
