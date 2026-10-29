@@ -1,3 +1,4 @@
+/* no-auto-assign-v1 */
 /* customer-new-expand-v1 */
 // trash-confirm-v1
 // status-outline-v1
@@ -296,10 +297,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
 
     const sla_due_at = computeSlaDue(priority, now);
-    const autoAssignee =
-      data.assignee_id ||
-      pickAssignee(agents, tickets, { branch: data.branch?.trim() }) ||
-      null;
+    // New tickets stay unassigned until an agent claims/assigns them
+    const assigneeId = data.assignee_id || null;
     const ticket: Ticket = {
       id,
       title: data.title,
@@ -307,7 +306,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       priority,
       status: 'open',
       channel: data.channel,
-      assignee_id: autoAssignee,
+      assignee_id: assigneeId,
       customer_name: data.customer_name,
       customer_email: data.customer_email || '',
       branch: data.branch?.trim() || undefined,

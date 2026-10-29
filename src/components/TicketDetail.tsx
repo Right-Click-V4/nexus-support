@@ -1,3 +1,4 @@
+/* assignee-transfer-v1 */
 /* save-notify-back-v1 */
 /* sla-close-race-v1 */
 /* sla-auto-close-v1 */
@@ -78,6 +79,8 @@ export default function TicketDetail({ ticket, onClose }: Props) {
   const [branch, setBranch] = useState(ticket.branch || '');
   const [editingBranch, setEditingBranch] = useState(false);
   const [editingPriority, setEditingPriority] = useState(false);
+  const [editingAssignee, setEditingAssignee] = useState(false);
+  const [assigneeLocked, setAssigneeLocked] = useState(() => !!ticket.assignee_id);
   const [noteText, setNoteText] = useState('');
   const [replyText, setReplyText] = useState('');
   const [saving, setSaving] = useState(false);
@@ -119,6 +122,8 @@ export default function TicketDetail({ ticket, onClose }: Props) {
     setPriority(ticket.priority);
     setAssigneeId(ticket.assignee_id || '');
     setBranch(ticket.branch || '');
+    setAssigneeLocked(!!ticket.assignee_id);
+    setEditingAssignee(false);
     setResolutionPlan(planFromTags(ticket.tags));
     setResolutionOther(planNoteFromTags(ticket.tags));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,6 +168,12 @@ export default function TicketDetail({ ticket, onClose }: Props) {
           body: `${ticket.title || ticket.id} was updated by support.`,
           link: 'mytickets',
         });
+      }
+      if (assigneeId) {
+        setAssigneeLocked(true);
+        setEditingAssignee(false);
+      } else {
+        setAssigneeLocked(false);
       }
       setShowSaved(true);
     } catch (e) {
@@ -368,18 +379,54 @@ export default function TicketDetail({ ticket, onClose }: Props) {
             </div>
 
             <div className="ticket-meta-block rounded-xl border border-slate-200 dark:border-white/10 p-3.5">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Assignee</div>
-              <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className="ticket-input w-full px-3 py-2 text-sm rounded-lg">
-                <option value="">Unassigned</option>
-                {agents
-                  .filter((a) => {
-                    const st = (a.approval_status || 'approved').toLowerCase();
-                    return st === 'approved' || st === '';
-                  })
-                  .map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}{a.is_admin ? ' (Admin)' : ''}</option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Assignee</div>
+                {assigneeLocked && !editingAssignee ? (
+                  <button
+                    type="button"
+                    onClick={() => setEditingAssignee(true)}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-violet-600 dark:text-violet-300 hover:underline"
+                  >
+                    Transfer
+                  </button>
+                ) : assigneeLocked && editingAssignee ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingAssignee(false);
+                      setAssigneeId(ticket.assignee_id || '');
+                    }}
+                    className="text-[11px] font-medium text-slate-500 hover:underline"
+                  >
+                    Cancel
+                  </button>
+                ) : null}
+              </div>
+              {(!assigneeLocked || editingAssignee) ? (
+                <select
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                  className="ticket-input w-full px-3 py-2 text-sm rounded-lg"
+                >
+                  <option value="">Unassigned</option>
+                  {agents
+                    .filter((a) => {
+                      const st = (a.approval_status || 'approved').toLowerCase();
+                      return st === 'approved' || st === '';
+                    })
+                    .map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}{a.is_admin ? ' (Admin)' : ''}
+                      </option>
+                    ))}
+                </select>
+              ) : (
+                <div className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {agents.find((a) => a.id === assigneeId)?.name
+                    || ticket.assignee?.name
+                    || '—'}
+                </div>
+              )}
             </div>
           </div>
 
