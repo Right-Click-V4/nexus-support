@@ -1,3 +1,4 @@
+/* mytickets-menu-portal-v1 */
 /* mytickets-menu-anchor-v2 */
 /* mytickets-menu-fixed-v1 */
 /* followup-agent-notify-v1 */
@@ -21,6 +22,7 @@
 /* mytickets-table-v1 */
 /* closed-sla-v1 */
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search, CheckCircle2, Ticket, BookOpen, ArrowLeft, MessageSquare,
   LogOut, User, Star, Home, ExternalLink, Users, ImagePlus, X,
@@ -180,12 +182,21 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const [myTicketsPage, setMyTicketsPage] = useState(1);
   const [myTicketsDateFrom, setMyTicketsDateFrom] = useState('');
   const [myTicketsDateTo, setMyTicketsDateTo] = useState('');
-  const [myTicketMenuId, setMyTicketMenuId] = useState<string | null>(null);
-  const [myTicketMenuPos, setMyTicketMenuPos] = useState<{ top: number; left: number; openUp: boolean }>({
-    top: 0,
-    left: 0,
-    openUp: false,
-  });
+  const [myTicketMenu, setMyTicketMenu] = useState<{
+    id: string;
+    top: number;
+    left: number;
+    openUp: boolean;
+  } | null>(null);
+  const myTicketMenuId = myTicketMenu?.id ?? null;
+  const setMyTicketMenuId = (id: string | null | ((prev: string | null) => string | null)) => {
+    if (typeof id === 'function') {
+      const next = id(myTicketMenuId);
+      if (next == null) setMyTicketMenu(null);
+      return;
+    }
+    if (id == null) setMyTicketMenu(null);
+  };
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
   const [portalNotifOpen, setPortalNotifOpen] = useState(false);
   const portalNotifRef = useRef<HTMLDivElement>(null);
@@ -194,7 +205,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     const onDoc = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && t.closest && t.closest('[data-myticket-menu]')) return;
-      setMyTicketMenuId(null);
+      setMyTicketMenu(null);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
@@ -1213,7 +1224,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (myTicketMenuId === t.id) {
-                                      setMyTicketMenuId(null);
+                                      setMyTicketMenu(null);
                                       return;
                                     }
                                     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -1230,8 +1241,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                     if (left + menuW > window.innerWidth - 8) {
                                       left = window.innerWidth - menuW - 8;
                                     }
-                                    setMyTicketMenuPos({ top, left, openUp });
-                                    setMyTicketMenuId(t.id);
+                                    setMyTicketMenu({ id: t.id, top, left, openUp });
                                   }}
                                 >
                                   <MoreVertical size={16} />
@@ -1239,20 +1249,20 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                     <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-sky-500 text-white text-[9px] font-bold leading-[14px] text-center">1</span>
                                   )}
                                 </button>
-                                {myTicketMenuId === t.id && (
+                                {myTicketMenuId === t.id && myTicketMenu && createPortal(
                                   <div
+                                    data-myticket-menu
                                     className="portal-mytickets-action-menu fixed z-[9998] w-40 rounded-xl border border-zinc-200/90 dark:border-white/15 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-xl py-1 text-left"
                                     style={{
-                                      top: myTicketMenuPos.top,
-                                      left: myTicketMenuPos.left,
-                                      transformOrigin: myTicketMenuPos.openUp ? 'bottom right' : 'top right',
+                                      top: myTicketMenu.top,
+                                      left: myTicketMenu.left,
                                     }}
                                   >
                                     <button
                                       type="button"
                                       className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
                                       onClick={() => {
-                                        setMyTicketMenuId(null);
+                                        setMyTicketMenu(null);
                                         const open = expandedTicketId !== t.id;
                                         setExpandedTicketId(open ? t.id : null);
                                         if (open && (t.tags || []).includes('customer_unread')) {
@@ -1268,14 +1278,15 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                       type="button"
                                       className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
                                       onClick={() => {
-                                        setMyTicketMenuId(null);
+                                        setMyTicketMenu(null);
                                         setFollowUpTicket(t);
                                         setFollowUpText('');
                                       }}
                                     >
                                       Send Follow-Up
                                     </button>
-                                  </div>
+                                  </div>,
+                                  document.body,
                                 )}
                               </td>
                             </tr>
