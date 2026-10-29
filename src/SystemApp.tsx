@@ -1,3 +1,4 @@
+/* agent-topbar-right-v1 */
 /* tickets-badge-unread-v1 */
 import { useEffect, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar';
@@ -31,7 +32,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { MaintenanceProvider, useMaintenance } from './context/MaintenanceContext';
 import { Site404Provider, useSite404 } from './context/Site404Context';
 import { useIsAdmin } from './components/useIsAdmin';
-import { Search, Bell, Settings, ExternalLink } from 'lucide-react';
+import { Bell, Settings, ExternalLink } from 'lucide-react';
 import AgentAvatar from './components/AgentAvatar';
 import ThemeToggle from './components/ThemeToggle';
 
@@ -68,7 +69,6 @@ const TITLES: Record<string, string> = {
 
 export function AgentShell() {
   const [activeNav, setActiveNav] = useState('dashboard');
-  const [search, setSearch] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const { tickets, usingSupabase, currentAgent } = useTickets();
@@ -201,30 +201,23 @@ export function AgentShell() {
           isAdmin={admin}
         />
         <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-          <header className="nexus-topbar relative z-40 h-14 shrink-0 flex items-center gap-3 px-4 lg:px-6">
-            <div className="text-sm font-semibold text-zinc-800">{TITLES[activeNav] || activeNav}</div>
-            <div className="flex-1 max-w-xl">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && search.trim()) setActiveNav('tickets');
-                  }}
-                  placeholder="Search tickets, customers, knowledge…"
-                  className="nexus-search w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
-                />
-              </div>
+          <header className="nexus-topbar relative z-40 h-14 shrink-0 flex items-center gap-3 px-4 lg:px-6 xl:px-8 w-full">
+            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 shrink-0 min-w-0 truncate max-w-[40%]">
+              {TITLES[activeNav] || activeNav}
             </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <a
-                href="#portal"
-                className="hidden sm:inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-violet-600 px-2 py-1.5 rounded-lg hover:bg-violet-50"
-                title="Customer portal"
+            <div className="flex-1 min-w-0" aria-hidden />
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.hash = 'portal';
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-300 px-2.5 py-1.5 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
+                title="Open Customer Portal"
               >
-                <ExternalLink size={14} /> Portal
-              </a>
+                <ExternalLink size={14} />
+                <span className="hidden sm:inline">Customer Portal</span>
+              </button>
               <ThemeToggle />
               <div className="relative z-[50]" ref={notifRef}>
                 <button
@@ -296,14 +289,14 @@ export function AgentShell() {
               )}
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 lg:p-6 relative z-0">
+          <main className="flex-1 overflow-auto p-4 lg:p-6 xl:px-8 2xl:px-10 relative z-0 w-full max-w-[100vw]">
             {!usingSupabase && (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs px-3 py-2">
                 Running offline demo data — configure Supabase for live tickets.
               </div>
             )}
             {activeNav === 'dashboard' && <Dashboard />}
-            {activeNav === 'tickets' && <TicketsPage search={search} />}
+            {activeNav === 'tickets' && <TicketsPage />}
             {activeNav === 'customers' && <CustomersPage />}
             {activeNav === 'team' && <TeamPage />}
             {activeNav === 'users' && (accountRole === 'admin' || !!currentAgent?.is_admin) && <UsersAdminPage />}
