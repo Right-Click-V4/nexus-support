@@ -1,3 +1,4 @@
+/* sla-auto-close-v1 */
 /* customer-new-expand-v1 */
 /* res-view-msg-v1 */
 /* resolution-plan-v1 */
@@ -56,6 +57,7 @@ function tagsWithPlan(tags: string[] | undefined, plan: string, otherNote = ''):
   return base;
 }
 import { uploadAttachment } from '../lib/storage';
+import { formatSlaCountdown } from '../lib/slaFormat';
 
 interface Props {
   ticket: Ticket;
@@ -97,6 +99,26 @@ export default function TicketDetail({ ticket, onClose }: Props) {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket.id]);
+
+  /* SLA breach → persist Closed so detail Status matches table */
+  useEffect(() => {
+    if (ticket.status === 'resolved' || ticket.status === 'closed') return;
+    const sla = formatSlaCountdown(ticket.sla_due_at, ticket.status);
+    if (sla.tone !== 'breach') return;
+    setStatus('closed');
+    void updateTicket(ticket.id, { status: 'closed' as Status });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.id, ticket.sla_due_at, ticket.status]);
+
+  /* Keep local form fields in sync when ticket updates from outside */
+  useEffect(() => {
+    setStatus(ticket.status);
+    setPriority(ticket.priority);
+    setAssigneeId(ticket.assignee_id || '');
+    setBranch(ticket.branch || '');
+    setResolutionPlan(planFromTags(ticket.tags));
+    setResolutionOther(planNoteFromTags(ticket.tags));
+  }, [ticket.id, ticket.status, ticket.priority, ticket.assignee_id, ticket.branch, ticket.tags]);
 
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+/* sla-auto-close-v1 */
 /* tickets-page30-v1 */
 /* trash-confirm-v1 */
 /* closed-sla-v1 */
@@ -44,6 +45,22 @@ export default function TicketsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [ticketPage, setTicketPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  /* sla-batch-close: persist Closed for SLA-breached tickets (not resolved) */
+  useEffect(() => {
+    const breached = tickets.filter(
+      (t) =>
+        !t.deleted_at &&
+        t.status !== 'resolved' &&
+        t.status !== 'closed' &&
+        formatSlaCountdown(t.sla_due_at, t.status).tone === 'breach'
+    );
+    if (!breached.length) return;
+    for (const t of breached.slice(0, 25)) {
+      void updateTicket(t.id, { status: 'closed' });
+    }
+  }, [tickets, updateTicket]);
+
   const [, setTick] = useState(0);
 
   useEffect(() => {
