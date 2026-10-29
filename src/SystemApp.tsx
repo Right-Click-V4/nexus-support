@@ -1,3 +1,4 @@
+/* tickets-badge-unread-v1 */
 import { useEffect, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -86,7 +87,12 @@ export function AgentShell() {
     conversations,
   } = usePlatform();
 
-  const openCount = tickets.filter((t) => t.status !== 'resolved' && !t.deleted_at).length;
+  /* Badge: New or unopened (unread tag) tickets only — clears when agent opens the ticket */
+  const openCount = tickets.filter(
+    (t) =>
+      !t.deleted_at &&
+      (t.status === 'new' || (t.tags || []).includes('unread'))
+  ).length;
   const chatBadge = conversations.filter((c) => c.status !== 'ended').length;
   const displayName =
     currentAgent?.name ||
