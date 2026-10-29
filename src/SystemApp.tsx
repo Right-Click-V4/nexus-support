@@ -1,3 +1,4 @@
+/* toast-hydrate-v1 */
 /* agent-toast-polish-v1 */
 /* agent-toast-from-notif-v1 */
 /* followup-agent-toast-v1 */
@@ -163,18 +164,27 @@ export function AgentShell() {
   } = usePlatform();
 
 
-  /* Toast when new agent notifications arrive (cross-tab / Supabase), not only local event */
+  /* Toast only for notifs that arrive AFTER initial hydrate (avoid spam on refresh) */
   useEffect(() => {
     const ids = new Set(notifications.map((n) => n.id));
     if (toastBootRef.current) {
-      prevNotifIdsRef.current = ids;
-      toastBootRef.current = false;
-      return;
+      prevNotifIdsRef.current = new Set([...prevNotifIdsRef.current, ...ids]);
+      const settle = window.setTimeout(() => {
+        prevNotifIdsRef.current = new Set(notifications.map((n) => n.id));
+        toastBootRef.current = false;
+      }, 1200);
+      return () => window.clearTimeout(settle);
     }
     const fresh = notifications.filter((n) => !prevNotifIdsRef.current.has(n.id) && !n.read);
     prevNotifIdsRef.current = ids;
     if (fresh.length === 0) return;
-    const latest = fresh[0];
+    const latest =
+      fresh.find((n) => /follow-?up/i.test(n.title || '')) ||
+      fresh.find((n) => !/tags\s*:/i.test(n.body || '')) ||
+      fresh[0];
+    if (/tags\s*:/i.test(latest.body || '') && /Ticket updated/i.test(latest.title || '')) {
+      return;
+    }
     setAgentToast({
       title: latest.title || 'New notification',
       body: latest.body || '',

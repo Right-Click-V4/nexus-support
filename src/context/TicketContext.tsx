@@ -1,3 +1,4 @@
+/* update-silent-notify-v1 */
 /* no-auto-assign-v1 */
 /* customer-new-expand-v1 */
 // trash-confirm-v1
@@ -61,7 +62,8 @@ interface TicketContextValue {
         | 'deleted_at'
         | 'tags'
       >
-    >
+    >,
+    opts?: { silent?: boolean },
   ) => Promise<void>;
   deleteTicket: (id: string) => Promise<void>;
   softDeleteTicket: (id: string) => Promise<void>;
@@ -392,7 +394,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         | 'deleted_at'
         | 'tags'
       >
-    >
+    >,
+    opts?: { silent?: boolean },
   ) => {
     const ticket = tickets.find((t) => t.id === id);
     const payload = { ...updates, updated_at: new Date().toISOString() };
@@ -426,25 +429,27 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         detail: changed.map((k) => `${k}=${JSON.stringify((updates as Record<string, unknown>)[k])}`).join(', '),
         actor: currentAgent?.name || user?.email || 'Agent',
       });
-      const assignee = updates.assignee_id
-        ? agents.find((a) => a.id === updates.assignee_id)
-        : ticket?.assignee_id
-          ? agents.find((a) => a.id === ticket.assignee_id)
-          : null;
-      const summary = changed.map((k) => `${k}: ${(updates as Record<string, unknown>)[k]}`).join(', ');
-      void notifyAgents({
-        title: 'Ticket updated',
-        body: `${id}${ticket ? ` · ${ticket.title}` : ''} — ${summary}`,
-        link: 'tickets',
-        userId: (assignee as Agent & { user_id?: string })?.user_id || undefined,
-      });
-      if (ticket?.customer_email) {
-        void notifyCustomer({
-          email: ticket.customer_email,
+      if (!opts?.silent) {
+        const assignee = updates.assignee_id
+          ? agents.find((a) => a.id === updates.assignee_id)
+          : ticket?.assignee_id
+            ? agents.find((a) => a.id === ticket.assignee_id)
+            : null;
+        const summary = changed.map((k) => `${k}: ${(updates as Record<string, unknown>)[k]}`).join(', ');
+        void notifyAgents({
           title: 'Ticket updated',
-          body: `${ticket.title || id} was updated by support.`,
-          link: 'mytickets',
+          body: `${id}${ticket ? ` · ${ticket.title}` : ''} — ${summary}`,
+          link: 'tickets',
+          userId: (assignee as Agent & { user_id?: string })?.user_id || undefined,
         });
+        if (ticket?.customer_email) {
+          void notifyCustomer({
+            email: ticket.customer_email,
+            title: 'Ticket updated',
+            body: `${ticket.title || id} was updated by support.`,
+            link: 'mytickets',
+          });
+        }
       }
     }
   };

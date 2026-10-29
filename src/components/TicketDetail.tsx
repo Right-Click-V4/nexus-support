@@ -1,3 +1,4 @@
+/* detail-silent-update-v1 */
 /* assignee-transfer-v1 */
 /* save-notify-back-v1 */
 /* sla-close-race-v1 */
@@ -99,10 +100,14 @@ export default function TicketDetail({ ticket, onClose }: Props) {
       ticket.status === 'new';
     if (!needs) return;
     const nextTags = tags.filter((t) => t !== 'unread');
-    void updateTicket(ticket.id, {
-      ...(ticket.status === 'new' ? { status: 'open' as Status } : {}),
-      tags: nextTags,
-    });
+    void updateTicket(
+      ticket.id,
+      {
+        ...(ticket.status === 'new' ? { status: 'open' as Status } : {}),
+        tags: nextTags,
+      },
+      { silent: true },
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket.id]);
 
@@ -115,7 +120,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
 
     if (breached) {
       setStatus('closed');
-      void updateTicket(ticket.id, { status: 'closed' as Status });
+      void updateTicket(ticket.id, { status: 'closed' as Status }, { silent: true });
     } else {
       setStatus(ticket.status);
     }
