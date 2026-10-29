@@ -1,3 +1,4 @@
+/* agent-notif-nav-v1 */
 /* toast-hydrate-v1 */
 /* agent-toast-polish-v1 */
 /* agent-toast-from-notif-v1 */
@@ -175,16 +176,23 @@ export function AgentShell() {
       }, 1200);
       return () => window.clearTimeout(settle);
     }
-    const fresh = notifications.filter((n) => !prevNotifIdsRef.current.has(n.id) && !n.read);
+    const isCustomerOrigin = (n: { title?: string; body?: string; link?: string }) => {
+      const t = (n.title || '').toLowerCase();
+      const b = (n.body || '').toLowerCase();
+      const link = (n.link || '').toLowerCase();
+      if (/new ticket/.test(t)) return true;
+      if (/follow-?up/.test(t) || /follow-?up/.test(b)) return true;
+      if (/live\s*chat|customer message|new message/.test(t) || /live\s*chat/.test(b)) return true;
+      if (link === 'chat' || link === 'livechat') return true;
+      if (/ticket updated/.test(t)) return false;
+      return false;
+    };
+    const fresh = notifications.filter(
+      (n) => !prevNotifIdsRef.current.has(n.id) && !n.read && isCustomerOrigin(n),
+    );
     prevNotifIdsRef.current = ids;
     if (fresh.length === 0) return;
-    const latest =
-      fresh.find((n) => /follow-?up/i.test(n.title || '')) ||
-      fresh.find((n) => !/tags\s*:/i.test(n.body || '')) ||
-      fresh[0];
-    if (/tags\s*:/i.test(latest.body || '') && /Ticket updated/i.test(latest.title || '')) {
-      return;
-    }
+    const latest = fresh[0];
     setAgentToast({
       title: latest.title || 'New notification',
       body: latest.body || '',
@@ -214,6 +222,14 @@ export function AgentShell() {
           }
         } catch { /* ignore */ }
       }
+      const tLow = title.toLowerCase();
+      const bLow = (body || '').toLowerCase();
+      const customer =
+        /new ticket/.test(tLow) ||
+        /follow-?up/.test(tLow) ||
+        /follow-?up/.test(bLow) ||
+        /live\s*chat|customer message|new message/.test(tLow);
+      if (!customer) return;
       setAgentToast({ title, body });
       window.setTimeout(() => setAgentToast(null), 7000);
       void refreshPlatform?.();
@@ -330,8 +346,18 @@ export function AgentShell() {
             top-[4.25rem] right-4
             border-violet-300/50 bg-white/80 text-zinc-900
             dark:border-violet-400/35 dark:bg-zinc-900/75 dark:text-zinc-50
-            animate-agent-toast-in"
+            animate-agent-toast-in cursor-pointer"
           role="status"
+          onClick={() => {
+            const t = (agentToast.title || '').toLowerCase();
+            const b = (agentToast.body || '').toLowerCase();
+            if (/live\s*chat|customer message|new message/.test(t) || /live\s*chat/.test(b)) {
+              setActiveNav('chat');
+            } else {
+              setActiveNav('tickets');
+            }
+            setAgentToast(null);
+          }}
         >
           <div className="flex items-start gap-3">
             <div className="mt-0.5 w-8 h-8 rounded-lg bg-violet-500/20 text-violet-700 dark:bg-violet-500/25 dark:text-violet-200 flex items-center justify-center shrink-0">
@@ -436,9 +462,38 @@ export function AgentShell() {
                           className={`px-3 py-2.5 border-b border-zinc-50 text-xs ${n.read ? 'opacity-60' : 'bg-violet-50/40'}`}
                         >
                           <div className="flex justify-between gap-2">
-                            <button type="button" className="text-left flex-1" onClick={() => void markNotificationRead(n.id)}>
-                              <div className="font-medium text-zinc-800">{n.title}</div>
-                              {n.body && <div className="text-zinc-500 mt-0.5">{n.body}</div>}
+                            <button
+                              type="button"
+                              className="text-left flex-1"
+                              onClick={() => {
+                                void markNotificationRead(n.id);
+                                setNotifOpen(false);
+                                const link = (n.link || '').toLowerCase();
+                                const title = (n.title || '').toLowerCase();
+                                const body = (n.body || '').toLowerCase();
+                                if (
+                                  link === 'chat' ||
+                                  link === 'livechat' ||
+                                  /live\s*chat|customer message|new message/.test(title) ||
+                                  /live\s*chat/.test(body)
+                                ) {
+                                  setActiveNav('chat');
+                                } else if (
+                                  link === 'tickets' ||
+                                  link === 'ticket' ||
+                                  /ticket|follow-?up|new ticket/.test(title) ||
+                                  /ticket|follow-?up/.test(body)
+                                ) {
+                                  setActiveNav('tickets');
+                                } else if (link === 'dashboard' || link === 'overview') {
+                                  setActiveNav('dashboard');
+                                } else if (link) {
+                                  setActiveNav(link);
+                                }
+                              }}
+                            >
+                              <div className={`font-medium ${n.read ? 'text-zinc-600' : 'text-zinc-900'}`}>{n.title}</div>
+                              {n.body && <div className="text-zinc-500 mt-0.5 line-clamp-3 whitespace-pre-line">{n.body}</div>}
                             </button>
                             <button type="button" className="text-zinc-300 hover:text-rose-500" onClick={() => void deleteNotification(n.id)}>
                               ×

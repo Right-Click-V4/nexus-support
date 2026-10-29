@@ -1,3 +1,4 @@
+/* no-agent-toast-on-save-v1 */
 /* update-silent-notify-v1 */
 /* no-auto-assign-v1 */
 /* customer-new-expand-v1 */
@@ -430,18 +431,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         actor: currentAgent?.name || user?.email || 'Agent',
       });
       if (!opts?.silent) {
-        const assignee = updates.assignee_id
-          ? agents.find((a) => a.id === updates.assignee_id)
-          : ticket?.assignee_id
-            ? agents.find((a) => a.id === ticket.assignee_id)
-            : null;
-        const summary = changed.map((k) => `${k}: ${(updates as Record<string, unknown>)[k]}`).join(', ');
-        void notifyAgents({
-          title: 'Ticket updated',
-          body: `${id}${ticket ? ` · ${ticket.title}` : ''} — ${summary}`,
-          link: 'tickets',
-          userId: (assignee as Agent & { user_id?: string })?.user_id || undefined,
-        });
         if (ticket?.customer_email) {
           void notifyCustomer({
             email: ticket.customer_email,
