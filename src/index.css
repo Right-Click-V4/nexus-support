@@ -947,7 +947,6 @@ html.nexus-light .nexus-topbar {
   background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
   border-bottom: 1px solid rgba(76, 29, 149, 0.55) !important;
 }
-html.nexus-light .app-cosmos aside,
 html.nexus-light .app-cosmos aside.portal-sidebar,
 html.nexus-light .app-cosmos > aside {
   background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
