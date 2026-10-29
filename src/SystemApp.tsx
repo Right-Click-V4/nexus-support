@@ -1,3 +1,4 @@
+/* agent-presence-shell-v1 */
 /* agent-notif-nav-v1 */
 /* toast-hydrate-v1 */
 /* agent-toast-polish-v1 */
@@ -147,7 +148,8 @@ export function AgentShell() {
   const prevNotifIdsRef = useRef<Set<string>>(new Set());
   const toastBootRef = useRef(true);
   const notifRef = useRef<HTMLDivElement>(null);
-  const { tickets, usingSupabase, currentAgent } = useTickets();
+  const { tickets, usingSupabase, currentAgent, updateAgentStatus: setPresenceStatus } = useTickets();
+  const presenceAgent = currentAgent;
   const { user, loading: authLoading, authBusy, requiresAuth, signOut, accountRole } = useAuth();
   const { enabled: maintenanceOn, ready: maintenanceReady } = useMaintenance();
   const { enabled: site404On, ready: site404Ready } = useSite404();
@@ -166,6 +168,35 @@ export function AgentShell() {
 
 
   /* Toast only for notifs that arrive AFTER initial hydrate (avoid spam on refresh) */
+
+  /* Presence: logged into Agent Workspace → Online; logout / last tab → Offline */
+  useEffect(() => {
+    if (!presenceAgent?.id) return;
+    if ((presenceAgent.status || 'offline') === 'offline') {
+      void setPresenceStatus('online');
+    }
+  }, [presenceAgent?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const goOffline = () => {
+      try {
+        void setPresenceStatus('offline');
+      } catch { /* ignore */ }
+    };
+    const onPageHide = () => {
+      try {
+        const raw = localStorage.getItem('nexus-tabs-v1');
+        const tabs = raw ? JSON.parse(raw) : {};
+        const n = tabs && typeof tabs === 'object' ? Object.keys(tabs).length : 0;
+        if (n <= 1) goOffline();
+      } catch {
+        goOffline();
+      }
+    };
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
+  }, [setPresenceStatus]);
+
   useEffect(() => {
     const ids = new Set(notifications.map((n) => n.id));
     if (toastBootRef.current) {
@@ -520,7 +551,7 @@ export function AgentShell() {
                 </div>
               </button>
               {requiresAuth && (
-                <button type="button" onClick={() => void signOut()} className="text-xs text-zinc-400 hover:text-zinc-700 px-2">
+                <button type="button" onClick={() => { void setPresenceStatus('offline'); void signOut(); }} className="text-xs text-zinc-400 hover:text-zinc-700 px-2">
                   Sign out
                 </button>
               )}

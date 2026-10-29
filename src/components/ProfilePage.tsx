@@ -1,3 +1,4 @@
+/* agent-presence-profile-v1 */
 import { useState, useEffect, useRef } from 'react';
 import { Camera, Trash2, ZoomIn, ZoomOut, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -41,6 +42,7 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('');
   const [timezone, setTimezone] = useState('UTC');
   const [status, setStatus] = useState<AgentStatus>('online');
+  const [statusMessage, setStatusMessage] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
@@ -63,7 +65,12 @@ export default function ProfilePage() {
       setPhone(currentAgent.phone || '');
       setBio(currentAgent.bio || '');
       setTimezone(currentAgent.timezone || 'UTC');
-      setStatus(currentAgent.status);
+      setStatus(
+        currentAgent.status === 'offline' || currentAgent.status === 'online'
+          ? 'online'
+          : currentAgent.status,
+      );
+      setStatusMessage(currentAgent.status_message || '');
       setAvatarUrl(currentAgent.avatar_url || null);
       if (!currentAgent.avatar_url) {
         try {
@@ -213,7 +220,7 @@ export default function ProfilePage() {
         }
         await refresh();
       } else if (currentAgent) {
-        await updateAgentStatus(status);
+        await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null);
       }
       if (currentAgent) {
         try {
@@ -221,7 +228,7 @@ export default function ProfilePage() {
           else localStorage.removeItem(`nexus-avatar-${currentAgent.id}`);
         } catch {}
       }
-      if (status !== currentAgent?.status) await updateAgentStatus(status);
+      if (status !== currentAgent?.status) await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null);
       setMsg('Profile saved. Open Team to see your photo.');
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Could not save profile');
@@ -321,7 +328,13 @@ export default function ProfilePage() {
             <div className="text-sm text-zinc-500 mt-0.5 truncate">{user?.email}</div>
             {currentAgent && (
               <div className="text-xs text-zinc-400 mt-1.5">
-                {currentAgent.role} · <span className="text-brand-600 font-medium capitalize">{currentAgent.status}</span>
+                {currentAgent.role} · <span className="text-brand-600 font-medium capitalize">{
+                  currentAgent.status === 'in_call'
+                    ? 'In a call'
+                    : currentAgent.status === 'custom'
+                      ? (currentAgent.status_message || 'Custom')
+                      : currentAgent.status
+                }</span>
               </div>
             )}
             <p className="text-[11px] text-zinc-400 mt-2">Upload a photo, then drag and zoom to choose the crop area.</p>
@@ -359,15 +372,30 @@ export default function ProfilePage() {
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-2">Status</label>
               <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as AgentStatus)}
+                value={status === 'offline' || status === 'online' ? 'online' : status}
+                onChange={(e) => {
+                  const v = e.target.value as AgentStatus;
+                  setStatus(v === 'online' ? 'online' : v);
+                }}
                 className="w-full px-4 py-2.5 text-sm border border-zinc-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               >
-                <option value="online">Online</option>
-                <option value="busy">Busy</option>
+                <option value="online">Available (default)</option>
                 <option value="away">Away</option>
-                <option value="offline">Offline</option>
+                <option value="busy">Busy</option>
+                <option value="in_call">In a Call / Meeting</option>
+                <option value="custom">Custom Status</option>
               </select>
+              <p className="text-[11px] text-zinc-500 mt-1">
+                Online/Offline is automatic from your session. This sets how you appear while logged in.
+              </p>
+              {status === 'custom' && (
+                <input
+                  value={statusMessage}
+                  onChange={(e) => setStatusMessage(e.target.value)}
+                  placeholder="e.g. Back in 10 minutes"
+                  className="mt-2 w-full px-4 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
+                />
+              )}
             </div>
           </div>
 

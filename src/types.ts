@@ -1,7 +1,8 @@
+/* agent-presence-v1 */
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
 export type Status = 'new' | 'open' | 'pending' | 'resolved' | 'on-hold' | 'closed';
 export type Channel = 'email' | 'chat' | 'phone' | 'portal' | 'social';
-export type AgentStatus = 'online' | 'busy' | 'away' | 'offline';
+export type AgentStatus = 'online' | 'busy' | 'away' | 'in_call' | 'custom' | 'offline';
 
 export interface Agent {
   id: string;
@@ -9,6 +10,8 @@ export interface Agent {
   initials: string;
   role: string;
   status: AgentStatus;
+  /** Optional note when status is custom. */
+  status_message?: string | null;
   color: string;
   email?: string;
   user_id?: string | null;

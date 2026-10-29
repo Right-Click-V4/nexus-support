@@ -1,3 +1,4 @@
+/* agent-presence-ctx-v1 */
 /* no-agent-toast-on-save-v1 */
 /* update-silent-notify-v1 */
 /* no-auto-assign-v1 */
@@ -70,7 +71,7 @@ interface TicketContextValue {
   softDeleteTicket: (id: string) => Promise<void>;
   addNote: (ticketId: string, text: string, author?: string) => Promise<void>;
   addMessage: (ticketId: string, text: string, kind?: 'public' | 'internal') => Promise<void>;
-  updateAgentStatus: (status: AgentStatus) => Promise<void>;
+  updateAgentStatus: (status: AgentStatus, statusMessage?: string | null) => Promise<void>;
   findTicket: (id: string, email?: string) => Ticket | undefined;
   ticketsForEmail: (email: string) => Ticket[];
   setAgentAdmin: (agentId: string, is_admin: boolean) => Promise<void>;
@@ -539,16 +540,25 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateAgentStatus = async (status: AgentStatus) => {
+  const updateAgentStatus = async (status: AgentStatus, statusMessage?: string | null) => {
     if (!currentAgent) return;
+    const msg = statusMessage === undefined ? currentAgent.status_message ?? null : statusMessage;
+    const patch: { status: AgentStatus; status_message?: string | null } = { status };
+    if (statusMessage !== undefined) patch.status_message = statusMessage;
     if (supabase) {
-      const { error } = await supabase.from('agents').update({ status }).eq('id', currentAgent.id);
+      let { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
+      if (error && statusMessage !== undefined) {
+        const retry = await supabase.from('agents').update({ status }).eq('id', currentAgent.id);
+        error = retry.error;
+      }
       if (error) throw error;
-      setCurrentAgent({ ...currentAgent, status });
-      setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? { ...a, status } : a)));
+      const next = { ...currentAgent, status, status_message: msg };
+      setCurrentAgent(next);
+      setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
     } else {
-      setCurrentAgent({ ...currentAgent, status });
-      setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? { ...a, status } : a)));
+      const next = { ...currentAgent, status, status_message: msg };
+      setCurrentAgent(next);
+      setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
     }
   };
 

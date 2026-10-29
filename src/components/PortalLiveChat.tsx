@@ -1,3 +1,4 @@
+/* presence-filter-v1 */
 /* livechat-active-agents-v1 */
 /* livechat-ticket-required-v1 */
 /* portal-livechat-v2 */
@@ -95,7 +96,7 @@ export default function PortalLiveChat({ onBack }: Props) {
       const st = (a.approval_status || 'approved').toLowerCase();
       if (st && st !== 'approved') return false;
       const status = (a.status || 'offline').toLowerCase();
-      return status === 'online' || status === 'busy';
+      return status !== 'offline' && status !== '';
     });
   }, [agents]);
 
@@ -372,7 +373,13 @@ export default function PortalLiveChat({ onBack }: Props) {
                         <AgentAvatar agent={a} size="sm" />
                         <span
                           className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-zinc-900 ${
-                            (a.status || '').toLowerCase() === 'busy' ? 'bg-amber-400' : 'bg-emerald-400'
+                            (() => {
+                              const st = (a.status || '').toLowerCase();
+                              if (st === 'busy' || st === 'in_call') return 'bg-amber-400';
+                              if (st === 'away') return 'bg-yellow-300';
+                              if (st === 'custom') return 'bg-sky-400';
+                              return 'bg-emerald-400';
+                            })()
                           }`}
                           title={(a.status || 'online').toString()}
                         />
@@ -385,7 +392,14 @@ export default function PortalLiveChat({ onBack }: Props) {
                           ) : null}
                         </div>
                         <div className="text-[11px] text-zinc-500 dark:text-zinc-400 capitalize">
-                          {(a.status || 'online').toLowerCase() === 'busy' ? 'Busy' : 'Online'}
+                          {(() => {
+                            const st = (a.status || 'online').toLowerCase();
+                            if (st === 'busy') return 'Busy';
+                            if (st === 'away') return 'Away';
+                            if (st === 'in_call') return 'In a call / meeting';
+                            if (st === 'custom') return a.status_message || 'Custom status';
+                            return 'Online';
+                          })()}
                           {a.role ? ` · ${a.role}` : ''}
                         </div>
                       </div>
