@@ -31,10 +31,11 @@ jobs:
           fi
           python3 scripts/patch_postlogin_boot.py || true
           python3 scripts/patch_boot_ui.py || true
+          python3 scripts/patch_agent_topbar.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PostLoginLoader.tsx src/SystemApp.tsx src/components/PortalAuthGate.tsx || true
-          git commit -m "feat(ui): enhanced loader; ceremony-only after login" || true
+          git commit -m "feat(ui): agent topbar right + portal switcher" || true
           git push || true
 
       - name: Restore full Customer Portal if needed
@@ -220,13 +221,14 @@ jobs:
           python3 scripts/patch_save_notify_back.py || true
           python3 scripts/patch_tickets_badge_unread.py || true
           python3 scripts/patch_tickets_ui_stats.py || true
+          python3 scripts/patch_agent_topbar.py || true
           python3 scripts/patch_tickets_sync.py || true
           python3 scripts/patch_tickets_noflicker.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/components/Sidebar.tsx src/SystemApp.tsx src/components/PortalHome.tsx src/components/TicketsPage.tsx src/components/TicketDetail.tsx src/context/TicketContext.tsx src/context/PlatformContext.tsx src/lib/agentNotify.ts src/types.ts src/portal-lounge.css src/index.css src/lib/communityApi.ts || true
-          git commit -m "feat: tickets UI stats and date filter" || true
+          git commit -m "feat: agent topbar right-aligned + portal switcher" || true
           git push || true
 
       - name: Setup Node
