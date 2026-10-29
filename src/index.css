@@ -951,3 +951,19 @@ html.nexus-light .app-cosmos aside.portal-sidebar,
 html.nexus-light .app-cosmos > aside {
   background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
 }
+
+
+/* agent-toast-polish-v1 — slide in from right */
+@keyframes agent-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-agent-toast-in {
+  animation: agent-toast-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

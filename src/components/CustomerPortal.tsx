@@ -1,3 +1,4 @@
+/* mytickets-menu-anchor-v2 */
 /* mytickets-menu-fixed-v1 */
 /* followup-agent-notify-v1 */
 /* portal-staff-preview-v1 */
@@ -1216,14 +1217,19 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                       return;
                                     }
                                     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                    const menuH = 88;
-                                    const menuW = 168;
-                                    const openUp = rect.bottom + menuH + 8 > window.innerHeight;
-                                    const top = openUp ? rect.top - menuH - 6 : rect.bottom + 6;
-                                    const left = Math.min(
-                                      Math.max(8, rect.right - menuW),
-                                      window.innerWidth - menuW - 8,
-                                    );
+                                    const menuH = 84;
+                                    const menuW = 160;
+                                    const gap = 4;
+                                    const spaceBelow = window.innerHeight - rect.bottom;
+                                    const openUp = spaceBelow < menuH + 12;
+                                    const top = openUp
+                                      ? Math.max(8, rect.top - menuH - gap)
+                                      : rect.bottom + gap;
+                                    let left = rect.right - menuW;
+                                    if (left < 8) left = 8;
+                                    if (left + menuW > window.innerWidth - 8) {
+                                      left = window.innerWidth - menuW - 8;
+                                    }
                                     setMyTicketMenuPos({ top, left, openUp });
                                     setMyTicketMenuId(t.id);
                                   }}
@@ -1235,8 +1241,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                 </button>
                                 {myTicketMenuId === t.id && (
                                   <div
-                                    className="portal-mytickets-action-menu fixed z-[9998] w-42 min-w-[10.5rem] rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-2xl py-1 text-left"
-                                    style={{ top: myTicketMenuPos.top, left: myTicketMenuPos.left }}
+                                    className="portal-mytickets-action-menu fixed z-[9998] w-40 rounded-xl border border-zinc-200/90 dark:border-white/15 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-xl py-1 text-left"
+                                    style={{
+                                      top: myTicketMenuPos.top,
+                                      left: myTicketMenuPos.left,
+                                      transformOrigin: myTicketMenuPos.openUp ? 'bottom right' : 'top right',
+                                    }}
                                   >
                                     <button
                                       type="button"

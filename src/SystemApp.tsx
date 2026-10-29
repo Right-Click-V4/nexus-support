@@ -1,3 +1,4 @@
+/* agent-toast-polish-v1 */
 /* agent-toast-from-notif-v1 */
 /* followup-agent-toast-v1 */
 /* workspace-switcher-v1 */
@@ -314,19 +315,26 @@ export function AgentShell() {
     <PostLoginShell ready={agentReady} label="Opening agent workspace…" variant="agent">
       
       {agentToast && (
-        <div className="agent-toast-followup fixed top-4 right-4 z-[9999] max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-violet-400/40 bg-zinc-950/95 text-white shadow-2xl shadow-violet-900/40 backdrop-blur-md px-4 py-3">
+        <div
+          className="agent-toast-followup fixed z-[9999] max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border px-4 py-3 shadow-2xl backdrop-blur-md
+            top-[4.25rem] right-4
+            border-violet-300/50 bg-white/80 text-zinc-900
+            dark:border-violet-400/35 dark:bg-zinc-900/75 dark:text-zinc-50
+            animate-agent-toast-in"
+          role="status"
+        >
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 w-8 h-8 rounded-lg bg-violet-500/25 text-violet-200 flex items-center justify-center shrink-0">
+            <div className="mt-0.5 w-8 h-8 rounded-lg bg-violet-500/20 text-violet-700 dark:bg-violet-500/25 dark:text-violet-200 flex items-center justify-center shrink-0">
               <Bell size={16} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold text-white leading-snug">{agentToast.title}</div>
-              <div className="text-xs text-zinc-300 mt-1 whitespace-pre-line leading-relaxed">{agentToast.body}</div>
+              <div className="text-sm font-semibold leading-snug text-zinc-900 dark:text-white">{agentToast.title}</div>
+              <div className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 whitespace-pre-line leading-relaxed">{agentToast.body}</div>
             </div>
             <button
               type="button"
               onClick={() => setAgentToast(null)}
-              className="text-zinc-400 hover:text-white text-lg leading-none px-1"
+              className="text-zinc-400 hover:text-zinc-800 dark:hover:text-white text-lg leading-none px-1"
               aria-label="Dismiss"
             >
               ×
