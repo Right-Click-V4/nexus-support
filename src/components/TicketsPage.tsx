@@ -1,3 +1,4 @@
+/* sla-close-race-v1 */
 /* sla-auto-close-v1 */
 /* tickets-page30-v1 */
 /* trash-confirm-v1 */
@@ -7,7 +8,7 @@
 /* ticket-unread-v1 */
 /* details-tickets-theme-v1 */
 /* tickets-table-v2 */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Search, Download, Trash2, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
 import { useTickets } from '../context/TicketContext';
@@ -47,16 +48,19 @@ export default function TicketsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   /* sla-batch-close: persist Closed for SLA-breached tickets (not resolved) */
+  const closedBreachRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     const breached = tickets.filter(
       (t) =>
         !t.deleted_at &&
         t.status !== 'resolved' &&
         t.status !== 'closed' &&
-        formatSlaCountdown(t.sla_due_at, t.status).tone === 'breach'
+        formatSlaCountdown(t.sla_due_at, t.status).tone === 'breach' &&
+        !closedBreachRef.current.has(t.id)
     );
     if (!breached.length) return;
     for (const t of breached.slice(0, 25)) {
+      closedBreachRef.current.add(t.id);
       void updateTicket(t.id, { status: 'closed' });
     }
   }, [tickets, updateTicket]);
