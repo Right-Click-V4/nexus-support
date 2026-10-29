@@ -1,3 +1,4 @@
+/* agent-chrome-meta-v1 */
 /* agent-topbar-right-v1 */
 /* tickets-badge-unread-v1 */
 import { useEffect, useRef, useState } from 'react';
@@ -65,6 +66,27 @@ const TITLES: Record<string, string> = {
   settings: 'Settings',
   profile: 'Profile',
   'admin-features': 'Admin features',
+};
+
+const VIEW_META: Record<string, { title: string; description: string }> = {
+  dashboard: { title: 'Overview', description: 'Workspace snapshot — open work, breaches, and quick actions.' },
+  tickets: { title: 'Tickets', description: 'Triage, assign, and resolve support tickets from every channel.' },
+  customers: { title: 'Branches', description: 'Branch locations and related customer context.' },
+  team: { title: 'Team', description: 'Agents on the desk — presence, roles, and coverage.' },
+  users: { title: 'Users & access', description: 'Accounts, roles, and who can sign in to the workspace.' },
+  analytics: { title: 'Analytics', description: 'Volume, SLA, and performance trends across tickets.' },
+  knowledge: { title: 'Knowledge Base', description: 'Articles and answers agents use while helping customers.' },
+  chat: { title: 'Live Chat', description: 'Real-time conversations with customers who need help now.' },
+  automations: { title: 'Automations', description: 'Rules that route, tag, or escalate work without manual steps.' },
+  macros: { title: 'Macros', description: 'Reusable replies and actions for common ticket updates.' },
+  surveys: { title: 'Surveys', description: 'Collect feedback after tickets close.' },
+  quality: { title: 'Quality', description: 'Review conversations and coaching signals.' },
+  announcements: { title: 'Announcements', description: 'Publish marquee and portal messages for customers.' },
+  forms: { title: 'Forms', description: 'Structured intake forms tied to ticket workflows.' },
+  releases: { title: 'Releases', description: 'Product and ops release notes shared with the team.' },
+  settings: { title: 'Settings', description: 'Workspace preferences, channels, and configuration.' },
+  profile: { title: 'Profile', description: 'Your agent profile, avatar, and personal preferences.' },
+  'admin-features': { title: 'Admin features', description: 'Admin-only tools for platform control and maintenance.' },
 };
 
 export function AgentShell() {
@@ -201,9 +223,14 @@ export function AgentShell() {
           isAdmin={admin}
         />
         <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-          <header className="nexus-topbar relative z-40 h-14 shrink-0 flex items-center gap-3 px-4 lg:px-6 xl:px-8 w-full">
-            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 shrink-0 min-w-0 truncate max-w-[40%]">
-              {TITLES[activeNav] || activeNav}
+          <header className="nexus-topbar relative z-40 min-h-[3.75rem] h-auto py-2.5 shrink-0 flex items-center gap-3 px-4 lg:px-6 xl:px-8 w-full">
+            <div className="shrink-0 min-w-0 max-w-[min(28rem,50%)] pr-3">
+              <div className="text-lg sm:text-xl font-bold tracking-tight text-zinc-900 dark:text-white leading-tight truncate">
+                {(VIEW_META[activeNav] || { title: TITLES[activeNav] || activeNav }).title}
+              </div>
+              <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5 line-clamp-2">
+                {(VIEW_META[activeNav] || { description: '' }).description}
+              </p>
             </div>
             <div className="flex-1 min-w-0" aria-hidden />
             <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
