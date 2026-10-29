@@ -1,3 +1,4 @@
+/* mytickets-menu-fixed-v1 */
 /* followup-agent-notify-v1 */
 /* portal-staff-preview-v1 */
 /* workspace-switcher-portal-v1 */
@@ -179,6 +180,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const [myTicketsDateFrom, setMyTicketsDateFrom] = useState('');
   const [myTicketsDateTo, setMyTicketsDateTo] = useState('');
   const [myTicketMenuId, setMyTicketMenuId] = useState<string | null>(null);
+  const [myTicketMenuPos, setMyTicketMenuPos] = useState<{ top: number; left: number; openUp: boolean }>({
+    top: 0,
+    left: 0,
+    openUp: false,
+  });
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
   const [portalNotifOpen, setPortalNotifOpen] = useState(false);
   const portalNotifRef = useRef<HTMLDivElement>(null);
@@ -1205,7 +1211,21 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                   aria-label="Ticket actions"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setMyTicketMenuId((id) => (id === t.id ? null : t.id));
+                                    if (myTicketMenuId === t.id) {
+                                      setMyTicketMenuId(null);
+                                      return;
+                                    }
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                    const menuH = 88;
+                                    const menuW = 168;
+                                    const openUp = rect.bottom + menuH + 8 > window.innerHeight;
+                                    const top = openUp ? rect.top - menuH - 6 : rect.bottom + 6;
+                                    const left = Math.min(
+                                      Math.max(8, rect.right - menuW),
+                                      window.innerWidth - menuW - 8,
+                                    );
+                                    setMyTicketMenuPos({ top, left, openUp });
+                                    setMyTicketMenuId(t.id);
                                   }}
                                 >
                                   <MoreVertical size={16} />
@@ -1214,7 +1234,10 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                                   )}
                                 </button>
                                 {myTicketMenuId === t.id && (
-                                  <div className="portal-mytickets-action-menu absolute right-0 top-full mt-1 z-[100] w-40 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xl py-1 text-left">
+                                  <div
+                                    className="portal-mytickets-action-menu fixed z-[9998] w-42 min-w-[10.5rem] rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-2xl py-1 text-left"
+                                    style={{ top: myTicketMenuPos.top, left: myTicketMenuPos.left }}
+                                  >
                                     <button
                                       type="button"
                                       className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"

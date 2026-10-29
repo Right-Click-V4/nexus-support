@@ -1,3 +1,4 @@
+/* agent-toast-from-notif-v1 */
 /* followup-agent-toast-v1 */
 /* workspace-switcher-v1 */
 /* agent-topbar-icons-v1 */
@@ -140,6 +141,8 @@ export function AgentShell() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [notifOpen, setNotifOpen] = useState(false);
   const [agentToast, setAgentToast] = useState<{ title: string; body: string } | null>(null);
+  const prevNotifIdsRef = useRef<Set<string>>(new Set());
+  const toastBootRef = useRef(true);
   const notifRef = useRef<HTMLDivElement>(null);
   const { tickets, usingSupabase, currentAgent } = useTickets();
   const { user, loading: authLoading, authBusy, requiresAuth, signOut, accountRole } = useAuth();
@@ -157,6 +160,27 @@ export function AgentShell() {
     deleteAllNotifications,
     conversations,
   } = usePlatform();
+
+
+  /* Toast when new agent notifications arrive (cross-tab / Supabase), not only local event */
+  useEffect(() => {
+    const ids = new Set(notifications.map((n) => n.id));
+    if (toastBootRef.current) {
+      prevNotifIdsRef.current = ids;
+      toastBootRef.current = false;
+      return;
+    }
+    const fresh = notifications.filter((n) => !prevNotifIdsRef.current.has(n.id) && !n.read);
+    prevNotifIdsRef.current = ids;
+    if (fresh.length === 0) return;
+    const latest = fresh[0];
+    setAgentToast({
+      title: latest.title || 'New notification',
+      body: latest.body || '',
+    });
+    const t = window.setTimeout(() => setAgentToast(null), 7000);
+    return () => window.clearTimeout(t);
+  }, [notifications]);
 
   useEffect(() => {
     const onEvt = (e: Event) => {
@@ -290,7 +314,7 @@ export function AgentShell() {
     <PostLoginShell ready={agentReady} label="Opening agent workspace…" variant="agent">
       
       {agentToast && (
-        <div className="agent-toast-followup fixed top-4 right-4 z-[200] max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-violet-400/40 bg-zinc-950/95 text-white shadow-2xl shadow-violet-900/40 backdrop-blur-md px-4 py-3">
+        <div className="agent-toast-followup fixed top-4 right-4 z-[9999] max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-violet-400/40 bg-zinc-950/95 text-white shadow-2xl shadow-violet-900/40 backdrop-blur-md px-4 py-3">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 w-8 h-8 rounded-lg bg-violet-500/25 text-violet-200 flex items-center justify-center shrink-0">
               <Bell size={16} />
