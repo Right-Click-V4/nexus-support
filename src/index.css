@@ -967,3 +967,35 @@ html.nexus-light .app-cosmos > aside {
 .animate-agent-toast-in {
   animation: agent-toast-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+
+/* portal-mytickets-action-menu-theme-v1 */
+.portal-mytickets-action-menu {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+html.nexus-light .portal-mytickets-action-menu {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(124, 58, 237, 0.28) !important;
+  color: #1e1b4b;
+}
+html.nexus-light .portal-mytickets-action-menu button {
+  color: #312e81 !important;
+}
+html.nexus-light .portal-mytickets-action-menu button:hover {
+  background: rgba(124, 58, 237, 0.1) !important;
+  color: #4c1d95 !important;
+}
+html.nexus-dark .portal-mytickets-action-menu {
+  background: rgba(24, 24, 27, 0.92) !important;
+  border-color: rgba(167, 139, 250, 0.35) !important;
+  color: #f4f4f5;
+}
+html.nexus-dark .portal-mytickets-action-menu button {
+  color: #e4e4e7 !important;
+}
+html.nexus-dark .portal-mytickets-action-menu button:hover {
+  background: rgba(167, 139, 250, 0.15) !important;
+  color: #f5f3ff !important;
+}

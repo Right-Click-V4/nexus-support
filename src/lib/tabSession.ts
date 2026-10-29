@@ -1,3 +1,4 @@
+/* tab-session-closed-flag-v1 */
 /**
  * Browser-session lifetime for auth:
  * - Stay logged in across tabs while ANY tab is open.
@@ -11,10 +12,11 @@
 
 const BC_NAME = 'nexus-auth-tabs-v3';
 const LIVE_KEY = 'nexus-auth-live-v3'; // sessionStorage — survives refresh, dies with browser session
+const CLOSED_KEY = 'nexus-auth-closed-v1'; // localStorage — set when last tab closes
 const TABS_KEY = 'nexus-live-tabs-v3';
 const HEARTBEAT_MS = 2500;
-const STALE_MS = 12_000;
-const SIBLING_WAIT_MS = 200;
+const STALE_MS = 4_000;
+const SIBLING_WAIT_MS = 280;
 
 export type TabSessionClearFn = () => void | Promise<void>;
 
@@ -81,6 +83,16 @@ export function detectNewBrowserSession(): Promise<boolean> {
     /* private mode */
   }
 
+  // Explicit flag: last tab/window was closed → force login
+  try {
+    if (localStorage.getItem(CLOSED_KEY) === '1') {
+      localStorage.removeItem(CLOSED_KEY);
+      return Promise.resolve(true);
+    }
+  } catch {
+    /* ignore */
+  }
+
   // Other tabs still heartbeating?
   try {
     const others = Object.keys(prune(readTabs()));
@@ -127,6 +139,11 @@ export function detectNewBrowserSession(): Promise<boolean> {
 export function markTabSessionLive() {
   try {
     sessionStorage.setItem(LIVE_KEY, '1');
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.removeItem(CLOSED_KEY);
   } catch {
     /* ignore */
   }
@@ -178,6 +195,13 @@ export function startTabSession(_opts?: {
       const tabs = prune(readTabs());
       delete tabs[tabId];
       writeTabs(tabs);
+      if (Object.keys(prune(tabs)).length === 0) {
+        try {
+          localStorage.setItem(CLOSED_KEY, '1');
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       /* ignore */
     }
