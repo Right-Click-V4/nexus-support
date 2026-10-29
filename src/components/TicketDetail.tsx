@@ -1,3 +1,4 @@
+/* save-notify-back-v1 */
 /* sla-close-race-v1 */
 /* sla-auto-close-v1 */
 /* customer-new-expand-v1 */
@@ -59,6 +60,7 @@ function tagsWithPlan(tags: string[] | undefined, plan: string, otherNote = ''):
 }
 import { uploadAttachment } from '../lib/storage';
 import { formatSlaCountdown } from '../lib/slaFormat';
+import { notifyCustomer } from '../lib/agentNotify';
 
 interface Props {
   ticket: Ticket;
@@ -153,6 +155,15 @@ export default function TicketDetail({ ticket, onClose }: Props) {
         branch: branch.trim() || undefined,
         tags: Array.from(new Set([...tagsWithPlan(ticket.tags, resolutionPlan, resolutionOther), 'customer_unread'])),
       });
+      // Explicit customer notify (bell + My Tickets New badge via customer_unread)
+      if (ticket.customer_email) {
+        void notifyCustomer({
+          email: ticket.customer_email,
+          title: 'Ticket updated',
+          body: `${ticket.title || ticket.id} was updated by support.`,
+          link: 'mytickets',
+        });
+      }
       setShowSaved(true);
     } catch (e) {
       console.error(e);
@@ -486,7 +497,7 @@ export default function TicketDetail({ ticket, onClose }: Props) {
     </div>
 
       {showSaved && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowSaved(false)}>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={() => { setShowSaved(false); onClose(); }}>
           <div
             className="ticket-success-modal w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl px-6 py-8 text-center"
             onClick={(e) => e.stopPropagation()}
@@ -498,7 +509,10 @@ export default function TicketDetail({ ticket, onClose }: Props) {
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Ticket changes have been saved.</p>
             <button
               type="button"
-              onClick={() => setShowSaved(false)}
+              onClick={() => {
+                setShowSaved(false);
+                onClose();
+              }}
               className="w-full py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium"
             >
               OK
