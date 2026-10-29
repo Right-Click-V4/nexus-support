@@ -1,3 +1,4 @@
+/* mytickets-copy-id-v1 */
 /* mytickets-menu-portal-v1 */
 /* mytickets-menu-anchor-v2 */
 /* mytickets-menu-fixed-v1 */
@@ -26,7 +27,7 @@ import { createPortal } from 'react-dom';
 import {
   Search, CheckCircle2, Ticket, BookOpen, ArrowLeft, MessageSquare,
   LogOut, User, Star, Home, ExternalLink, Users, ImagePlus, X,
-  Flag, ListTree, Lightbulb, Clock3, ClipboardList, MoreVertical, Info, Send, Bell,
+  Flag, ListTree, Lightbulb, Clock3, ClipboardList, MoreVertical, Info, Send, Bell, Copy, Check,
 } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
@@ -198,6 +199,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     if (id == null) setMyTicketMenu(null);
   };
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
+  const [copiedTicketId, setCopiedTicketId] = useState<string | null>(null);
   const [portalNotifOpen, setPortalNotifOpen] = useState(false);
   const portalNotifRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1199,7 +1201,33 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                           {slice.map((t) => (
                             <>
                             <tr key={t.id} className="border-b border-zinc-100/80 dark:border-white/5 hover:bg-violet-500/5 transition-colors">
-                              <td className="px-4 py-3 font-mono text-xs text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{t.id}</td>
+                              <td className="px-4 py-3 font-mono text-xs text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                                <span className="inline-flex items-center gap-1.5">
+                                  <span>{t.id}</span>
+                                  <button
+                                    type="button"
+                                    title="Copy ticket ID"
+                                    aria-label={`Copy ${t.id}`}
+                                    className="inline-flex p-1 rounded-md text-zinc-400 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        await navigator.clipboard.writeText(t.id);
+                                        setCopiedTicketId(t.id);
+                                        window.setTimeout(() => setCopiedTicketId((cur) => (cur === t.id ? null : cur)), 1500);
+                                      } catch {
+                                        /* ignore */
+                                      }
+                                    }}
+                                  >
+                                    {copiedTicketId === t.id ? (
+                                      <Check size={13} className="text-emerald-500" />
+                                    ) : (
+                                      <Copy size={13} />
+                                    )}
+                                  </button>
+                                </span>
+                              </td>
                               <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50 max-w-[240px]">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <div className="truncate" title={t.title}>{t.title}</div>

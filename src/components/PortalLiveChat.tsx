@@ -1,3 +1,4 @@
+/* livechat-ticket-required-v1 */
 /* portal-livechat-v2 */
 import { useState, useEffect, useRef, useMemo } from 'react';
 import clsx from 'clsx';
@@ -122,19 +123,24 @@ export default function PortalLiveChat({ onBack }: Props) {
       setError('Account name is required — sign in again if this is empty.');
       return;
     }
+    const tid = ticketId.trim();
+    if (!tid) {
+      setError('Ticket number is required.');
+      return;
+    }
     setStarting(true);
     setError('');
     try {
       const br = branch.trim() || undefined;
-      const c = await createChat(nm, email.trim() || undefined, {
+      const c = await createChat(nm, (user?.email || email).trim() || undefined, {
         branch: br,
-        ticket_id: ticketId.trim() || undefined,
+        ticket_id: tid,
       });
       setChatId(c.id);
       sessionStorage.setItem(STORAGE_KEY, c.id);
       const parts = [`Hi, I'm ${nm}.`];
       if (br) parts.push(`Branch: ${br}.`);
-      if (ticketId.trim()) parts.push(`Ticket: ${ticketId.trim()}.`);
+      if (tid) parts.push(`Ticket: ${tid}.`);
       parts.push('I need assistance.');
       await sendChatMessage(c.id, parts.join(' '), 'customer');
     } catch (err: unknown) {
@@ -186,7 +192,7 @@ export default function PortalLiveChat({ onBack }: Props) {
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Live Chat</h1>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
-                    Connect with a support agent in real time. Your name is locked to your account.
+                    Connect with a support agent in real time.
                   </p>
                 </div>
               </div>
@@ -215,20 +221,25 @@ export default function PortalLiveChat({ onBack }: Props) {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={field}
+                    readOnly
+                    disabled
+                    className={`${field} opacity-80 cursor-not-allowed`}
                     placeholder="you@email.com"
                   />
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                    Locked to your registered account email.
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Ticket number <span className="font-normal text-zinc-400">(optional)</span>
+                    Ticket number
                   </label>
                   <input
                     value={ticketId}
                     onChange={(e) => setTicketId(e.target.value)}
                     placeholder="e.g. NX-2841"
+                    required
                     className={`${field} font-mono`}
                   />
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
@@ -247,7 +258,7 @@ export default function PortalLiveChat({ onBack }: Props) {
 
                 <div>
                   <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Branch <span className="font-normal text-zinc-400">(optional)</span>
+                    Branch
                   </label>
                   <select value={branch} onChange={(e) => setBranch(e.target.value)} className={field}>
                     <option value="">Select branch…</option>
