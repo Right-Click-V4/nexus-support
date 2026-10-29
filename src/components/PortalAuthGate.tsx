@@ -1,5 +1,5 @@
+/* agent-portal-preview-v1 */
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import LoginPage from './LoginPage';
 import PostLoginLoader, { PostLoginShell, BootLoader, hasJustLoggedIn } from './PostLoginLoader';
@@ -10,16 +10,10 @@ interface Props {
   onBackToAgent?: () => void;
 }
 
+/** Agents/admins may open Customer Portal to preview; customers stay portal-only. */
 export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }: Props) {
   const { user, loading, authBusy, requiresAuth, accountRole, configError } = useAuth();
   const goAgent = onOpenAgent || onBackToAgent;
-  const isAgentSide = accountRole === 'agent' || accountRole === 'admin';
-
-  useEffect(() => {
-    if (loading || authBusy || !requiresAuth || !user || !isAgentSide) return;
-    if (goAgent) goAgent();
-    else window.location.hash = '';
-  }, [loading, authBusy, requiresAuth, user, isAgentSide, goAgent]);
 
   if (requiresAuth && loading && !authBusy) {
     if (hasJustLoggedIn()) {
@@ -45,13 +39,9 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
     return <LoginPage audience="customer" onOpenAgent={goAgent} />;
   }
 
-  if (requiresAuth && user && isAgentSide) {
-    return <BootLoader label="Opening agent workspace…" />;
-  }
-
   return (
     <PostLoginShell
-      ready={!requiresAuth || (!!user && !isAgentSide)}
+      ready={!requiresAuth || !!user}
       label="Opening customer portal…"
       variant="customer"
     >
