@@ -1,3 +1,4 @@
+/* expand-darker-glass-v1 */
 /* notif-z-expand-glass-v1 */
 /* portal-bell-v1 */
 /* view-detail-polish-v1 */
@@ -1224,16 +1225,18 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                               </td>
                             </tr>
                             {expandedTicketId === t.id && (
-                              <tr key={t.id + '-detail'} className="border-b border-zinc-100/80 dark:border-white/5 bg-violet-500/[0.04]">
+                              <tr key={t.id + '-detail'} className="border-b border-zinc-100/80 dark:border-white/5 bg-transparent dark:bg-black/20">
                                 <td colSpan={7} className="px-4 py-4">
-                                  <div className={`rounded-xl border p-4 sm:p-5 space-y-4 text-left shadow-sm backdrop-blur-md ${
-                                    t.status === 'resolved' || t.status === 'closed'
-                                      ? 'border-emerald-400/35 bg-white/75 dark:bg-emerald-950/50 dark:border-emerald-400/30'
-                                      : t.status === 'pending'
-                                        ? 'border-orange-400/35 bg-white/75 dark:bg-orange-950/40 dark:border-orange-400/30'
-                                        : t.status === 'on-hold'
-                                          ? 'border-yellow-400/35 bg-white/75 dark:bg-yellow-950/35 dark:border-yellow-400/30'
-                                          : 'border-violet-400/35 bg-white/75 dark:bg-violet-950/50 dark:border-violet-400/30'
+                                  <div className={`rounded-xl border p-4 sm:p-5 space-y-4 text-left shadow-sm backdrop-blur-md portal-ticket-expand ${
+                                    t.status === 'closed'
+                                      ? 'portal-ticket-expand--closed border-red-500/40 bg-red-50/80 dark:bg-[#1a0a0c]/90 dark:border-red-400/45'
+                                      : t.status === 'resolved'
+                                        ? 'portal-ticket-expand--resolved border-emerald-500/40 bg-emerald-50/80 dark:bg-[#0c1f17]/90 dark:border-emerald-400/45'
+                                        : t.status === 'pending'
+                                          ? 'portal-ticket-expand--pending border-orange-500/40 bg-orange-50/80 dark:bg-[#1a1208]/90 dark:border-orange-400/45'
+                                          : t.status === 'on-hold'
+                                            ? 'portal-ticket-expand--hold border-yellow-500/40 bg-yellow-50/80 dark:bg-[#1a1808]/90 dark:border-yellow-400/45'
+                                            : 'portal-ticket-expand--open border-violet-500/40 bg-violet-50/80 dark:bg-[#12081c]/90 dark:border-violet-400/45'
                                   }`}>
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                       <div>
