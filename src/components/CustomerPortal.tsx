@@ -1,3 +1,4 @@
+/* workspace-switcher-portal-v1 */
 /* notif-above-marquee-v1 */
 /* expand-darker-glass-v1 */
 /* notif-z-expand-glass-v1 */
@@ -524,8 +525,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
 
         <div className="portal-sidebar-footer p-3 space-y-1">
           {onBackToAgent && (
-            <button type="button" onClick={onBackToAgent} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:bg-white/5 hover:text-zinc-200">
-              <ExternalLink size={16} /> Agent desk
+            <button
+              type="button"
+              onClick={onBackToAgent}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-violet-800 dark:text-violet-100 bg-violet-100/90 dark:bg-violet-500/20 border border-violet-400/40 hover:bg-violet-200 dark:hover:bg-violet-500/30"
+            >
+              <ExternalLink size={16} /> Agent Workspace
             </button>
           )}
           <div className="w-full flex items-center gap-3 px-3 py-2 rounded-lg">
@@ -632,7 +637,18 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
           </div>
           <ThemeToggle />
           {requiresAuth && (
-            <button
+                          {onBackToAgent && (
+                <button
+                  type="button"
+                  onClick={onBackToAgent}
+                  className="switch-to-agent-top inline-flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 border border-violet-500/50 shadow-md"
+                  title="Back to Agent Workspace"
+                >
+                  <ExternalLink size={14} />
+                  <span className="hidden sm:inline">Agent Workspace</span>
+                </button>
+              )}
+<button
               type="button"
               onClick={() => void signOut()}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-violet-500/15 dark:hover:bg-white/10 border border-violet-700/25 dark:border-white/20 transition-colors"

@@ -939,3 +939,16 @@ html.nexus-dark .app-cosmos aside button[class*="bg-brand"] {
   color: #fff !important;
   box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.35);
 }
+
+
+/* workspace-switcher-chrome-v1 — light topbar matches sidebar; solid switcher */
+html.nexus-light .app-cosmos .nexus-topbar,
+html.nexus-light .nexus-topbar {
+  background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
+  border-bottom: 1px solid rgba(76, 29, 149, 0.55) !important;
+}
+html.nexus-light .app-cosmos aside,
+html.nexus-light .app-cosmos aside.portal-sidebar,
+html.nexus-light .app-cosmos > aside {
+  background: linear-gradient(180deg, rgba(196, 181, 253, 0.92) 0%, rgba(167, 139, 250, 0.88) 45%, rgba(196, 181, 253, 0.90) 100%) !important;
+}

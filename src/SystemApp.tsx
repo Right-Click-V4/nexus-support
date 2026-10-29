@@ -1,3 +1,4 @@
+/* workspace-switcher-v1 */
 /* agent-topbar-icons-v1 */
 /* agent-chrome-meta-v1 */
 /* agent-topbar-right-v1 */
@@ -288,17 +289,19 @@ export function AgentShell() {
             </div>
             <div className="flex-1 min-w-0" aria-hidden />
             <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.hash = 'portal';
-                }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-800 dark:text-violet-200 px-2.5 py-1.5 rounded-lg border border-violet-400/50 dark:border-violet-400/35 bg-violet-100 dark:bg-violet-500/15 hover:bg-violet-200 dark:hover:bg-violet-500/25 shadow-sm transition-colors"
-                title="Open Customer Portal"
-              >
-                <ExternalLink size={14} className="text-violet-700 dark:text-violet-200" />
-                <span className="hidden sm:inline">Customer Portal</span>
-              </button>
+                            {(accountRole === 'agent' || accountRole === 'admin' || admin) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.hash = 'portal';
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-lg border border-violet-700/40 bg-violet-600 hover:bg-violet-700 shadow-md shadow-violet-600/25 transition-colors"
+                  title="Preview Customer Portal"
+                >
+                  <ExternalLink size={14} className="text-white" />
+                  <span className="hidden sm:inline">Customer Portal</span>
+                </button>
+              )}
               <ThemeToggle />
               <div className="relative z-[50]" ref={notifRef}>
                 <button
@@ -435,13 +438,19 @@ export function PortalShell() {
       />
     );
   }
+  const goAgent = () => {
+    window.location.hash = 'agent';
+  };
+
   return (
-    <PortalAuthGate
-      onOpenAgent={() => {
-        window.location.hash = '';
-      }}
-    >
-      <CustomerPortal />
+    <PortalAuthGate onOpenAgent={goAgent} onBackToAgent={goAgent}>
+      <CustomerPortal
+        onBackToAgent={
+          accountRole === 'agent' || accountRole === 'admin' || admin
+            ? goAgent
+            : undefined
+        }
+      />
     </PortalAuthGate>
   );
 }
