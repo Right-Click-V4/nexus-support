@@ -1,3 +1,4 @@
+/* notif-z-expand-glass-v1 */
 /* Purple sky + dense galaxy particles + theme-aware glass sidebar */
 
 .portal-cosmic {
@@ -408,6 +409,8 @@ html.nexus-light .nexus-topbar .text-zinc-400 {
 
 /* Announcement marquee under top bar */
 .portal-marquee {
+  position: relative;
+  z-index: 25;
   display: flex;
   align-items: center;
   gap: 0.5rem;
