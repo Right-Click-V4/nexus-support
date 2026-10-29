@@ -1,13 +1,33 @@
+/* portal-livechat-v2 */
 import { useState, useEffect, useRef, useMemo } from 'react';
 import clsx from 'clsx';
-import { Send, ArrowLeft, Paperclip, MessageCircle, Sparkles, Clock } from 'lucide-react';
+import { Send, Paperclip, MessageCircle, Sparkles, Clock, Building2, Ticket } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 import { useTickets } from '../context/TicketContext';
-import { INITIAL_BRANCHES } from '../data';
+import { useAuth } from '../context/AuthContext';
 import { MAX_CHAT_FILE_BYTES } from '../types';
 import { encodeChatAttachment, parseChatAttachment, isImageMime } from '../lib/chatAttachments';
 
 const STORAGE_KEY = 'nexus-portal-chat-id';
+
+const BRANCH_OPTIONS = [
+  'Abucay',
+  'Abuyog',
+  'Avenida',
+  'Baybay',
+  'Burauen',
+  'Calbayog',
+  'Carigara',
+  'Catarman',
+  'Catbalogan',
+  'Kananga',
+  'Maasin',
+  'Ormoc',
+  'Palo-Naga',
+  'Palo-Pawing',
+  'Palo-Schisto',
+  'Sogod',
+] as const;
 
 const QUICK_REPLIES = [
   'I need help with my account',
@@ -23,8 +43,16 @@ interface Props {
 export default function PortalLiveChat({ onBack }: Props) {
   const { conversations, createChat, sendChatMessage, refreshPlatform } = usePlatform();
   const { findTicket } = useTickets();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const { user } = useAuth();
+
+  const accountName =
+    (user?.user_metadata?.full_name as string | undefined)?.trim() ||
+    (user?.user_metadata?.name as string | undefined)?.trim() ||
+    user?.email?.split('@')[0] ||
+    '';
+
+  const [name, setName] = useState(accountName);
+  const [email, setEmail] = useState(user?.email || '');
   const [branch, setBranch] = useState('');
   const [ticketId, setTicketId] = useState('');
   const [ticketHint, setTicketHint] = useState('');
@@ -36,20 +64,27 @@ export default function PortalLiveChat({ onBack }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (accountName) setName(accountName);
+  }, [accountName]);
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
+
   const conversation = conversations.find((c) => c.id === chatId) || null;
   const messages = conversation?.messages || [];
 
   const branchOptions = useMemo(() => {
-    const set = new Set(INITIAL_BRANCHES.map((b) => b.name));
+    const set = new Set<string>([...BRANCH_OPTIONS]);
     try {
       const raw = localStorage.getItem('nexus-branches-v1');
       if (raw) {
-        const list = JSON.parse(raw) as { name: string }[];
-        list.forEach((b) => set.add(b.name));
+        (JSON.parse(raw) as { name: string }[]).forEach((b) => set.add(b.name));
       }
     } catch {}
     if (branch) set.add(branch);
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [branch]);
 
   useEffect(() => {
@@ -60,7 +95,7 @@ export default function PortalLiveChat({ onBack }: Props) {
     }
     const t = findTicket(id);
     if (!t) {
-      setTicketHint('Ticket not found yet — you can still chat.');
+      setTicketHint('Ticket not found yet — you can still start a chat.');
       return;
     }
     if (t.branch) {
@@ -69,9 +104,7 @@ export default function PortalLiveChat({ onBack }: Props) {
     } else {
       setTicketHint(`Found ${t.id}: ${t.title} (no branch on ticket — pick one below if you want)`);
     }
-    if (t.customer_email && !email.trim()) setEmail(t.customer_email);
-    if (t.customer_name && !name.trim()) setName(t.customer_name);
-  }, [ticketId, findTicket]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ticketId, findTicket]);
 
   useEffect(() => {
     const t = setInterval(() => refreshPlatform(), 3000);
@@ -80,269 +113,331 @@ export default function PortalLiveChat({ onBack }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  }, [messages.length, chatId]);
 
   const start = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      setError('Name is required');
+    const nm = (accountName || name).trim();
+    if (!nm) {
+      setError('Account name is required — sign in again if this is empty.');
       return;
     }
-    setError('');
     setStarting(true);
+    setError('');
     try {
-      const tid = ticketId.trim() || undefined;
       const br = branch.trim() || undefined;
-      const c = await createChat(name.trim(), email.trim() || undefined, {
+      const c = await createChat(nm, email.trim() || undefined, {
         branch: br,
-        ticket_id: tid,
+        ticket_id: ticketId.trim() || undefined,
       });
-      sessionStorage.setItem(STORAGE_KEY, c.id);
       setChatId(c.id);
-      const parts = [`Hi, I'm ${name.trim()}.`];
+      sessionStorage.setItem(STORAGE_KEY, c.id);
+      const parts = [`Hi, I'm ${nm}.`];
       if (br) parts.push(`Branch: ${br}.`);
-      if (tid) parts.push(`Ticket to resolve: ${tid}.`);
-      parts.push('I need help.');
+      if (ticketId.trim()) parts.push(`Ticket: ${ticketId.trim()}.`);
+      parts.push('I need assistance.');
       await sendChatMessage(c.id, parts.join(' '), 'customer');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Could not start chat');
     } finally {
       setStarting(false);
     }
   };
 
-  const send = async (text?: string) => {
-    const body = (text ?? draft).trim();
-    if (!body || !chatId) return;
+  const send = async () => {
+    if (!chatId || !draft.trim()) return;
+    const text = draft.trim();
     setDraft('');
-    await sendChatMessage(chatId, body, 'customer');
+    await sendChatMessage(chatId, text, 'customer');
   };
 
-  const sendFile = async (file: File) => {
-    if (!chatId) return;
+  const onFile = async (file: File | null) => {
+    if (!chatId || !file) return;
     setFileError('');
     if (file.size > MAX_CHAT_FILE_BYTES) {
-      setFileError(`File too large (max ~${Math.round(MAX_CHAT_FILE_BYTES / 1000)}KB).`);
+      setFileError('File is too large.');
       return;
     }
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error('Could not read file'));
-      reader.readAsDataURL(file);
-    });
-    const body = encodeChatAttachment(
-      { url: dataUrl, name: file.name, mime: file.type || 'application/octet-stream' },
-      draft.trim() || undefined
-    );
-    setDraft('');
-    await sendChatMessage(chatId, body, 'customer');
+    try {
+      const dataUrl = await encodeChatAttachment(file);
+      await sendChatMessage(
+        chatId,
+        JSON.stringify({ url: dataUrl, name: file.name, mime: file.type || 'application/octet-stream' }),
+        'customer',
+      );
+    } catch {
+      setFileError('Could not attach file.');
+    }
   };
 
-  const endAndLeave = () => {
-    sessionStorage.removeItem(STORAGE_KEY);
-    setChatId(null);
-    onBack();
-  };
+  const field =
+    'w-full px-3 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-white/15 bg-white/80 dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400';
 
-  if (!chatId || !conversation) {
+  if (!chatId) {
     return (
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-6">
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-lg shadow-brand-500/25 mb-4">
-            <MessageCircle className="text-white" size={26} />
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="grid lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="portal-overview-glass rounded-2xl p-5 sm:p-6">
+              <div className="flex items-start gap-3 mb-5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/25 shrink-0">
+                  <MessageCircle className="text-white" size={24} />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Live Chat</h1>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+                    Connect with a support agent in real time. Your name is locked to your account.
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={start} className="space-y-4">
+                {error && (
+                  <div className="text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-500/30 px-3 py-2 rounded-xl">
+                    {error}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Your name</label>
+                  <input
+                    value={name}
+                    readOnly
+                    required
+                    className={`${field} opacity-90 cursor-not-allowed bg-white/40 dark:bg-white/5`}
+                    title="Filled from your account — cannot be changed"
+                  />
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Locked to your registered account name.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={field}
+                    placeholder="you@email.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Ticket number <span className="font-normal text-zinc-400">(optional)</span>
+                  </label>
+                  <input
+                    value={ticketId}
+                    onChange={(e) => setTicketId(e.target.value)}
+                    placeholder="e.g. NX-2841"
+                    className={`${field} font-mono`}
+                  />
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                    Enter a ticket ID — branch fills in automatically when found.
+                  </p>
+                  {ticketHint && (
+                    <p
+                      className={`text-[11px] mt-1 ${
+                        ticketHint.startsWith('Found') ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                      }`}
+                    >
+                      {ticketHint}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Branch <span className="font-normal text-zinc-400">(optional)</span>
+                  </label>
+                  <select value={branch} onChange={(e) => setBranch(e.target.value)} className={field}>
+                    <option value="">Select branch…</option>
+                    {branchOptions.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={starting}
+                  className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 shadow-lg shadow-violet-500/25 disabled:opacity-50 transition-all"
+                >
+                  {starting ? 'Connecting…' : 'Start chat'}
+                </button>
+              </form>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Live chat</h1>
-          <p className="text-zinc-500 text-sm mt-1">Talk to a support agent in real time.</p>
-          <div className="mt-4 flex justify-center gap-3 text-[11px] text-zinc-500">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-zinc-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Agents online
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-zinc-200">
-              <Clock size={12} /> Typical wait under a few minutes
-            </span>
+
+          <div className="lg:col-span-5 space-y-4">
+            <div className="portal-overview-glass rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+                  <Sparkles size={16} />
+                </div>
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Before you start</h2>
+              </div>
+              <ul className="space-y-2.5 text-[13px] text-zinc-600 dark:text-zinc-300">
+                <li className="flex gap-2">
+                  <span className="text-emerald-500 shrink-0">•</span>
+                  <span>Agents are typically available during business hours.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-emerald-500 shrink-0">•</span>
+                  <span>Link a ticket number if this is about an existing request.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-emerald-500 shrink-0">•</span>
+                  <span>You can attach screenshots after the chat starts.</span>
+                </li>
+              </ul>
+              <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/20 bg-white/30 dark:bg-white/5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Agents online
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/20 bg-white/30 dark:bg-white/5">
+                  <Clock size={12} /> Typical wait: a few minutes
+                </span>
+              </div>
+            </div>
+            <div className="portal-overview-glass rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Building2 size={16} className="text-violet-600 dark:text-violet-300" />
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Branch list</h2>
+              </div>
+              <p className="text-[12px] text-zinc-600 dark:text-zinc-400 mb-2">
+                Same branches as Submit a Ticket — pick the site this chat is about.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {BRANCH_OPTIONS.slice(0, 8).map((b) => (
+                  <span
+                    key={b}
+                    className="text-[10px] px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-800 dark:text-violet-200 border border-violet-400/20"
+                  >
+                    {b}
+                  </span>
+                ))}
+                <span className="text-[10px] px-2 py-0.5 text-zinc-500">+ more in the list</span>
+              </div>
+            </div>
           </div>
         </div>
-        <form onSubmit={start} className="bg-white rounded-2xl border border-zinc-200 shadow-card p-6 space-y-4">
-          {error && <div className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-lg">{error}</div>}
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Your name *</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} required
-              className="w-full px-3 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Email (optional)</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Ticket number (if any)</label>
-            <input
-              value={ticketId}
-              onChange={(e) => setTicketId(e.target.value)}
-              placeholder="e.g. NX-2841"
-              className="w-full px-3 py-2.5 text-sm border border-zinc-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-            />
-            <p className="text-[11px] text-zinc-400 mt-1">
-              Enter your ticket ID first — branch fills in automatically when found.
-            </p>
-            {ticketHint && (
-              <p className={`text-[11px] mt-1 ${ticketHint.startsWith('Found') ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {ticketHint}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
-              Branch <span className="font-normal text-zinc-400">(optional)</span>
-            </label>
-            <select
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-zinc-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-            >
-              <option value="">Select branch (optional)…</option>
-              {branchOptions.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" disabled={starting}
-            className="w-full py-3 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 disabled:opacity-50 shadow-sm shadow-brand-600/20">
-            {starting ? 'Connecting…' : 'Start chat'}
-          </button>
-        </form>
       </div>
     );
   }
 
   return (
-    <div className="max-w-lg mx-auto flex flex-col h-[calc(100vh-8rem)] min-h-[440px]">
-      <div className="flex items-center justify-between mb-3">
-        <button type="button" onClick={endAndLeave} className="text-xs text-zinc-400 hover:text-rose-600">
-          End session
+    <div className="w-full max-w-4xl mx-auto flex flex-col min-h-[min(70vh,640px)] portal-overview-glass rounded-2xl overflow-hidden border border-white/15">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/30 dark:bg-black/20">
+        <div className="flex items-center gap-2 min-w-0">
+          <MessageCircle size={18} className="text-violet-600 dark:text-violet-300 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-zinc-900 dark:text-white truncate">Live Chat</div>
+            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              {conversation?.status === 'ended' ? 'Chat ended' : 'Connected with support'}
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            sessionStorage.removeItem(STORAGE_KEY);
+            setChatId(null);
+          }}
+          className="text-xs text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 px-2 py-1 rounded-lg hover:bg-white/40 dark:hover:bg-white/5"
+        >
+          End / new chat
         </button>
       </div>
-      <div className="flex-1 bg-white rounded-2xl border border-zinc-200 shadow-card flex flex-col overflow-hidden">
-        <div className="px-4 py-3 border-b border-zinc-100 bg-gradient-to-r from-brand-50 to-violet-50">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center">
-              <MessageCircle size={16} className="text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-zinc-900">Support chat</div>
-              <div className="text-xs text-zinc-500 capitalize flex items-center gap-1.5">
-                <span className={clsx(
-                  'w-1.5 h-1.5 rounded-full',
-                  conversation.status === 'waiting' ? 'bg-amber-400 animate-pulse' : conversation.status === 'ended' ? 'bg-zinc-400' : 'bg-emerald-500'
-                )} />
-                {conversation.status === 'waiting' ? 'Waiting for agent…' : conversation.status}
-                {conversation.branch ? ` · ${conversation.branch}` : ''}
-                {conversation.ticket_id ? ` · ${conversation.ticket_id}` : ''}
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-50/40 via-white to-zinc-50">
-          {messages.length <= 1 && (
-            <div className="rounded-xl border border-dashed border-brand-200 bg-white/80 p-4 text-center mb-2">
-              <Sparkles className="mx-auto text-brand-500 mb-2" size={20} />
-              <p className="text-sm font-medium text-zinc-800">You're in the queue</p>
-              <p className="text-xs text-zinc-500 mt-1">
-                An agent will join shortly. Feel free to add more details below.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2 mt-3">
-                {QUICK_REPLIES.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => void send(q)}
-                    className="text-xs px-2.5 py-1.5 rounded-full bg-brand-50 text-brand-700 border border-brand-100 hover:bg-brand-100"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {messages.map((m) => {
-            const { att, text } = parseChatAttachment(m.text);
-            return (
-              <div key={m.id} className={clsx('flex', m.sender === 'customer' ? 'justify-end' : 'justify-start')}>
-                <div className={clsx(
-                  'max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm',
-                  m.sender === 'customer'
-                    ? 'bg-brand-600 text-white rounded-br-md'
-                    : 'bg-white border border-zinc-100 text-zinc-800 rounded-bl-md'
-                )}>
-                  {m.sender === 'agent' && (
-                    <div className="text-[10px] font-semibold text-brand-600 mb-0.5">Agent</div>
-                  )}
-                  {att && isImageMime(att.mime) && (
-                    <a href={att.url} target="_blank" rel="noreferrer" className="block mb-2">
-                      <img src={att.url} alt={att.name || 'image'} className="max-w-full rounded-lg max-h-48 object-contain" />
-                    </a>
-                  )}
-                  {att && !isImageMime(att.mime) && (
-                    <a
-                      href={att.url}
-                      download={att.name || 'file'}
-                      className={clsx('block text-xs underline mb-1', m.sender === 'customer' ? 'text-brand-100' : 'text-brand-700')}
-                    >
-                      📎 {att.name || 'Download file'}
-                    </a>
-                  )}
-                  {text}
-                  <div className={clsx('text-[10px] mt-1', m.sender === 'customer' ? 'text-brand-200' : 'text-zinc-400')}>
-                    {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={bottomRef} />
-        </div>
-
-        {conversation.status !== 'ended' ? (
-          <div className="p-3 border-t border-zinc-100 space-y-2 bg-white">
-            {fileError && <p className="text-xs text-rose-600">{fileError}</p>}
-            <div className="flex gap-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*,.pdf,.txt,.log,.zip,.doc,.docx"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) sendFile(f);
-                  e.target.value = '';
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="px-3 py-2.5 border border-zinc-200 rounded-xl text-zinc-500 hover:bg-zinc-50"
-                title="Send image or file"
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-transparent">
+        {messages.map((m) => {
+          const mine = m.sender === 'customer';
+          const att = parseChatAttachment(m.body);
+          return (
+            <div key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>
+              <div
+                className={clsx(
+                  'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm',
+                  mine
+                    ? 'bg-violet-600 text-white rounded-br-md'
+                    : 'bg-white/70 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-100 border border-white/20 dark:border-white/10 rounded-bl-md',
+                )}
               >
-                <Paperclip size={18} />
-              </button>
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && void send()}
-                placeholder="Type your message…"
-                className="flex-1 px-4 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-              />
-              <button type="button" onClick={() => void send()} disabled={!draft.trim()}
-                className="px-4 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-40">
-                <Send size={18} />
-              </button>
+                {att ? (
+                  isImageMime(att.mime) ? (
+                    <img src={att.url} alt={att.name} className="max-h-48 rounded-lg" />
+                  ) : (
+                    <a href={att.url} download={att.name} className="underline">
+                      {att.name}
+                    </a>
+                  )
+                ) : (
+                  m.body
+                )}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="p-4 text-center text-sm text-zinc-500 bg-zinc-50">This chat was ended by the agent.</div>
-        )}
+          );
+        })}
+        <div ref={bottomRef} />
       </div>
+
+      {conversation?.status !== 'ended' && (
+        <div className="border-t border-white/10 p-3 bg-white/25 dark:bg-black/25 space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_REPLIES.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => setDraft(q)}
+                className="text-[11px] px-2 py-1 rounded-full border border-white/20 bg-white/40 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:border-violet-400/40"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+          {fileError && <p className="text-[11px] text-rose-500">{fileError}</p>}
+          <div className="flex items-end gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              className="hidden"
+              accept="image/*,.pdf,.txt"
+              onChange={(e) => void onFile(e.target.files?.[0] || null)}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="p-2.5 rounded-xl border border-white/20 text-zinc-500 hover:text-violet-600 dark:hover:text-violet-300"
+              title="Attach"
+            >
+              <Paperclip size={18} />
+            </button>
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void send();
+                }
+              }}
+              rows={1}
+              placeholder="Type a message…"
+              className="flex-1 resize-none px-3 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-white/15 bg-white/80 dark:bg-zinc-900/70 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            />
+            <button
+              type="button"
+              onClick={() => void send()}
+              disabled={!draft.trim()}
+              className="p-2.5 rounded-xl bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-40"
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
