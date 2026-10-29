@@ -204,7 +204,7 @@ html.nexus-dark .portal-sidebar-footer .portal-nav-item { color: #a1a1aa; }
 }
 .portal-shell .nexus-topbar {
   flex-shrink: 0;
-  position: relative; z-index: 20;
+  position: relative; z-index: 70;
   background: linear-gradient(105deg, rgba(196, 181, 253, 0.94) 0%, rgba(167, 139, 250, 0.90) 40%, rgba(221, 214, 254, 0.92) 100%);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(167, 139, 250, 0.35);
@@ -410,7 +410,7 @@ html.nexus-light .nexus-topbar .text-zinc-400 {
 /* Announcement marquee under top bar */
 .portal-marquee {
   position: relative;
-  z-index: 25;
+  z-index: 40;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1468,4 +1468,25 @@ html.nexus-dark .portal-ticket-expand .text-zinc-500 {
 html.nexus-dark .portal-ticket-expand .text-zinc-700,
 html.nexus-dark .portal-ticket-expand .text-zinc-800 {
   color: #e4e4e7;
+}
+
+
+/* notif-above-marquee-v1 */
+.portal-shell .nexus-topbar {
+  z-index: 70 !important;
+}
+.portal-marquee {
+  z-index: 40 !important;
+}
+.portal-notif-panel {
+  z-index: 80 !important;
+  position: absolute;
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+html.nexus-dark .portal-notif-panel {
+  background: rgba(12, 10, 24, 0.72) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
