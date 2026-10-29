@@ -1,3 +1,4 @@
+/* portal-staff-preview-v1 */
 /* workspace-switcher-portal-v1 */
 /* notif-above-marquee-v1 */
 /* expand-darker-glass-v1 */
@@ -487,8 +488,10 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   };
 
 
-  if (!isCustomerSession) {
-    return <PortalAuthGate onBackToAgent={onBackToAgent}>{null}</PortalAuthGate>;
+  /* Staff (agent/admin) may preview the portal; customers use full session.
+     Previously non-customers rendered null → blank white page on #portal. */
+  if (requiresAuth && !user) {
+    return null;
   }
 
   return (
