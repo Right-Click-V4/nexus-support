@@ -43,10 +43,11 @@ jobs:
           python3 scripts/patch_menu_portal_anchor.py || true
           python3 scripts/patch_menu_theme_session.py || true
           python3 scripts/patch_assignee_transfer.py || true
+          python3 scripts/patch_silent_ticket_notify.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PostLoginLoader.tsx src/SystemApp.tsx src/components/PortalAuthGate.tsx src/index.css src/components/CustomerPortal.tsx src/context/PlatformContext.tsx src/lib/agentNotify.ts src/lib/tabSession.ts src/components/TicketDetail.tsx src/context/TicketContext.tsx || true
-          git commit -m "feat: assignee transfer + no auto-assign" || true
+          git commit -m "fix: silent ticket update + toast hydrate" || true
           git push || true
 
       - name: Restore full Customer Portal if needed
@@ -244,13 +245,14 @@ jobs:
           python3 scripts/patch_menu_portal_anchor.py || true
           python3 scripts/patch_menu_theme_session.py || true
           python3 scripts/patch_assignee_transfer.py || true
+          python3 scripts/patch_silent_ticket_notify.py || true
           python3 scripts/patch_tickets_sync.py || true
           python3 scripts/patch_tickets_noflicker.py || true
           python3 scripts/patch_portal_layout.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/PortalCommunityChat.tsx src/components/CustomerPortal.tsx src/components/Sidebar.tsx src/SystemApp.tsx src/components/PortalHome.tsx src/components/TicketsPage.tsx src/components/TicketDetail.tsx src/context/TicketContext.tsx src/context/PlatformContext.tsx src/lib/agentNotify.ts src/types.ts src/portal-lounge.css src/index.css src/lib/communityApi.ts src/components/PortalLiveChat.tsx src/components/PortalAuthGate.tsx src/lib/tabSession.ts || true
-          git commit -m "feat: assignee transfer + no auto-assign" || true
+          git commit -m "fix: silent ticket update + toast hydrate" || true
           git push || true
 
       - name: Setup Node
@@ -274,6 +276,7 @@ jobs:
           python3 scripts/patch_menu_portal_anchor.py || true
           python3 scripts/patch_menu_theme_session.py || true
           python3 scripts/patch_assignee_transfer.py || true
+          python3 scripts/patch_silent_ticket_notify.py || true
           npm run build
           touch dist/.nojekyll
 
