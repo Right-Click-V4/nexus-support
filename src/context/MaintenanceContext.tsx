@@ -1,3 +1,4 @@
+/* boot-timeout-v1 */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchMaintenance, readMaintenanceCache, saveMaintenance, writeMaintenanceCache } from '../lib/maintenance';
@@ -28,9 +29,13 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
       writeMaintenanceCache(on);
     };
 
+    const readyTimer = window.setTimeout(() => {
+      if (!cancelled) setReady(true);
+    }, 2500);
     fetchMaintenance()
       .then(apply)
       .finally(() => {
+        window.clearTimeout(readyTimer);
         if (!cancelled) setReady(true);
       });
 

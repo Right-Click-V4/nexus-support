@@ -1,3 +1,4 @@
+/* auth-boot-timeout-v1 */
 /* presence-force-offline-v1 */
 /* session-boot-order-v1 */
 import {
@@ -142,44 +143,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // session touches the heartbeat and would hide an idle logout.
     let tabCtl: { tabId: string; stop: () => void } | null = null;
     let suppressAuthEvents = false;
+    const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T | null> =>
+      Promise.race([
+        p.then((v) => v as T | null).catch(() => null),
+        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), ms)),
+      ]);
+
     const forceAgentOffline = async () => {
       try {
         const id = localStorage.getItem('nexus-presence-agent-id');
         if (!id || !supabase) return;
-        await supabase.from('agents').update({ status: 'offline', last_seen_at: null }).eq('id', id);
+        await withTimeout(
+          supabase.from('agents').update({ status: 'offline', last_seen_at: null }).eq('id', id).then(() => null),
+          2000,
+        );
         localStorage.removeItem('nexus-presence-agent-id');
       } catch { /* ignore */ }
     };
 
     const boot = async () => {
-      const isNewSession = await detectNewBrowserSession();
-      if (isNewSession) {
-        suppressAuthEvents = true;
-        await forceAgentOffline();
-        clearSupabaseAuthStorage();
-        try {
-          await supabase.auth.signOut({ scope: 'local' });
-        } catch {
-          /* ignore */
+      try {
+        const isNewSession = await detectNewBrowserSession();
+        if (isNewSession) {
+          suppressAuthEvents = true;
+          await forceAgentOffline();
+          clearSupabaseAuthStorage();
+          try {
+            await withTimeout(supabase.auth.signOut({ scope: 'local' }), 2000);
+          } catch {
+            /* ignore */
+          }
+          clearSupabaseAuthStorage();
+          if (!cancelled) {
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+          }
+          tabCtl = startTabSession();
+          window.setTimeout(() => {
+            suppressAuthEvents = false;
+          }, 1500);
+          return;
         }
-        clearSupabaseAuthStorage();
+        tabCtl = startTabSession();
+        markTabSessionLive();
+        let sess = null;
+        try {
+          const result = await withTimeout(supabase.auth.getSession(), 4000);
+          if (result && typeof result === 'object' && result !== null && 'data' in result) {
+            sess = (result as { data: { session: typeof session } }).data?.session ?? null;
+          }
+        } catch { /* ignore */ }
+        await applySession(sess);
+      } catch {
         if (!cancelled) {
           setSession(null);
           setUser(null);
           setLoading(false);
         }
-        tabCtl = startTabSession();
-        window.setTimeout(() => {
-          suppressAuthEvents = false;
-        }, 1500);
-        return;
+        if (!tabCtl) tabCtl = startTabSession();
       }
-      tabCtl = startTabSession();
-      markTabSessionLive();
-      const { data } = await supabase.auth.getSession();
-      await applySession(data.session);
     };
     void boot();
+    window.setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 6000);
 
     const {
       data: { subscription },

@@ -1,3 +1,4 @@
+/* boot-timeout-v1 */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchSite404, readSite404Cache, saveSite404, writeSite404Cache } from '../lib/site404';
@@ -27,9 +28,13 @@ export function Site404Provider({ children }: { children: ReactNode }) {
       writeSite404Cache(on);
     };
 
+    const readyTimer = window.setTimeout(() => {
+      if (!cancelled) setReady(true);
+    }, 2500);
     fetchSite404()
       .then(apply)
       .finally(() => {
+        window.clearTimeout(readyTimer);
         if (!cancelled) setReady(true);
       });
 
