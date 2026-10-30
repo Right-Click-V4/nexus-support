@@ -46,10 +46,6 @@ if plc.exists():
                 "min-h-[min(70vh,640px)] portal-overview-glass rounded-2xl overflow-hidden border border-white/15",
                 "min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-zinc-200/50 dark:border-white/10 bg-white/50 dark:bg-zinc-950/80 backdrop-blur-xl shadow-lg shadow-black/10",
             ),
-            (
-                "min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-white/15",
-                "min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-zinc-200/50 dark:border-white/10 bg-white/50 dark:bg-zinc-950/80 backdrop-blur-xl shadow-lg shadow-black/10",
-            ),
         ]:
             p = p.replace(a, b)
         old_sub = "{conversation?.status === 'ended' ? 'Chat ended' : 'Connected with support'}"
@@ -82,20 +78,56 @@ if plc.exists():
 lcp = Path("src/components/LiveChatPage.tsx")
 if lcp.exists():
     l = lcp.read_text()
+    # Dedupe imports always
+    lines = l.splitlines(True)
+    seen = False
+    out = []
+    for line in lines:
+        if "import { useTickets } from '../context/TicketContext';" in line:
+            if seen:
+                continue
+            seen = True
+        out.append(line)
+    l = "".join(out)
+    l = re.sub(
+        r"(const \{ currentAgent, createTicket, findTicket \} = useTickets\(\);\n)(?:const \{[^}]*\} = useTickets\(\);\n)+",
+        r"\1",
+        l,
+    )
+    l = re.sub(
+        r"const \{ currentAgent, createTicket, findTicket \} = useTickets\(\);\n\s*const \{ createTicket, findTicket \} = useTickets\(\);",
+        "const { currentAgent, createTicket, findTicket } = useTickets();",
+        l,
+    )
+
     if "chat-viewer-publish-v1" not in l:
         if "chatPresence" not in l:
-            l = l.replace(
-                "from '../context/PlatformContext';",
-                "from '../context/PlatformContext';\nimport { useTickets } from '../context/TicketContext';\nimport { publishChatViewer, clearChatViewer } from '../lib/chatPresence';",
-                1,
-            )
+            if "from '../context/TicketContext'" in l:
+                l = l.replace(
+                    "from '../context/PlatformContext';",
+                    "from '../context/PlatformContext';\nimport { publishChatViewer, clearChatViewer } from '../lib/chatPresence';",
+                    1,
+                )
+            else:
+                l = l.replace(
+                    "from '../context/PlatformContext';",
+                    "from '../context/PlatformContext';\nimport { useTickets } from '../context/TicketContext';\nimport { publishChatViewer, clearChatViewer } from '../lib/chatPresence';",
+                    1,
+                )
         if "currentAgent" not in l:
-            l = re.sub(
-                r"const \{([^}]+)\} = usePlatform\(\);",
-                lambda m: m.group(0) + "\n  const { currentAgent, createTicket, findTicket } = useTickets();",
-                l,
-                count=1,
-            )
+            if "const { createTicket, findTicket } = useTickets();" in l:
+                l = l.replace(
+                    "const { createTicket, findTicket } = useTickets();",
+                    "const { currentAgent, createTicket, findTicket } = useTickets();",
+                    1,
+                )
+            elif "useTickets()" not in l:
+                l = re.sub(
+                    r"const \{([^}]+)\} = usePlatform\(\);",
+                    lambda m: m.group(0) + "\n  const { currentAgent, createTicket, findTicket } = useTickets();",
+                    l,
+                    count=1,
+                )
         if "if (!selectedId || !currentAgent)" not in l:
             effect = """
   useEffect(() => {
@@ -116,12 +148,13 @@ if lcp.exists():
                     effect + "\n  const selected = conversations.find",
                     1,
                 )
-        if "refreshPlatform" not in l[: l.find("= usePlatform") + 200] if "= usePlatform" in l else True:
+        if "linkTicketId," in l and "refreshPlatform" not in l.split("= usePlatform")[0][-250:]:
             l = l.replace("linkTicketId,", "linkTicketId,\n    refreshPlatform,", 1)
         if "void refreshPlatform(); }, 4000)" not in l and "refreshPlatform" in l:
-            l = l.replace(
-                "const selected = conversations.find",
-                """
+            if "const selected = conversations.find" in l:
+                l = l.replace(
+                    "const selected = conversations.find",
+                    """
   useEffect(() => {
     if (!selectedId) return;
     const id = window.setInterval(() => { void refreshPlatform(); }, 4000);
@@ -129,11 +162,12 @@ if lcp.exists():
   }, [selectedId, refreshPlatform]);
 
   const selected = conversations.find""",
-                1,
-            )
+                    1,
+                )
         l = "/* chat-viewer-publish-v1 */\n" + l
-        lcp.write_text(l)
-        print("lcp")
+        print("lcp patched")
     else:
-        print("lcp already")
+        print("lcp presence already")
+
+    lcp.write_text(l)
 print("done")

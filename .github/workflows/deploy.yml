@@ -37,13 +37,15 @@ jobs:
           python3 scripts/patch_livechat_fix_v2.py || true
           python3 scripts/patch_livechat_ui_404.py || true
           python3 scripts/patch_livechat_dark_presence.py || true
+          python3 scripts/patch_livechat_lcp_dedupe.py || true
           python3 scripts/patch_livechat_fix_v2.py || true
           python3 scripts/patch_livechat_ui_404.py || true
           python3 scripts/patch_livechat_dark_presence.py || true
+          python3 scripts/patch_livechat_lcp_dedupe.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: livechat dark + presence" || true
+          git commit -m "fix: livechat dedupe + presence" || true
           git push || true
 
       - name: Setup Node
@@ -71,6 +73,7 @@ jobs:
           python3 scripts/patch_livechat_fix_v2.py || true
           python3 scripts/patch_livechat_ui_404.py || true
           python3 scripts/patch_livechat_dark_presence.py || true
+          python3 scripts/patch_livechat_lcp_dedupe.py || true
           npm run build
           touch dist/.nojekyll
 
