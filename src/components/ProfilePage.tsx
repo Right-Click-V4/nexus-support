@@ -1,3 +1,4 @@
+/* profile-rework-v1 */
 /* status-active-labels-v1 */
 /* emoji-beside-custom-field-v1 */
 /* emoji-custom-only-v1 */
@@ -188,46 +189,47 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       if (supabase && user) {
-        await supabase.auth.updateUser({
-          data: { full_name: name.trim(), avatar_url: avatarUrl || null },
-        });
+        try {
+          await supabase.auth.updateUser({
+            data: { full_name: name.trim(), avatar_url: avatarUrl || null },
+          });
+        } catch {
+          /* auth metadata optional */
+        }
         if (currentAgent) {
           const parts = name.trim().split(/\s+/);
-          const initials = parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase();
-          const { error } = await supabase
-            .from('agents')
-            .update({
-              name: name.trim(),
-              initials,
-              phone: phone.trim() || null,
-              bio: bio.trim() || null,
-              timezone,
-              status,
-              avatar_url: avatarUrl,
-            })
-            .eq('id', currentAgent.id);
-          if (error) {
-            if (String(error.message || '').toLowerCase().includes('avatar_url')) {
-              await supabase
-                .from('agents')
-                .update({
-                  name: name.trim(),
-                  initials,
-                  phone: phone.trim() || null,
-                  bio: bio.trim() || null,
-                  timezone,
-                  status,
-                })
-                .eq('id', currentAgent.id);
-              setErr('Photo needs a DB column. Run: alter table public.agents add column if not exists avatar_url text;');
-            } else {
-              throw error;
+          const initials = parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'AG';
+          const base: Record<string, unknown> = {
+            name: name.trim(),
+            initials,
+            phone: phone.trim() || null,
+            bio: bio.trim() || null,
+          };
+          let lastErr: { message?: string } | null = null;
+          const attempts: Record<string, unknown>[] = [
+            { ...base, avatar_url: avatarUrl || null },
+            { ...base },
+            { name: name.trim(), initials, phone: phone.trim() || null },
+            { name: name.trim(), initials },
+          ];
+          let ok = false;
+          for (const patch of attempts) {
+            const { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
+            if (!error) {
+              ok = true;
+              break;
             }
+            lastErr = error;
+          }
+          if (!ok && lastErr) {
+            throw new Error(lastErr.message || 'Could not save profile');
           }
         }
-        await refresh();
-      } else if (currentAgent) {
-        await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null, statusEmoji || null);
+        try {
+          await refresh();
+        } catch {
+          /* ignore */
+        }
       }
       if (currentAgent) {
         try {
@@ -235,8 +237,24 @@ export default function ProfilePage() {
           else localStorage.removeItem(`nexus-avatar-${currentAgent.id}`);
         } catch {}
       }
-      if (status !== currentAgent?.status) await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null, statusEmoji || null);
-      setMsg('Profile saved. Open Team to see your photo.');
+      try {
+        await updateAgentStatus(
+          status === 'offline' ? 'online' : status,
+          status === 'custom' ? statusMessage.trim() || null : null,
+          status === 'custom' ? statusEmoji || null : null,
+        );
+      } catch {
+        /* optional */
+      }
+      if (password.trim()) {
+        if (password.trim().length < 6) throw new Error('Password must be at least 6 characters');\n        if (!supabase) throw new Error('Cloud auth required to change password');
+        const { error: pwErr } = await supabase.auth.updateUser({ password: password.trim() });
+        if (pwErr) throw pwErr;
+        setPassword('');
+        setMsg('Profile and password saved.');
+      } else {
+        setMsg('Profile saved.');
+      }
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Could not save profile');
     } finally {
@@ -368,12 +386,12 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-2">Phone</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-2">Contact No.</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full px-4 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-                placeholder="+1 555 000 0000"
+                placeholder="e.g. 09XX XXX XXXX"
               />
             </div>
             <div>
@@ -461,19 +479,6 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-2">Timezone</label>
-            <select
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border border-zinc-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-            >
-              {['UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Manila'].map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-zinc-700 mb-2">Bio</label>
             <textarea
               value={bio}
@@ -484,34 +489,26 @@ export default function ProfilePage() {
             />
           </div>
 
+          <div className="pt-2 border-t border-zinc-200 dark:border-white/10">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-1">Change password</label>
+            <p className="text-xs text-zinc-500 mb-2">Optional — leave blank to keep your current password.</p>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              placeholder="New password (min 6 characters)"
+              className="w-full px-4 py-2.5 text-sm border border-zinc-200 dark:border-white/15 rounded-xl bg-white dark:bg-zinc-900/60 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
+              autoComplete="new-password"
+            />
+          </div>
+
           <button
             type="submit"
             disabled={saving || uploading}
             className="w-full py-3 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors"
           >
             {saving ? 'Saving...' : 'Save profile'}
-          </button>
-        </form>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-zinc-200 shadow-card p-8">
-        <h2 className="text-base font-semibold text-zinc-900 mb-1">Change password</h2>
-        <p className="text-sm text-zinc-500 mb-5">Use a strong password you do not reuse elsewhere.</p>
-        <form onSubmit={changePassword} className="space-y-4">
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={6}
-            placeholder="New password (min 6 characters)"
-            className="w-full px-4 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-          />
-          <button
-            type="submit"
-            disabled={saving || !password}
-            className="px-5 py-2.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-100 rounded-xl hover:bg-brand-100 disabled:opacity-50 transition-colors"
-          >
-            Update password
           </button>
         </form>
       </div>
