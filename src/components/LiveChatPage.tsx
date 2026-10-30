@@ -6,7 +6,6 @@ import { Send, Plus, Trash2, UserRound, RotateCcw, Paperclip, Ticket, ExternalLi
 import { usePlatform } from '../context/PlatformContext';
 import { useTickets } from '../context/TicketContext';
 import { publishChatViewer, clearChatViewer } from '../lib/chatPresence';
-import { useTickets } from '../context/TicketContext';
 import { uploadAttachment } from '../lib/storage';
 
 export default function LiveChatPage() {
@@ -20,7 +19,6 @@ export default function LiveChatPage() {
     refreshPlatform,
   } = usePlatform();
   const { currentAgent, createTicket, findTicket } = useTickets();
-  const { createTicket, findTicket } = useTickets();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
