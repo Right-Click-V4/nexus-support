@@ -1,3 +1,4 @@
+/* livechat-dark-presence-v1 */
 /* livechat-ui-v3 */
 /* livechat-text-field-v1 */
 /* presence-poll-refresh-v1 */
@@ -19,6 +20,7 @@ import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
 import { MAX_CHAT_FILE_BYTES } from '../types';
 import { encodeChatFile, parseChatAttachment, isImageMime } from '../lib/chatAttachments';
+import { watchChatViewers, type ChatViewer } from '../lib/chatPresence';
 
 const STORAGE_KEY = 'nexus-portal-chat-id';
 
@@ -69,6 +71,7 @@ export default function PortalLiveChat({ onBack }: Props) {
   const [ticketId, setTicketId] = useState('');
   const [ticketHint, setTicketHint] = useState('');
   const [chatId, setChatId] = useState<string | null>(() => sessionStorage.getItem(STORAGE_KEY));
+  const [chatViewers, setChatViewers] = useState<ChatViewer[]>([]);
   const [draft, setDraft] = useState('');
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
@@ -86,6 +89,15 @@ export default function PortalLiveChat({ onBack }: Props) {
 
   const conversation = conversations.find((c) => c.id === chatId) || null;
   const messages = conversation?.messages || [];
+  useEffect(() => {
+    return watchChatViewers(chatId, setChatViewers);
+  }, [chatId]);
+  useEffect(() => {
+    if (!chatId) return;
+    const id = window.setInterval(() => { void refreshPlatform(); }, 4000);
+    return () => window.clearInterval(id);
+  }, [chatId, refreshPlatform]);
+
 
   const branchOptions = useMemo(() => {
     const set = new Set<string>([...BRANCH_OPTIONS]);
@@ -474,14 +486,14 @@ export default function PortalLiveChat({ onBack }: Props) {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-zinc-200/40 dark:border-white/15 bg-white/40 dark:bg-black/25 backdrop-blur-xl shadow-lg shadow-black/10">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 bg-white/50 dark:bg-black/30 backdrop-blur-md">
+    <div className="w-full max-w-4xl mx-auto flex flex-col min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-zinc-200/40 dark:border-white/15 bg-white/50 dark:bg-zinc-950/80 backdrop-blur-xl shadow-lg shadow-black/10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 bg-white/55 dark:bg-zinc-950/70 backdrop-blur-md">
         <div className="flex items-center gap-2 min-w-0">
           <MessageCircle size={18} className="text-violet-600 dark:text-violet-300 shrink-0" />
           <div className="min-w-0">
             <div className="text-sm font-semibold text-zinc-900 dark:text-white truncate">Live Chat</div>
             <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-              {conversation?.status === 'ended' ? 'Chat ended' : 'Connected with support'}
+              {conversation?.status === 'ended' ? 'Chat ended' : chatViewers.length > 0 ? `Connected · ${chatViewers.map((v) => v.name).join(', ')}` : 'Connected with support'}
             </div>
           </div>
         </div>
@@ -525,7 +537,7 @@ export default function PortalLiveChat({ onBack }: Props) {
                   'max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm',
                   mine
                     ? 'bg-violet-600/90 text-white rounded-br-md'
-                    : 'bg-white/70 dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10 rounded-bl-md backdrop-blur-sm',
+                    : 'bg-white/75 dark:bg-zinc-900/80 text-zinc-800 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10 rounded-bl-md backdrop-blur-sm',
                 )}
               >
                 {att ? (
@@ -562,7 +574,7 @@ export default function PortalLiveChat({ onBack }: Props) {
       </div>
 
       {conversation?.status !== 'ended' && (
-        <div className="border-t border-zinc-200/50 dark:border-white/10 p-3 bg-white/45 dark:bg-black/30 backdrop-blur-md space-y-2">
+        <div className="border-t border-zinc-200/50 dark:border-white/10 p-3 bg-white/50 dark:bg-zinc-950/75 backdrop-blur-md space-y-2">
           <div className="flex flex-wrap gap-1.5">
             {QUICK_REPLIES.map((q) => (
               <button

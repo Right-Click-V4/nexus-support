@@ -1,8 +1,11 @@
+/* chat-viewer-publish-v1 */
 /* livechat-text-field-v1 */
 import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Send, Plus, Trash2, UserRound, RotateCcw, Paperclip, Ticket, ExternalLink } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
+import { useTickets } from '../context/TicketContext';
+import { publishChatViewer, clearChatViewer } from '../lib/chatPresence';
 import { useTickets } from '../context/TicketContext';
 import { uploadAttachment } from '../lib/storage';
 
@@ -14,7 +17,9 @@ export default function LiveChatPage() {
     startConversation,
     deleteConversation,
     linkTicketId,
+    refreshPlatform,
   } = usePlatform();
+  const { currentAgent, createTicket, findTicket } = useTickets();
   const { createTicket, findTicket } = useTickets();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -32,6 +37,26 @@ export default function LiveChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversations, selectedId]);
+
+  
+  useEffect(() => {
+    if (!selectedId || !currentAgent) return;
+    const beat = () =>
+      publishChatViewer(selectedId, { id: currentAgent.id, name: currentAgent.name || 'Agent' });
+    beat();
+    const t = window.setInterval(beat, 5000);
+    return () => {
+      window.clearInterval(t);
+      clearChatViewer(selectedId, currentAgent.id);
+    };
+  }, [selectedId, currentAgent?.id, currentAgent?.name]);
+
+  
+  useEffect(() => {
+    if (!selectedId) return;
+    const id = window.setInterval(() => { void refreshPlatform(); }, 4000);
+    return () => window.clearInterval(id);
+  }, [selectedId, refreshPlatform]);
 
   const selected = conversations.find((c) => c.id === selectedId) || null;
   const activeCount = conversations.filter((c) => c.status !== 'ended').length;
