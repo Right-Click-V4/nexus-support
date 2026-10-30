@@ -1,3 +1,4 @@
+/* postlogin-auto-clear-v1 */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 const MIN_MS = 3200;
@@ -291,6 +292,7 @@ export default function PostLoginLoader({
       window.setTimeout(() => setStepIdx(1), 750),
       window.setTimeout(() => setStepIdx(2), 1600),
       window.setTimeout(() => setStepIdx(3), 2500),
+      window.setTimeout(() => clearJustLoggedIn(), 3600),
     ];
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, []);
@@ -494,7 +496,7 @@ export function PostLoginShell({
     return <BootLoader label={label} />;
   }
 
-  if (mode === 'done' && !wantCeremony.current) {
+  if (mode === 'done') {
     return <>{children}</>;
   }
 
