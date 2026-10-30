@@ -1,3 +1,4 @@
+/* status-dot-match-v1 */
 import {
   LayoutDashboard, Ticket, Building2, BookOpen, MessageSquare,
   BarChart3, UserCog, Zap, ClipboardList, ShieldCheck,
@@ -6,6 +7,45 @@ import {
 import clsx from 'clsx';
 import { useBranding } from '../context/BrandingContext';
 import { DEFAULT_BRANDING } from '../lib/branding';
+
+
+function statusDotClass(status?: string) {
+  switch ((status || 'online').toLowerCase()) {
+    case 'online':
+      return 'bg-emerald-400';
+    case 'away':
+      return 'bg-sky-400';
+    case 'busy':
+      return 'bg-amber-300';
+    case 'in_call':
+      return 'bg-orange-400';
+    case 'custom':
+      return 'bg-white';
+    case 'offline':
+      return 'bg-zinc-500';
+    default:
+      return 'bg-emerald-400';
+  }
+}
+
+function statusLabel(status?: string) {
+  switch ((status || 'online').toLowerCase()) {
+    case 'online':
+      return 'Available';
+    case 'away':
+      return 'Away';
+    case 'busy':
+      return 'Busy';
+    case 'in_call':
+      return 'In a call';
+    case 'custom':
+      return 'Custom';
+    case 'offline':
+      return 'Offline';
+    default:
+      return status || 'Available';
+  }
+}
 
 interface SidebarProps {
   active: string;
@@ -161,15 +201,24 @@ export default function Sidebar({
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center text-white text-xs font-semibold">{initials}</div>
             )}
             <span
-              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-zinc-950 ${
-                agentStatus === 'online' ? 'bg-emerald-400' : agentStatus === 'busy' ? 'bg-amber-400' : agentStatus === 'away' ? 'bg-orange-400' : 'bg-zinc-500'
-              }`}
-              title={agentStatus}
+              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-zinc-950 ${statusDotClass(agentStatus)}`}
+              title={statusLabel(agentStatus)}
             />
           </div>
           <div className="flex-1 min-w-0 text-left">
             <div className="text-sm font-medium text-zinc-100 truncate">{resolvedName}</div>
             <div className="text-[11px] text-zinc-500 truncate">{userEmail}</div>
+            <div className="text-[10px] mt-0.5 font-medium truncate">
+              <span className="text-zinc-400">Online · </span>
+              <span className={
+                agentStatus === 'away' ? 'text-sky-400' :
+                agentStatus === 'busy' ? 'text-amber-300' :
+                agentStatus === 'in_call' ? 'text-orange-400' :
+                agentStatus === 'custom' ? 'text-white' :
+                agentStatus === 'offline' ? 'text-zinc-500' :
+                'text-emerald-400'
+              }>{statusLabel(agentStatus)}</span>
+            </div>
           </div>
           <User size={14} className="text-zinc-500 shrink-0" />
         </button>

@@ -1,3 +1,4 @@
+/* status-fab-v1 */
 /* portal-force-ready-v1 */
 /* presence-fast-online-v1 */
 /* toast-created-window-v1 */
@@ -151,6 +152,7 @@ export function AgentShell() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [notifOpen, setNotifOpen] = useState(false);
   const [agentToast, setAgentToast] = useState<{ title: string; body: string } | null>(null);
+  const [statusFabOpen, setStatusFabOpen] = useState(false);
   const prevNotifIdsRef = useRef<Set<string>>(new Set());
   const toastBootRef = useRef(true);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -438,6 +440,83 @@ export function AgentShell() {
           </div>
         </div>
       )}
+
+      
+      {/* Floating status shortcut — bottom right */}
+      <div className="fixed bottom-5 right-5 z-[80] flex flex-col items-end gap-2">
+        {statusFabOpen && (
+          <div className="mb-1 w-56 rounded-2xl border border-white/15 bg-zinc-950/95 backdrop-blur-md shadow-2xl shadow-black/40 p-2 space-y-1">
+            <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-zinc-500 font-semibold">Set status</div>
+            {([
+              ['online', 'Available', 'bg-emerald-400'],
+              ['away', 'Away', 'bg-sky-400'],
+              ['busy', 'Busy', 'bg-amber-300'],
+              ['in_call', 'In a Call / Meeting', 'bg-orange-400'],
+            ] as const).map(([id, label, dot]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  void setPresenceStatus(id);
+                  setStatusFabOpen(false);
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm transition-colors ${
+                  (currentAgent?.status || 'online') === id
+                    ? 'bg-white/10 text-white'
+                    : 'text-zinc-300 hover:bg-white/5'
+                }`}
+              >
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
+                {label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFabOpen(false);
+                setActiveNav('profile');
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+            >
+              <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-white" />
+              Custom status…
+            </button>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setStatusFabOpen((o) => !o)}
+          className="flex items-center gap-2 pl-3 pr-4 py-2.5 rounded-full border border-white/20 bg-zinc-950/90 backdrop-blur-md shadow-lg shadow-black/30 text-sm font-medium text-white hover:bg-zinc-900 transition-colors"
+          title="Change status"
+        >
+          <span
+            className={`w-3 h-3 rounded-full shrink-0 ${
+              (currentAgent?.status || 'online') === 'away'
+                ? 'bg-sky-400'
+                : (currentAgent?.status || 'online') === 'busy'
+                  ? 'bg-amber-300'
+                  : (currentAgent?.status || 'online') === 'in_call'
+                    ? 'bg-orange-400'
+                    : (currentAgent?.status || 'online') === 'custom'
+                      ? 'bg-white'
+                      : (currentAgent?.status || 'online') === 'offline'
+                        ? 'bg-zinc-500'
+                        : 'bg-emerald-400'
+            }`}
+          />
+          {(currentAgent?.status || 'online') === 'away'
+            ? 'Away'
+            : (currentAgent?.status || 'online') === 'busy'
+              ? 'Busy'
+              : (currentAgent?.status || 'online') === 'in_call'
+                ? 'In a call'
+                : (currentAgent?.status || 'online') === 'custom'
+                  ? (currentAgent?.status_message || 'Custom')
+                  : (currentAgent?.status || 'online') === 'offline'
+                    ? 'Offline'
+                    : 'Available'}
+        </button>
+      </div>
 
       <div className="app-cosmos flex min-h-screen">
         <Sidebar
