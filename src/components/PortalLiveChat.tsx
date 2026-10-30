@@ -1,3 +1,4 @@
+/* active-now-status-labels-v1 */
 /* status-colors-active-v1 */
 /* presence-active-filter-v1 */
 /* presence-filter-v1 */
@@ -388,8 +389,9 @@ export default function PortalLiveChat({ onBack }: Props) {
                           className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-zinc-900 ${
                             (() => {
                               const st = (a.status || '').toLowerCase();
-                              if (st === 'busy' || st === 'in_call') return 'bg-amber-400';
-                              if (st === 'away') return 'bg-yellow-300';
+                              if (st === 'busy') return 'bg-yellow-400';
+                              if (st === 'in_call') return 'bg-orange-400';
+                              if (st === 'away') return 'bg-sky-400';
                               if (st === 'custom') return 'bg-white';
                               return 'bg-emerald-400';
                             })()
@@ -404,16 +406,28 @@ export default function PortalLiveChat({ onBack }: Props) {
                             <span className="ml-1.5 text-[10px] font-semibold text-violet-500 dark:text-violet-300">Admin</span>
                           ) : null}
                         </div>
-                        <div className="text-[11px] text-zinc-500 dark:text-zinc-400 capitalize">
-                          {(() => {
-                            const st = (a.status || 'online').toLowerCase();
-                            if (st === 'busy') return 'Busy';
-                            if (st === 'away') return 'Away';
-                            if (st === 'in_call') return 'In a call / meeting';
-                            if (st === 'custom') return a.status_message || 'Custom status';
-                            return 'Online';
-                          })()}
-                          {a.role ? ` · ${a.role}` : ''}
+                        <div className="text-[11px] truncate flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-emerald-400" />
+                          {a.status_emoji ? <span className="shrink-0">{a.status_emoji}</span> : null}
+                          <span
+                            className={(() => {
+                              const st = (a.status || 'online').toLowerCase();
+                              if (st === 'away') return 'text-sky-400 font-medium';
+                              if (st === 'busy') return 'text-yellow-300 font-medium';
+                              if (st === 'in_call') return 'text-orange-400 font-medium';
+                              if (st === 'custom') return 'text-white font-medium';
+                              return 'text-emerald-400 font-medium';
+                            })()}
+                          >
+                            {(() => {
+                              const st = (a.status || 'online').toLowerCase();
+                              if (st === 'busy') return 'Busy';
+                              if (st === 'away') return 'Away';
+                              if (st === 'in_call') return 'In a call';
+                              if (st === 'custom') return a.status_message || 'Custom status';
+                              return 'Available';
+                            })()}
+                          </span>
                         </div>
                       </div>
                     </li>

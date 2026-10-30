@@ -1,3 +1,4 @@
+/* status-active-labels-v1 */
 /* emoji-beside-custom-field-v1 */
 /* emoji-custom-only-v1 */
 /* status-emoji-profile-v1 */
@@ -400,61 +401,61 @@ export default function ProfilePage() {
                   <option value="in_call">In a Call / Meeting</option>
                   <option value="custom">Custom Status</option>
                 </select>
-                <div className="relative">
-                  <button
-                    type="button"
-                    title="Add emoji"
-                    onClick={() => setEmojiOpen((o) => !o)}
-                    className="h-[42px] min-w-[42px] px-2 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900/60 text-lg hover:bg-zinc-50 dark:hover:bg-white/5"
-                  >
-                    {statusEmoji || '😊'}
-                  </button>
-                  {emojiOpen && (
-                    <div className="absolute right-0 z-30 mt-1 p-2 w-56 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xl grid grid-cols-6 gap-1">
-                      {['😊','🙂','😎','🫡','💼','📞','🎧','☕','🍔','🚗','🏠','💤','🔥','⚡','✅','❌','🟢','🟡','🟠','🔵','⚪','🛠️','💬','🚀'].map((em) => (
-                        <button
-                          key={em}
-                          type="button"
-                          className="h-8 w-8 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 text-base"
-                          onClick={() => {
-                            setStatusEmoji(em);
-                            setEmojiOpen(false);
-                            const msg = status === 'custom' ? statusMessage.trim() || null : null;
-                            void updateAgentStatus(status === 'offline' ? 'online' : status, msg, em);
-                          }}
-                        >
-                          {em}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        className="col-span-6 text-[11px] text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 py-1"
-                        onClick={() => {
-                          setStatusEmoji('');
-                          setEmojiOpen(false);
-                          const msg = status === 'custom' ? statusMessage.trim() || null : null;
-                          void updateAgentStatus(status === 'offline' ? 'online' : status, msg, null);
-                        }}
-                      >
-                        Clear emoji
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
               <p className="text-[11px] text-zinc-500 mt-1">
                 Online/Offline is automatic from your session. Status updates Live Chat Active Now in real time.
               </p>
               {status === 'custom' && (
-                <input
-                  value={statusMessage}
-                  onChange={(e) => setStatusMessage(e.target.value)}
-                  onBlur={() => {
-                    void updateAgentStatus('custom', statusMessage.trim() || null, statusEmoji || null);
-                  }}
-                  placeholder="Write your custom status…"
-                  className="mt-2 w-full px-4 py-2.5 text-sm border border-zinc-200 dark:border-white/15 rounded-xl bg-white dark:bg-zinc-900/60 text-white dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-                />
+                <div className="mt-2 flex gap-2 items-start">
+                  <input
+                    value={statusMessage}
+                    onChange={(e) => setStatusMessage(e.target.value)}
+                    onBlur={() => {
+                      void updateAgentStatus('custom', statusMessage.trim() || null, statusEmoji || null);
+                    }}
+                    placeholder="Write your custom status…"
+                    className="flex-1 px-4 py-2.5 text-sm border border-zinc-200 dark:border-white/15 rounded-xl bg-white dark:bg-zinc-900/60 text-white dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
+                  />
+                  <div className="relative">
+                    <button
+                      type="button"
+                      title="Add emoji"
+                      onClick={() => setEmojiOpen((o) => !o)}
+                      className="h-[42px] min-w-[42px] px-2 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900/60 text-lg hover:bg-zinc-50 dark:hover:bg-white/5"
+                    >
+                      {statusEmoji || '😊'}
+                    </button>
+                    {emojiOpen && (
+                      <div className="absolute right-0 z-30 mt-1 p-2 w-56 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xl grid grid-cols-6 gap-1">
+                        {['😊','🙂','😎','🫡','💼','📞','🎧','☕','🍔','🚗','🏠','💤','🔥','⚡','✅','❌','🟢','🟡','🟠','🔵','⚪','🛠️','💬','🚀'].map((em) => (
+                          <button
+                            key={em}
+                            type="button"
+                            className="h-8 w-8 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 text-base"
+                            onClick={() => {
+                              setStatusEmoji(em);
+                              setEmojiOpen(false);
+                              void updateAgentStatus('custom', statusMessage.trim() || null, em);
+                            }}
+                          >
+                            {em}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className="col-span-6 text-[11px] text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 py-1"
+                          onClick={() => {
+                            setStatusEmoji('');
+                            setEmojiOpen(false);
+                            void updateAgentStatus('custom', statusMessage.trim() || null, null);
+                          }}
+                        >
+                          Clear emoji
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>
