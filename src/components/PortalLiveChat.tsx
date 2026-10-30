@@ -1,3 +1,4 @@
+/* livechat-text-field-v1 */
 /* presence-poll-refresh-v1 */
 /* active-now-online-prefix-v1 */
 /* presence-window-v2 */
@@ -16,7 +17,7 @@ import { usePlatform } from '../context/PlatformContext';
 import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
 import { MAX_CHAT_FILE_BYTES } from '../types';
-import { encodeChatAttachment, parseChatAttachment, isImageMime } from '../lib/chatAttachments';
+import { encodeChatFile, parseChatAttachment, isImageMime } from '../lib/chatAttachments';
 
 const STORAGE_KEY = 'nexus-portal-chat-id';
 
@@ -209,7 +210,7 @@ export default function PortalLiveChat({ onBack }: Props) {
       return;
     }
     try {
-      const dataUrl = await encodeChatAttachment(file);
+      const dataUrl = await encodeChatFile(file);
       await sendChatMessage(
         chatId,
         JSON.stringify({ url: dataUrl, name: file.name, mime: file.type || 'application/octet-stream' }),
@@ -292,7 +293,7 @@ export default function PortalLiveChat({ onBack }: Props) {
                   {ticketHint && (
                     <p
                       className={`text-[11px] mt-1 ${
-                        ticketHint.startsWith('Found') ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                        (ticketHint || '').startsWith('Found') ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
                       }`}
                     >
                       {ticketHint}
@@ -496,7 +497,10 @@ export default function PortalLiveChat({ onBack }: Props) {
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-transparent">
         {messages.map((m) => {
           const mine = m.sender === 'customer';
-          const att = parseChatAttachment(m.body);
+          const raw = m.text || (m as { body?: string }).body || '';
+          const parsed = parseChatAttachment(raw);
+          const att = parsed.att;
+          const bodyText = (parsed.text || raw || '').toString();
           return (
             <div key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>
               <div
@@ -508,15 +512,15 @@ export default function PortalLiveChat({ onBack }: Props) {
                 )}
               >
                 {att ? (
-                  isImageMime(att.mime) ? (
-                    <img src={att.url} alt={att.name} className="max-h-48 rounded-lg" />
+                  isImageMime(att?.mime) ? (
+                    <img src={att.url} alt={att?.name || 'Download file'} className="max-h-48 rounded-lg" />
                   ) : (
-                    <a href={att.url} download={att.name} className="underline">
-                      {att.name}
+                    <a href={att.url} download={att?.name || 'Download file'} className="underline">
+                      {att?.name || 'Download file'}
                     </a>
                   )
                 ) : (
-                  m.body
+                  bodyText
                 )}
               </div>
             </div>

@@ -1,3 +1,4 @@
+/* livechat-text-field-v1 */
 import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Send, Plus, Trash2, UserRound, RotateCcw, Paperclip, Ticket, ExternalLink } from 'lucide-react';
@@ -232,7 +233,7 @@ export default function LiveChatPage() {
                         <a href={m.body} target="_blank" rel="noreferrer" className="block">
                           <img src={m.body} alt="attachment" className="max-h-48 rounded-lg" />
                         </a>
-                      ) : m.body?.startsWith('http') ? (
+                      ) : (m.text || (m as { body?: string }).body || '').startsWith('http') ? (
                         <a href={m.body} target="_blank" rel="noreferrer" className="underline break-all inline-flex items-center gap-1">
                           {m.body} <ExternalLink size={12} />
                         </a>

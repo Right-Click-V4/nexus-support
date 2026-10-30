@@ -1,3 +1,4 @@
+/* profile-success-modal-v1 */
 /* profile-fetch-resilient-v1 */
 /* profile-rework-v1 */
 /* status-active-labels-v1 */
@@ -56,6 +57,7 @@ export default function ProfilePage() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -270,8 +272,10 @@ export default function ProfilePage() {
         if (pwErr) throw pwErr;
         setPassword('');
         setMsg('Profile and password saved.');
+        setSuccessOpen(true);
       } else {
         setMsg('Profile saved.');
+        setSuccessOpen(true);
       }
     } catch (e: unknown) {
       const m = e instanceof Error ? e.message : 'Could not save profile';
@@ -537,6 +541,26 @@ export default function ProfilePage() {
           </button>
         </form>
       </div>
+
+      
+      {successOpen && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/55" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-zinc-950/95 backdrop-blur-md shadow-2xl p-6 text-center">
+            <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center mb-3">
+              <Check className="text-emerald-400" size={28} strokeWidth={2.5} />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Successfully Updated</h3>
+            <p className="text-sm text-zinc-400 mt-1.5">Your profile photo and details are saved and will show across portals.</p>
+            <button
+              type="button"
+              onClick={() => setSuccessOpen(false)}
+              className="mt-5 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       {cropSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
