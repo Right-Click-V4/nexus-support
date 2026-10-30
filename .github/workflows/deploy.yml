@@ -39,13 +39,15 @@ jobs:
           python3 scripts/patch_postlogin_force_exit.py || true
           python3 scripts/patch_profile_rework.py || true
           python3 scripts/patch_profile_fetch_resilient.py || true
+          python3 scripts/patch_status_fab.py || true
           python3 scripts/patch_fix_profile_escape.py || true
           python3 scripts/patch_ticket_ops_timeout.py || true
           python3 scripts/patch_profile_fetch_resilient.py || true
+          python3 scripts/patch_status_fab.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: profile fetch resilient" || true
+          git commit -m "fix: status fab + sidebar colors" || true
           git push || true
 
       - name: Setup Node
@@ -69,6 +71,7 @@ jobs:
           python3 scripts/patch_postlogin_force_exit.py || true
           python3 scripts/patch_profile_rework.py || true
           python3 scripts/patch_profile_fetch_resilient.py || true
+          python3 scripts/patch_status_fab.py || true
           python3 scripts/patch_fix_profile_escape.py || true
           npm run build
           touch dist/.nojekyll
