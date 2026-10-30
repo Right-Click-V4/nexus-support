@@ -72,6 +72,7 @@ interface TicketContextValue {
   addNote: (ticketId: string, text: string, author?: string) => Promise<void>;
   addMessage: (ticketId: string, text: string, kind?: 'public' | 'internal') => Promise<void>;
   updateAgentStatus: (status: AgentStatus, statusMessage?: string | null) => Promise<void>;
+  touchPresence: () => Promise<void>;
   findTicket: (id: string, email?: string) => Ticket | undefined;
   ticketsForEmail: (email: string) => Ticket[];
   setAgentAdmin: (agentId: string, is_admin: boolean) => Promise<void>;
@@ -543,22 +544,44 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const updateAgentStatus = async (status: AgentStatus, statusMessage?: string | null) => {
     if (!currentAgent) return;
     const msg = statusMessage === undefined ? currentAgent.status_message ?? null : statusMessage;
-    const patch: { status: AgentStatus; status_message?: string | null } = { status };
+    const seen = status === 'offline' ? null : new Date().toISOString();
+    const patch: Record<string, unknown> = { status, last_seen_at: seen };
     if (statusMessage !== undefined) patch.status_message = statusMessage;
     if (supabase) {
       let { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
-      if (error && statusMessage !== undefined) {
-        const retry = await supabase.from('agents').update({ status }).eq('id', currentAgent.id);
+      if (error) {
+        const minimal: Record<string, unknown> = { status };
+        if (statusMessage !== undefined) minimal.status_message = statusMessage;
+        const retry = await supabase.from('agents').update(minimal).eq('id', currentAgent.id);
         error = retry.error;
       }
       if (error) throw error;
-      const next = { ...currentAgent, status, status_message: msg };
+      const next = { ...currentAgent, status, status_message: msg, last_seen_at: seen };
       setCurrentAgent(next);
       setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
+      try {
+        localStorage.setItem('nexus-presence-agent-id', currentAgent.id);
+      } catch { /* ignore */ }
     } else {
-      const next = { ...currentAgent, status, status_message: msg };
+      const next = { ...currentAgent, status, status_message: msg, last_seen_at: seen };
       setCurrentAgent(next);
       setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
+    }
+  };
+
+  const touchPresence = async () => {
+    if (!currentAgent || !supabase) return;
+    if ((currentAgent.status || 'offline') === 'offline') return;
+    const seen = new Date().toISOString();
+    const { error } = await supabase
+      .from('agents')
+      .update({ last_seen_at: seen })
+      .eq('id', currentAgent.id);
+    if (!error) {
+      setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at: seen } : prev));
+      setAgents((prev) =>
+        prev.map((a) => (a.id === currentAgent.id ? { ...a, last_seen_at: seen } : a)),
+      );
     }
   };
 
@@ -599,6 +622,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         addNote,
         addMessage,
         updateAgentStatus,
+        touchPresence,
         findTicket,
         ticketsForEmail,
         setAgentAdmin,

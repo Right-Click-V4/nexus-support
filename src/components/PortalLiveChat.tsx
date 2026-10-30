@@ -1,3 +1,4 @@
+/* presence-active-filter-v1 */
 /* presence-filter-v1 */
 /* livechat-active-agents-v1 */
 /* livechat-ticket-required-v1 */
@@ -91,14 +92,25 @@ export default function PortalLiveChat({ onBack }: Props) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [branch]);
 
+  const [presenceTick, setPresenceTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setPresenceTick((n) => n + 1), 10000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const onlineAgents = useMemo(() => {
+    const now = Date.now();
+    const LIVE_WINDOW_MS = 45_000;
     return (agents || []).filter((a) => {
       const st = (a.approval_status || 'approved').toLowerCase();
       if (st && st !== 'approved') return false;
       const status = (a.status || 'offline').toLowerCase();
-      return status !== 'offline' && status !== '';
+      if (status === 'offline' || status === '') return false;
+      const seen = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
+      if (!seen || Number.isNaN(seen)) return false;
+      return now - seen <= LIVE_WINDOW_MS;
     });
-  }, [agents]);
+  }, [agents, presenceTick]);
 
   const hasAgentOnline = onlineAgents.length > 0;
 

@@ -12,6 +12,7 @@ export interface Agent {
   status: AgentStatus;
   /** Optional note when status is custom. */
   status_message?: string | null;
+  last_seen_at?: string | null;
   color: string;
   email?: string;
   user_id?: string | null;

@@ -1,3 +1,4 @@
+/* presence-force-offline-v1 */
 /* session-boot-order-v1 */
 import {
   createContext,
@@ -141,11 +142,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // session touches the heartbeat and would hide an idle logout.
     let tabCtl: { tabId: string; stop: () => void } | null = null;
     let suppressAuthEvents = false;
+    const forceAgentOffline = async () => {
+      try {
+        const id = localStorage.getItem('nexus-presence-agent-id');
+        if (!id || !supabase) return;
+        await supabase.from('agents').update({ status: 'offline', last_seen_at: null }).eq('id', id);
+        localStorage.removeItem('nexus-presence-agent-id');
+      } catch { /* ignore */ }
+    };
 
     const boot = async () => {
       const isNewSession = await detectNewBrowserSession();
       if (isNewSession) {
         suppressAuthEvents = true;
+        await forceAgentOffline();
         clearSupabaseAuthStorage();
         try {
           await supabase.auth.signOut({ scope: 'local' });
@@ -284,6 +294,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    await forceAgentOffline();
     clearSupabaseAuthStorage();
     await supabase.auth.signOut();
   };
