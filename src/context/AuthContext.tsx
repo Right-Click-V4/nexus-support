@@ -1,3 +1,4 @@
+/* supabase-paused-hint-v1 */
 /* force-offline-scope-v1 */
 /* auth-boot-timeout-v1 */
 /* presence-force-offline-v1 */
@@ -54,9 +55,9 @@ function friendlyAuthError(err: unknown): Error {
     lower.includes('err_name_not_resolved')
   ) {
     return new Error(
-      'Cannot reach Supabase (Failed to fetch). Check that VITE_SUPABASE_URL is the full ' +
-        'https://YOUR_PROJECT.supabase.co URL and that the project is not paused. ' +
-        'Update GitHub Actions secrets and redeploy if this is the live site.'
+      'Cannot reach Supabase (Failed to fetch). Most common cause: the Supabase project is PAUSED. ' +
+        'Open supabase.com/dashboard, open project gcpmmbiarqracxfskirp, click Restore. ' +
+        'Also allow *.supabase.co in the browser if an ad-blocker is on.'
     );
   }
   return err;

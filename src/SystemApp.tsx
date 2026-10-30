@@ -1,3 +1,4 @@
+/* portal-force-ready-v1 */
 /* presence-fast-online-v1 */
 /* toast-created-window-v1 */
 /* portal-postlogin-fix-v1 */
@@ -36,7 +37,7 @@ import ProfilePage from './components/ProfilePage';
 import LoginPage from './components/LoginPage';
 import CustomerPortal from './components/CustomerPortal';
 import PortalAuthGate from './components/PortalAuthGate';
-import PostLoginLoader, { PostLoginShell, BootLoader, hasJustLoggedIn } from './components/PostLoginLoader';
+import PostLoginLoader, { PostLoginShell, BootLoader, hasJustLoggedIn, clearJustLoggedIn } from './components/PostLoginLoader';
 import AdminFeaturesPage from './components/AdminFeaturesPage';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import NotFoundScreen from './components/NotFoundScreen';
@@ -631,13 +632,24 @@ export function PortalShell() {
   const { isAdmin, adminReady } = useIsAdmin();
   const { user, accountRole, authBusy } = useAuth();
   const admin = accountRole === 'admin' || isAdmin;
+  const [forceReady, setForceReady] = useState(false);
+
+  // Never stick on post-login / boot screens if maintenance/auth checks hang
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setForceReady(true);
+      try { clearJustLoggedIn(); } catch { /* ignore */ }
+    }, 4500);
+    return () => window.clearTimeout(t);
+  }, []);
 
   // Customers must not wait on adminReady (agents table check) — that caused endless post-login.
   const portalBlocked =
-    !ready ||
-    !site404Ready ||
-    authBusy ||
-    (user && accountRole !== 'customer' && !adminReady);
+    !forceReady &&
+    (!ready ||
+      !site404Ready ||
+      authBusy ||
+      (user && accountRole !== 'customer' && !adminReady));
   if (portalBlocked) {
     if (hasJustLoggedIn()) {
       return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;

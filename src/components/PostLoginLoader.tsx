@@ -1,3 +1,4 @@
+/* postlogin-force-exit-v1 */
 /* postlogin-auto-clear-v1 */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
@@ -23,7 +24,7 @@ export function hasJustLoggedIn(): boolean {
   }
 }
 
-function clearJustLoggedIn() {
+export function clearJustLoggedIn() {
   try {
     sessionStorage.removeItem(POST_LOGIN_KEY);
   } catch {
