@@ -471,7 +471,8 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
           </div>
           <ThemeToggle />
           {requiresAuth && (
-                          {onBackToAgent && (
+            <>
+              {onBackToAgent && (
                 <button
                   type="button"
                   onClick={onBackToAgent}
@@ -482,15 +483,16 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   <span className="hidden sm:inline">Agent Workspace</span>
                 </button>
               )}
-<button
-              type="button"
-              onClick={() => void signOut()}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-violet-500/15 dark:hover:bg-white/10 border border-violet-700/25 dark:border-white/20 transition-colors"
-              title="Sign out"
-            >
-              <LogOut size={15} strokeWidth={2.25} />
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-violet-500/15 dark:hover:bg-white/10 border border-violet-700/25 dark:border-white/20 transition-colors"
+                title="Sign out"
+              >
+                <LogOut size={15} strokeWidth={2.25} />
+                <span className="hidden sm:inline">Sign out</span>
+              </button>
+            </>
           )}
         </header>
 
