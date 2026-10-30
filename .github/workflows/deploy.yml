@@ -53,10 +53,11 @@ jobs:
           python3 scripts/patch_presence_accurate.py || true
           python3 scripts/patch_session_refresh_keep.py || true
           python3 scripts/patch_session_idle_30s.py || true
+          python3 scripts/patch_login_customer_first.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/lib/tabSession.ts src/context/AuthContext.tsx src/SystemApp.tsx src/components/PortalLiveChat.tsx src/context/TicketContext.tsx src/types.ts || true
-          git commit -m "feat: session idle 30s" || true
+          git add src/lib/tabSession.ts src/context/AuthContext.tsx src/SystemApp.tsx src/components/PortalLiveChat.tsx src/context/TicketContext.tsx src/types.ts src/components/LoginPage.tsx || true
+          git commit -m "feat: login defaults to Customer" || true
           git push || true
 
       - name: Restore full Customer Portal if needed
@@ -83,13 +84,13 @@ jobs:
           if ! grep -q "DEFAULT_GROUP_ID" src/components/PortalCommunityChat.tsx 2>/dev/null; then
             curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/a3f7b260cd8c6e3200bbe03b10c1524df894badc/src/components/PortalCommunityChat.tsx" -o src/components/PortalCommunityChat.tsx || true
           fi
-          for s in patch_community_ux.py patch_community_panel.py patch_community_cloud_min.py patch_community_media.py patch_community_footer_space.py patch_footer_flow.py patch_community_glass_marquee.py patch_community_contrast.py patch_chrome_footer_v2.py patch_nav_signout.py patch_swap_signout.py patch_labels_titlecase.py patch_submit_form.py patch_submit_layout.py patch_branch_list.py patch_submit_left_subject.py patch_submit_guide.py patch_submit_overview_layout.py patch_submit_fill.py patch_submit_glow.py patch_priority_glow.py patch_submit_modal.py patch_modal_glow.py patch_details_tickets_theme.py patch_ticket_detail_unread.py patch_ticket_panel.py patch_ticket_detail_layout.py patch_status_assignee_colors.py patch_ticket_save_ui.py patch_closed_merge_track.py patch_trash_confirm_colors.py patch_light_mytickets.py patch_mytickets_guide.py patch_mytickets_actions.py patch_mytickets_jsx_fix.py patch_mytickets_wider.py patch_mytickets_menu_guide.py patch_status_colors_space.py patch_action_unify.py patch_menu_page20.py patch_tickets_page30.py patch_resolution_plan.py patch_res_view_msg.py patch_customer_new_expand.py patch_fix_expand_fragment.py patch_view_detail_polish.py patch_portal_bell.py patch_notify_customer.py patch_fix_platform_import.py patch_notif_z_expand_glass.py patch_expand_darker_glass.py patch_notif_above_marquee.py patch_sla_auto_close.py patch_sla_close_race.py patch_save_notify_back.py patch_tickets_badge_unread.py patch_tickets_ui_stats.py patch_agent_topbar.py patch_agent_chrome_dark.py patch_agent_icons_portal_btn.py patch_workspace_switcher.py patch_fix_cp_switcher_jsx.py patch_portal_staff_preview.py patch_followup_agent_notify.py patch_toast_menu_fix.py patch_menu_toast_polish.py patch_menu_portal_anchor.py patch_menu_theme_session.py patch_assignee_transfer.py patch_silent_ticket_notify.py patch_agent_notif_nav.py patch_copy_id_livechat.py patch_livechat_active.py patch_agent_presence.py patch_tab_session_idle.py patch_session_boot_order.py patch_presence_accurate.py patch_session_refresh_keep.py patch_session_idle_30s.py patch_tickets_sync.py patch_tickets_noflicker.py patch_portal_layout.py; do
+          for s in patch_community_ux.py patch_community_panel.py patch_community_cloud_min.py patch_community_media.py patch_community_footer_space.py patch_footer_flow.py patch_community_glass_marquee.py patch_community_contrast.py patch_chrome_footer_v2.py patch_nav_signout.py patch_swap_signout.py patch_labels_titlecase.py patch_submit_form.py patch_submit_layout.py patch_branch_list.py patch_submit_left_subject.py patch_submit_guide.py patch_submit_overview_layout.py patch_submit_fill.py patch_submit_glow.py patch_priority_glow.py patch_submit_modal.py patch_modal_glow.py patch_details_tickets_theme.py patch_ticket_detail_unread.py patch_ticket_panel.py patch_ticket_detail_layout.py patch_status_assignee_colors.py patch_ticket_save_ui.py patch_closed_merge_track.py patch_trash_confirm_colors.py patch_light_mytickets.py patch_mytickets_guide.py patch_mytickets_actions.py patch_mytickets_jsx_fix.py patch_mytickets_wider.py patch_mytickets_menu_guide.py patch_status_colors_space.py patch_action_unify.py patch_menu_page20.py patch_tickets_page30.py patch_resolution_plan.py patch_res_view_msg.py patch_customer_new_expand.py patch_fix_expand_fragment.py patch_view_detail_polish.py patch_portal_bell.py patch_notify_customer.py patch_fix_platform_import.py patch_notif_z_expand_glass.py patch_expand_darker_glass.py patch_notif_above_marquee.py patch_sla_auto_close.py patch_sla_close_race.py patch_save_notify_back.py patch_tickets_badge_unread.py patch_tickets_ui_stats.py patch_agent_topbar.py patch_agent_chrome_dark.py patch_agent_icons_portal_btn.py patch_workspace_switcher.py patch_fix_cp_switcher_jsx.py patch_portal_staff_preview.py patch_followup_agent_notify.py patch_toast_menu_fix.py patch_menu_toast_polish.py patch_menu_portal_anchor.py patch_menu_theme_session.py patch_assignee_transfer.py patch_silent_ticket_notify.py patch_agent_notif_nav.py patch_copy_id_livechat.py patch_livechat_active.py patch_agent_presence.py patch_tab_session_idle.py patch_session_boot_order.py patch_presence_accurate.py patch_session_refresh_keep.py patch_session_idle_30s.py patch_login_customer_first.py patch_tickets_sync.py patch_tickets_noflicker.py patch_portal_layout.py; do
             python3 scripts/$s || true
           done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "feat: session idle 30s" || true
+          git commit -m "feat: login defaults to Customer" || true
           git push || true
 
       - name: Setup Node
@@ -108,6 +109,7 @@ jobs:
           python3 scripts/patch_session_refresh_keep.py || true
           python3 scripts/patch_session_idle_30s.py || true
           python3 scripts/patch_presence_accurate.py || true
+          python3 scripts/patch_login_customer_first.py || true
           npm run build
           touch dist/.nojekyll
 
