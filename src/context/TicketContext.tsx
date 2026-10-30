@@ -1,3 +1,4 @@
+/* tickets-presence-fix-v1 */
 /* status-emoji-ctx-v1 */
 /* agent-presence-ctx-v1 */
 /* no-agent-toast-on-save-v1 */
@@ -152,28 +153,37 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       return;
     }
     const silent = opts?.silent === true;
-    /* Only show full-page loading on the first load — never flash the table away on poll/focus/realtime */
     if (!silent) setLoading(true);
+    const withTimeout = <T,>(p: PromiseLike<T>, ms: number): Promise<T | null> =>
+      Promise.race([
+        Promise.resolve(p).then((v) => v as T).catch(() => null),
+        new Promise<null>((r) => window.setTimeout(() => r(null), ms)),
+      ]);
     try {
       const [tRes, aRes, cRes] = await Promise.all([
-        supabase.from('tickets').select('*').order('created_at', { ascending: false }),
-        supabase.from('agents').select('*'),
-        supabase.from('customers').select('*'),
+        withTimeout(supabase.from('tickets').select('*').order('created_at', { ascending: false }), 10000),
+        withTimeout(supabase.from('agents').select('*'), 10000),
+        withTimeout(supabase.from('customers').select('*'), 10000),
       ]);
-      const agentList = filterAgents(((aRes.data as Agent[]) || []).map(hydrateAvatar));
-      if (aRes.data) setAgents(agentList);
-      if (cRes.data) setCustomers(cRes.data as Customer[]);
-      if (tRes.data) {
-        const list = (tRes.data as Ticket[]).map((t) => ({
-          ...t,
-          assignee: agentList.find((a) => a.id === t.assignee_id) || null,
-          notes: t.notes || [],
-          messages: t.messages || [],
-          attachments: t.attachments || [],
-          tags: t.tags || [],
+      const agentRows = aRes && typeof aRes === 'object' && 'data' in aRes ? (aRes as { data: Agent[] | null }).data : null;
+      const customerRows = cRes && typeof cRes === 'object' && 'data' in cRes ? (cRes as { data: Customer[] | null }).data : null;
+      const ticketRows = tRes && typeof tRes === 'object' && 'data' in tRes ? (tRes as { data: Ticket[] | null }).data : null;
+      const agentList = filterAgents((agentRows || []).map(hydrateAvatar));
+      if (agentRows) setAgents(agentList);
+      if (customerRows) setCustomers(customerRows as Customer[]);
+      if (ticketRows) {
+        const list = (ticketRows as Ticket[]).map((row) => ({
+          ...row,
+          assignee: agentList.find((a) => a.id === row.assignee_id) || null,
+          notes: row.notes || [],
+          messages: row.messages || [],
+          attachments: row.attachments || [],
+          tags: row.tags || [],
         }));
         setTickets(list);
       }
+    } catch {
+      /* never leave UI stuck on Loading tickets */
     } finally {
       setLoading(false);
     }
@@ -562,13 +572,15 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         const retry = await supabase.from('agents').update(minimal).eq('id', currentAgent.id);
         error = retry.error;
       }
-      if (error) throw error;
       const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
       setCurrentAgent(next);
       setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
       try {
         localStorage.setItem('nexus-presence-agent-id', currentAgent.id);
       } catch { /* ignore */ }
+      if (error) {
+        // non-fatal for UI presence
+      }
     } else {
       const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
       setCurrentAgent(next);
@@ -580,15 +592,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (!currentAgent || !supabase) return;
     if ((currentAgent.status || 'offline') === 'offline') return;
     const seen = new Date().toISOString();
-    const { error } = await supabase
-      .from('agents')
-      .update({ last_seen_at: seen })
-      .eq('id', currentAgent.id);
-    if (!error) {
-      setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at: seen } : prev));
-      setAgents((prev) =>
-        prev.map((a) => (a.id === currentAgent.id ? { ...a, last_seen_at: seen } : a)),
-      );
+    setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at: seen } : prev));
+    setAgents((prev) =>
+      prev.map((a) => (a.id === currentAgent.id ? { ...a, last_seen_at: seen } : a)),
+    );
+    try {
+      const { error } = await supabase
+        .from('agents')
+        .update({ last_seen_at: seen })
+        .eq('id', currentAgent.id);
+      if (error) {
+        await supabase.from('agents').update({ status: currentAgent.status || 'online' }).eq('id', currentAgent.id);
+      }
+    } catch {
+      /* ignore */
     }
   };
 

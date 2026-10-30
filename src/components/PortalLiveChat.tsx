@@ -1,3 +1,4 @@
+/* presence-window-v2 */
 /* active-now-status-labels-v1 */
 /* status-colors-active-v1 */
 /* presence-active-filter-v1 */
@@ -102,15 +103,15 @@ export default function PortalLiveChat({ onBack }: Props) {
 
   const onlineAgents = useMemo(() => {
     const now = Date.now();
-    const LIVE_WINDOW_MS = 45_000;
+    const LIVE_WINDOW_MS = 120_000;
     return (agents || []).filter((a) => {
       const st = (a.approval_status || 'approved').toLowerCase();
       if (st && st !== 'approved') return false;
       const status = (a.status || 'offline').toLowerCase();
       if (status === 'offline' || status === '') return false;
       const seen = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
-      if (!seen || Number.isNaN(seen)) return false;
-      return now - seen <= LIVE_WINDOW_MS;
+      if (seen && !Number.isNaN(seen)) return now - seen <= LIVE_WINDOW_MS;
+      return status === 'online' || status === 'busy' || status === 'away' || status === 'in_call' || status === 'custom';
     });
   }, [agents, presenceTick]);
 
