@@ -1,3 +1,4 @@
+/* session-idle-30s-v1 */
 /* session-refresh-keep-v1 */
 /* tab-session-closed-flag-v1 */
 /* tab-session-idle-v2 */
@@ -20,7 +21,7 @@ const HEARTBEAT_MS = 2500;
 const STALE_MS = 4_000;
 const SIBLING_WAIT_MS = 280;
 /** If no tab heartbeat for this long, treat next load as a new browser session. */
-const IDLE_MS = 5 * 60 * 1000; // 5 minutes
+const IDLE_MS = 30 * 1000; // 30 seconds
 
 export type TabSessionClearFn = () => void | Promise<void>;
 
