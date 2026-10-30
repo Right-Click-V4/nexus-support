@@ -1,3 +1,4 @@
+/* session-refresh-keep-v1 */
 /* tab-session-closed-flag-v1 */
 /* tab-session-idle-v2 */
 /**
@@ -107,9 +108,27 @@ export function detectNewBrowserSession(): Promise<boolean> {
     /* ignore */
   }
 
-  // Heartbeats stopped → previous session is dead (also fixes Chrome session restore
-  // restoring sessionStorage LIVE_KEY after the user fully closed the browser).
+  // Same-tab refresh: sessionStorage survives; heartbeat was recent (pagehide must not age it).
+  let liveFlag = false;
+  try {
+    liveFlag = sessionStorage.getItem(LIVE_KEY) === '1';
+  } catch {
+    /* private mode */
+  }
+
   const age = lastBeatAge(now);
+
+  // Hard refresh / soft reload: keep session when this tab still has LIVE_KEY and beat is fresh
+  if (liveFlag && age <= IDLE_MS) {
+    try {
+      localStorage.removeItem(CLOSED_KEY);
+    } catch {
+      /* ignore */
+    }
+    return Promise.resolve(false);
+  }
+
+  // Genuinely idle (browser closed long enough) — even if Chrome restored LIVE_KEY
   if (age > IDLE_MS) {
     try {
       sessionStorage.removeItem(LIVE_KEY);
@@ -124,16 +143,7 @@ export function detectNewBrowserSession(): Promise<boolean> {
     return Promise.resolve(true);
   }
 
-  // Same tab refresh / navigation keeps sessionStorage + recent beat → keep session
-  try {
-    if (sessionStorage.getItem(LIVE_KEY) === '1') {
-      return Promise.resolve(false);
-    }
-  } catch {
-    /* private mode */
-  }
-
-  // Explicit flag: last tab/window was closed → force login
+  // Explicit flag: last tab closed and this is a cold open (no LIVE_KEY)
   try {
     if (localStorage.getItem(CLOSED_KEY) === '1') {
       localStorage.removeItem(CLOSED_KEY);
@@ -246,12 +256,8 @@ export function startTabSession(_opts?: {
         } catch {
           /* ignore */
         }
-        // Age the heartbeat so the next cold open is treated as a new session
-        try {
-          localStorage.setItem(LAST_BEAT_KEY, String(Date.now() - IDLE_MS - 1000));
-        } catch {
-          /* ignore */
-        }
+        // Do NOT age LAST_BEAT here — pagehide also runs on hard refresh.
+        // Idle logout uses wall-clock last_beat age; overnight close naturally ages it.
       }
     } catch {
       /* ignore */
