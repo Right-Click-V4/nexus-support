@@ -1,3 +1,4 @@
+/* login-customer-first-v1 */
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { markJustLoggedIn } from './PostLoginLoader';
@@ -24,7 +25,7 @@ const CUSTOMER_CAPS = [
 export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenAgent }: Props) {
   const { signIn, signUp, resetPassword, configError } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const [audienceTab, setAudienceTab] = useState<'agent' | 'customer'>(audience === 'agent' ? 'agent' : 'customer');
+  const [audienceTab, setAudienceTab] = useState<'agent' | 'customer'>('customer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');

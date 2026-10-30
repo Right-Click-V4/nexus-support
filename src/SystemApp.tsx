@@ -1,3 +1,4 @@
+/* login-customer-first-v1 */
 /* presence-heartbeat-v1 */
 /* agent-presence-shell-v1 */
 /* agent-notif-nav-v1 */
@@ -360,7 +361,7 @@ export function AgentShell() {
   if (requiresAuth && (!user || authBusy)) {
     return (
       <LoginPage
-        audience="agent"
+        audience="customer"
         onOpenPortal={() => {
           window.location.hash = 'portal';
         }}
