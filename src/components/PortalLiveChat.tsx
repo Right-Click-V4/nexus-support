@@ -1,3 +1,4 @@
+/* active-now-online-prefix-v1 */
 /* presence-window-v2 */
 /* active-now-status-labels-v1 */
 /* status-colors-active-v1 */
@@ -97,7 +98,7 @@ export default function PortalLiveChat({ onBack }: Props) {
 
   const [presenceTick, setPresenceTick] = useState(0);
   useEffect(() => {
-    const id = window.setInterval(() => setPresenceTick((n) => n + 1), 10000);
+    const id = window.setInterval(() => setPresenceTick((n) => n + 1), 5000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -408,7 +409,18 @@ export default function PortalLiveChat({ onBack }: Props) {
                           ) : null}
                         </div>
                         <div className="text-[11px] truncate flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-emerald-400" />
+                          <span
+                            className={(() => {
+                              const st = (a.status || 'online').toLowerCase();
+                              if (st === 'away') return 'w-1.5 h-1.5 rounded-full shrink-0 bg-sky-400';
+                              if (st === 'busy') return 'w-1.5 h-1.5 rounded-full shrink-0 bg-yellow-400';
+                              if (st === 'in_call') return 'w-1.5 h-1.5 rounded-full shrink-0 bg-orange-400';
+                              if (st === 'custom') return 'w-1.5 h-1.5 rounded-full shrink-0 bg-white';
+                              return 'w-1.5 h-1.5 rounded-full shrink-0 bg-emerald-400';
+                            })()}
+                          />
+                          <span className="text-zinc-400 dark:text-zinc-400 font-medium">Online</span>
+                          <span className="text-zinc-500">·</span>
                           {a.status_emoji ? <span className="shrink-0">{a.status_emoji}</span> : null}
                           <span
                             className={(() => {

@@ -1,3 +1,4 @@
+/* toast-created-window-v1 */
 /* portal-postlogin-fix-v1 */
 /* login-customer-first-v1 */
 /* presence-heartbeat-v1 */
@@ -186,7 +187,7 @@ export function AgentShell() {
     if (!presenceAgent?.id) return;
     const tick = () => { void touchPresence?.(); };
     tick();
-    const id = window.setInterval(tick, 15000);
+    const id = window.setInterval(tick, 8000);
     return () => window.clearInterval(id);
   }, [presenceAgent?.id, touchPresence]);
 
@@ -218,22 +219,31 @@ export function AgentShell() {
       const settle = window.setTimeout(() => {
         prevNotifIdsRef.current = new Set(notifications.map((n) => n.id));
         toastBootRef.current = false;
-      }, 1200);
+      }, 3500);
       return () => window.clearTimeout(settle);
     }
-    const isCustomerOrigin = (n: { title?: string; body?: string; link?: string }) => {
+    const isCustomerOrigin = (n: { title?: string; body?: string; link?: string; created_at?: string }) => {
       const t = (n.title || '').toLowerCase();
       const b = (n.body || '').toLowerCase();
       const link = (n.link || '').toLowerCase();
+      if (/ticket updated/.test(t)) return false;
       if (/new ticket/.test(t)) return true;
       if (/follow-?up/.test(t) || /follow-?up/.test(b)) return true;
       if (/live\s*chat|customer message|new message/.test(t) || /live\s*chat/.test(b)) return true;
       if (link === 'chat' || link === 'livechat') return true;
-      if (/ticket updated/.test(t)) return false;
       return false;
     };
+    const isRecent = (n: { created_at?: string }) => {
+      if (!n.created_at) return false;
+      const age = Date.now() - new Date(n.created_at).getTime();
+      return !Number.isNaN(age) && age >= 0 && age < 45_000;
+    };
     const fresh = notifications.filter(
-      (n) => !prevNotifIdsRef.current.has(n.id) && !n.read && isCustomerOrigin(n),
+      (n) =>
+        !prevNotifIdsRef.current.has(n.id) &&
+        !n.read &&
+        isCustomerOrigin(n) &&
+        isRecent(n),
     );
     prevNotifIdsRef.current = ids;
     if (fresh.length === 0) return;
