@@ -1,3 +1,4 @@
+/* error-to-404-v1 */
 /* error-boundary-portal-v1 */
 import { Component, type ReactNode } from 'react';
 
@@ -46,12 +47,12 @@ export default class ErrorBoundary extends Component<Props, State> {
                 type="button"
                 onClick={() => {
                   this.setState({ error: null });
-                  window.location.hash = '#/';
+                  window.location.hash = '#/404';
                   window.location.reload();
                 }}
                 style={{ padding: '10px 18px', background: 'transparent', color: '#e4e4e7', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, cursor: 'pointer' }}
               >
-                Go to home / 404 screen
+                Show 404 page
               </button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+/* hash-404-strict-v1 */
 /* status-fab-v1 */
 /* portal-force-ready-v1 */
 /* presence-fast-online-v1 */
@@ -76,13 +77,15 @@ import ThemeToggle from './components/ThemeToggle';
 import { onAgentNotify } from './lib/agentNotify';
 
 export function getModeFromHash(): 'agent' | 'portal' | 'notfound' {
-  const h = (window.location.hash || '').replace(/^#/, '').toLowerCase().split('?')[0];
-  if (h === '404' || h === 'not-found' || h === 'notfound') return 'notfound';
+  const h = (window.location.hash || '')
+    .replace(/^#\/?/, '')
+    .toLowerCase()
+    .split('?')[0]
+    .replace(/\/+$/, '');
+  if (h === '404' || h === 'not-found' || h === 'notfound' || h === '/') return 'notfound';
   if (h.startsWith('portal')) return 'portal';
-  if (h && !h.startsWith('portal') && !['', 'agent', 'app', 'desk'].includes(h) && h.includes('/')) {
-    return 'notfound';
-  }
-  return 'agent';
+  if (!h || h === 'agent' || h === 'app' || h === 'desk') return 'agent';
+  return 'notfound';
 }
 
 const TITLES: Record<string, string> = {

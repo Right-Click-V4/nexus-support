@@ -1,3 +1,4 @@
+/* livechat-ui-v3 */
 /* livechat-text-field-v1 */
 /* presence-poll-refresh-v1 */
 /* active-now-online-prefix-v1 */
@@ -183,11 +184,13 @@ export default function PortalLiveChat({ onBack }: Props) {
       });
       setChatId(c.id);
       sessionStorage.setItem(STORAGE_KEY, c.id);
-      const parts = [`Hi, I'm ${nm}.`];
-      if (br) parts.push(`Branch: ${br}.`);
-      if (tid) parts.push(`Ticket: ${tid}.`);
-      parts.push('I need assistance.');
-      await sendChatMessage(c.id, parts.join(' '), 'customer');
+      const lines = [
+        `Hi, I'm ${nm}.`,
+        br ? `Branch: ${br}` : null,
+        tid ? `Ticket: ${tid}` : null,
+        'I need assistance.',
+      ].filter(Boolean) as string[];
+      await sendChatMessage(c.id, lines.join('\n'), 'customer');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Could not start chat');
     } finally {
@@ -471,8 +474,8 @@ export default function PortalLiveChat({ onBack }: Props) {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col min-h-[min(70vh,640px)] portal-overview-glass rounded-2xl overflow-hidden border border-white/15">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/30 dark:bg-black/20">
+    <div className="w-full max-w-4xl mx-auto flex flex-col min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-zinc-200/40 dark:border-white/15 bg-white/40 dark:bg-black/25 backdrop-blur-xl shadow-lg shadow-black/10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 bg-white/50 dark:bg-black/30 backdrop-blur-md">
         <div className="flex items-center gap-2 min-w-0">
           <MessageCircle size={18} className="text-violet-600 dark:text-violet-300 shrink-0" />
           <div className="min-w-0">
@@ -494,26 +497,40 @@ export default function PortalLiveChat({ onBack }: Props) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-transparent">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent">
         {messages.map((m) => {
           const mine = m.sender === 'customer';
           const raw = m.text || (m as { body?: string }).body || '';
           const parsed = parseChatAttachment(raw);
           const att = parsed.att;
           const bodyText = (parsed.text || raw || '').toString();
+          const customerName = accountName || name || user?.email?.split('@')[0] || 'You';
+          const customerInitials = customerName
+            .split(/\s+/)
+            .map((x) => x[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
           return (
-            <div key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>
+            <div key={m.id} className={clsx('flex items-end gap-2', mine ? 'justify-end' : 'justify-start')}>
+              {!mine && (
+                <div className="shrink-0 mb-0.5">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white/20">
+                    AG
+                  </div>
+                </div>
+              )}
               <div
                 className={clsx(
-                  'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm',
+                  'max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm',
                   mine
-                    ? 'bg-violet-600 text-white rounded-br-md'
-                    : 'bg-white/70 dark:bg-zinc-900/70 text-zinc-800 dark:text-zinc-100 border border-white/20 dark:border-white/10 rounded-bl-md',
+                    ? 'bg-violet-600/90 text-white rounded-br-md'
+                    : 'bg-white/70 dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10 rounded-bl-md backdrop-blur-sm',
                 )}
               >
                 {att ? (
                   isImageMime(att?.mime) ? (
-                    <img src={att.url} alt={att?.name || 'Download file'} className="max-h-48 rounded-lg" />
+                    <img src={att.url} alt={att.name || 'attachment'} className="max-h-48 rounded-lg" />
                   ) : (
                     <a href={att.url} download={att?.name || 'Download file'} className="underline">
                       {att?.name || 'Download file'}
@@ -523,6 +540,21 @@ export default function PortalLiveChat({ onBack }: Props) {
                   bodyText
                 )}
               </div>
+              {mine && (
+                <div className="shrink-0 mb-0.5">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img
+                      src={String(user.user_metadata.avatar_url)}
+                      alt=""
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-violet-400/30"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-violet-400/30">
+                      {customerInitials || 'U'}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -530,7 +562,7 @@ export default function PortalLiveChat({ onBack }: Props) {
       </div>
 
       {conversation?.status !== 'ended' && (
-        <div className="border-t border-white/10 p-3 bg-white/25 dark:bg-black/25 space-y-2">
+        <div className="border-t border-zinc-200/50 dark:border-white/10 p-3 bg-white/45 dark:bg-black/30 backdrop-blur-md space-y-2">
           <div className="flex flex-wrap gap-1.5">
             {QUICK_REPLIES.map((q) => (
               <button
