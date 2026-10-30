@@ -1,3 +1,4 @@
+/* session-boot-order-v1 */
 import {
   createContext,
   useContext,
@@ -136,27 +137,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setLoading(false);
     };
 
-    // Tab session: keep auth across refresh; clear only on new browser session (see boot)
-    const tabCtl = startTabSession();
+    // IMPORTANT: detect new session BEFORE startTabSession — starting the tab
+    // session touches the heartbeat and would hide an idle logout.
+    let tabCtl: { tabId: string; stop: () => void } | null = null;
+    let suppressAuthEvents = false;
 
     const boot = async () => {
-      // New browser window/session (all prior tabs closed) → force login
       const isNewSession = await detectNewBrowserSession();
       if (isNewSession) {
+        suppressAuthEvents = true;
         clearSupabaseAuthStorage();
         try {
           await supabase.auth.signOut({ scope: 'local' });
         } catch {
           /* ignore */
         }
-        markTabSessionLive();
+        clearSupabaseAuthStorage();
         if (!cancelled) {
           setSession(null);
           setUser(null);
           setLoading(false);
         }
+        tabCtl = startTabSession();
+        window.setTimeout(() => {
+          suppressAuthEvents = false;
+        }, 1500);
         return;
       }
+      tabCtl = startTabSession();
       markTabSessionLive();
       const { data } = await supabase.auth.getSession();
       await applySession(data.session);
@@ -166,13 +174,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, next) => {
+      if (suppressAuthEvents) {
+        if (next) {
+          void supabase.auth.signOut({ scope: 'local' });
+          clearSupabaseAuthStorage();
+        }
+        return;
+      }
       void applySession(next);
     });
 
     return () => {
       cancelled = true;
       subscription.unsubscribe();
-      tabCtl.stop();
+      tabCtl?.stop();
     };
   }, []);
 
