@@ -1,34 +1,27 @@
-/* mytickets-copy-id-v1 */
-/* mytickets-menu-portal-v1 */
-/* mytickets-menu-anchor-v2 */
-/* mytickets-menu-fixed-v1 */
-/* followup-agent-notify-v1 */
-/* portal-staff-preview-v1 */
 /* workspace-switcher-portal-v1 */
-/* notif-above-marquee-v1 */
-/* expand-darker-glass-v1 */
-/* notif-z-expand-glass-v1 */
-/* portal-bell-v1 */
 /* view-detail-polish-v1 */
-/* fix-expand-fragment-v1 */
-/* customer-new-expand-v1 */
-/* menu-page20-v1 */
-/* action-unify-v1 */
+/* mytickets-menu-fixed-v1 */
 /* status-colors-space-v1 */
-/* mytickets-menu-guide-v1 */
+/* portal-staff-preview-v1 */
+/* portal-bell-v1 */
+/* notif-z-expand-glass-v1 */
+/* notif-above-marquee-v1 */
 /* mytickets-wider-v1 */
+/* mytickets-menu-guide-v1 */
 /* mytickets-jsx-fix-v1 */
 /* mytickets-actions-v1 */
-/* mytickets-guide-v1 */
+/* mytickets-menu-anchor-v2 */
+/* mytickets-menu-portal-v1 */
+/* menu-page20-v1 */
 /* mytickets-table-v1 */
-/* closed-sla-v1 */
+/* followup-agent-notify-v1 */
+/* fix-expand-fragment-v1 */
+/* expand-darker-glass-v1 */
+/* details-tickets-theme-v1 */
+/* customer-new-expand-v1 */
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  Search, CheckCircle2, Ticket, BookOpen, ArrowLeft, MessageSquare,
-  LogOut, User, Star, Home, ExternalLink, Users, ImagePlus, X,
-  Flag, ListTree, Lightbulb, Clock3, ClipboardList, MoreVertical, Info, Send, Bell, Copy, Check,
-} from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle2, ExternalLink, Home, Info, LogOut, MessageSquare, MoreVertical, Search, Send, Star, Ticket, User, Users } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
 import { notifyAgents } from '../lib/agentNotify';
@@ -59,25 +52,7 @@ const HELP_ARTICLES = [
   { title: 'API rate limits', body: 'Free plans allow 60 requests/minute. Pro plans allow 600.' },
 ];
 
-/** Fixed portal branch list (alphabetical) */
-const BRANCH_OPTIONS = [
-  'Abucay',
-  'Abuyog',
-  'Avenida',
-  'Baybay',
-  'Burauen',
-  'Calbayog',
-  'Carigara',
-  'Catarman',
-  'Catbalogan',
-  'Kananga',
-  'Maasin',
-  'Ormoc',
-  'Palo-Naga',
-  'Palo-Pawing',
-  'Palo-Schisto',
-  'Sogod',
-] as const;
+const BRANCH_OPTIONS = INITIAL_BRANCHES.map((b) => b.name);
 
 /** Editable later — common ticket subjects for the portal form */
 /** Subject list (alphabetical) — editable later */
@@ -107,50 +82,17 @@ const SUBJECT_OPTIONS = [
   'Training / how-to question',
 ] as const;
 
-/** Help text for each subject (keep in sync with SUBJECT_OPTIONS) */
-const SUBJECT_GUIDE: { subject: string; tip: string }[] = [
-  { subject: 'Access permissions / roles', tip: 'You need a role change, more access, or cannot open a screen you should be able to use.' },
-  { subject: 'Account & login issues', tip: 'Problems signing in, locked account, wrong profile details, or account not recognized.' },
-  { subject: 'API access / API keys', tip: 'Request new keys, rotate keys, or troubleshoot API authentication.' },
-  { subject: 'API rate limits', tip: 'You are hitting request limits or need higher quota for production traffic.' },
-  { subject: 'Billing & invoices', tip: 'Questions about charges, invoices, receipts, or payment history.' },
-  { subject: 'Branch or location change', tip: 'Transfer your workplace branch, update location assignment, or correct branch mapping.' },
-  { subject: 'Bug report', tip: 'Something in the product is broken or behaves incorrectly — include steps to reproduce if you can.' },
-  { subject: 'Data export or import', tip: 'You need to download data, bulk upload records, or fix a failed import/export.' },
-  { subject: 'Email delivery problems', tip: 'Expected emails (alerts, invoices, resets) are missing, delayed, or going to spam.' },
-  { subject: 'Feature request', tip: 'A capability is missing and you want the product team to consider adding it.' },
-  { subject: 'Hardware / device issue', tip: 'POS terminal, printer, scanner, or other branch hardware is failing.' },
-  { subject: 'Integration help', tip: 'Connecting NexusOps with another system (POS, accounting, SSO, webhooks, etc.).' },
-  { subject: 'Mobile app issue', tip: 'Bugs or login problems specific to the mobile app.' },
-  { subject: 'Network connectivity', tip: 'Branch network, VPN, or connectivity problems blocking the service.' },
-  { subject: 'Notifications & alerts', tip: 'Push, email, or in-app alerts are wrong, too noisy, or not arriving.' },
-  { subject: 'Other', tip: 'None of the subjects fit — describe your request clearly in Details.' },
-  { subject: 'Password reset / locked out', tip: 'You cannot reset your password or your account is locked after failed attempts.' },
-  { subject: 'Payment failed or declined', tip: 'A card or payment method was declined, or a charge did not complete.' },
-  { subject: 'Performance / slow response', tip: 'Pages or APIs are unusually slow, timing out, or freezing.' },
-  { subject: 'Security concern', tip: 'Suspected unauthorized access, phishing, data exposure, or other security risk — use Critical if active.' },
-  { subject: 'Service outage / downtime', tip: 'The product is down or a major feature is unavailable for your branch.' },
-  { subject: 'Subscription / plan change', tip: 'Upgrade, downgrade, cancel, or change seats on your plan.' },
-  { subject: 'Training / how-to question', tip: 'You need guidance on how to use a feature (not a bug).' },
-];
 
-const PRIORITY_GUIDE: { level: string; color: string; tip: string }[] = [
-  { level: 'Low', color: 'bg-emerald-500', tip: 'Minor inconvenience. Work can continue; no rush.' },
-  { level: 'Medium', color: 'bg-sky-500', tip: 'Normal request. Affects work but a workaround exists. Default for most tickets.' },
-  { level: 'High', color: 'bg-amber-500', tip: 'Significant impact. A key workflow is blocked for you or your branch.' },
-  { level: 'Critical', color: 'bg-rose-500', tip: 'Emergency. Full outage, data risk, or business stopped. Use only when truly urgent.' },
-];
-
-const VIEW_META: Record<PortalView, { title: string; desc: string; iconColor: string }> = {
-  home: { title: 'Overview', desc: 'How this portal works and how to get support.', iconColor: 'text-violet-700 dark:text-violet-300' },
-  submit: { title: 'Submit a Ticket', desc: 'Open a support ticket with your branch and details.', iconColor: 'text-amber-600 dark:text-amber-400' },
-  track: { title: 'Track a Ticket', desc: 'Look up status updates by ticket ID and email.', iconColor: 'text-emerald-600 dark:text-emerald-400' },
-  success: { title: 'Request received', desc: 'Your ticket was created successfully.', iconColor: 'text-violet-700 dark:text-violet-300' },
-  help: { title: 'Help Articles', desc: 'Guides and FAQs you can use without waiting on an agent.', iconColor: 'text-indigo-700 dark:text-indigo-300' },
-  chat: { title: 'Live Chat', desc: 'Talk to a support agent in real time.', iconColor: 'text-fuchsia-600 dark:text-fuchsia-400' },
-  account: { title: 'Account', desc: 'Profile details and sign-in information.', iconColor: 'text-pink-600 dark:text-pink-400' },
-  mytickets: { title: 'My Tickets', desc: 'Review tickets you have opened with support.', iconColor: 'text-emerald-600 dark:text-emerald-400' },
-  community: { title: 'Community', desc: 'Chat with other customers about tips and workarounds.', iconColor: 'text-sky-600 dark:text-sky-400' },
+const VIEW_TITLES: Record<PortalView, string> = {
+  home: 'Home',
+  submit: 'Submit a request',
+  track: 'Track a ticket',
+  success: 'Request received',
+  help: 'Help articles',
+  chat: 'Live chat',
+  account: 'Account',
+  mytickets: 'My tickets',
+  community: 'Community',
 };
 
 function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
@@ -165,8 +107,12 @@ function BrandMark({ className = 'w-8 h-8' }: { className?: string }) {
   );
 }
 
-/* footer-flow-v2 */ /* community-glass-v1 */ /* chrome-footer-v2 */ /* nav-signout-v1 */ /* swap-signout-v1 */
-/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */ /* branch-list-v1 */ /* submit-left-subject-v1 */ /* submit-guide-v1 */ /* submit-overview-layout-v1 */ /* submit-fill-v1 */ /* submit-glow-v1 */ /* priority-required-v1 */ /* submit-success-modal-v1 */ /* modal-glow-v2 */ /* details-tickets-theme-v1 */
+/* footer-flow-v2 */
+/* labels-titlecase-v1 */ /* submit-form-v1 */ /* submit-layout-v1 */
+/* nav-signout-v1 */ /* swap-signout-v1 */
+/* submit-guide-v1 */
+/* submit-left-subject-v1 */
+/* submit-success-modal-v1 */
 export default function CustomerPortal({ onBackToAgent }: Props) {
   const { createTicket, updateTicket, findTicket, tickets, ticketsForEmail } = useTickets();
   const { user, accountRole, signOut, requiresAuth } = useAuth();
@@ -183,46 +129,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const [myTicketsPage, setMyTicketsPage] = useState(1);
   const [myTicketsDateFrom, setMyTicketsDateFrom] = useState('');
   const [myTicketsDateTo, setMyTicketsDateTo] = useState('');
-  const [myTicketMenu, setMyTicketMenu] = useState<{
-    id: string;
-    top: number;
-    left: number;
-    openUp: boolean;
-  } | null>(null);
-  const myTicketMenuId = myTicketMenu?.id ?? null;
-  const setMyTicketMenuId = (id: string | null | ((prev: string | null) => string | null)) => {
-    if (typeof id === 'function') {
-      const next = id(myTicketMenuId);
-      if (next == null) setMyTicketMenu(null);
-      return;
-    }
-    if (id == null) setMyTicketMenu(null);
-  };
-  const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
-  const [copiedTicketId, setCopiedTicketId] = useState<string | null>(null);
-  const [portalNotifOpen, setPortalNotifOpen] = useState(false);
-  const portalNotifRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!myTicketMenuId) return;
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t && t.closest && t.closest('[data-myticket-menu]')) return;
-      setMyTicketMenu(null);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [myTicketMenuId]);
-  /* portal-notif-outside */
-  useEffect(() => {
-    if (!portalNotifOpen) return;
-    const onDoc = (e: MouseEvent) => {
-      if (portalNotifRef.current && !portalNotifRef.current.contains(e.target as Node)) {
-        setPortalNotifOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [portalNotifOpen]);
+  const [myTicketMenuId, setMyTicketMenuId] = useState<string | null>(null);
+  const [myTicketMenuPos, setMyTicketMenuPos] = useState<{ top: number; left: number; openUp: boolean }>({
+    top: 0,
+    left: 0,
+    openUp: false,
+  });
   const [followUpTicket, setFollowUpTicket] = useState<TicketType | null>(null);
   const [followUpText, setFollowUpText] = useState('');
   const [followUpBusy, setFollowUpBusy] = useState(false);
@@ -232,8 +144,6 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority | ''>('');
-  const [attachPreview, setAttachPreview] = useState<{ name: string; size: number; mime: string; url: string } | null>(null);
-  const [attachError, setAttachError] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [created, setCreated] = useState<TicketType | null>(null);
@@ -309,57 +219,34 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   }, []);
 
 
-  const branchOptions = useMemo(() => [...BRANCH_OPTIONS], []);
+  const branchOptions = useMemo(() => {
+    const set = new Set(BRANCH_OPTIONS);
+    tickets.forEach((t) => { if (t.branch) set.add(t.branch); });
+    try {
+      const raw = localStorage.getItem('nexus-branches-v1');
+      if (raw) (JSON.parse(raw) as { name: string }[]).forEach((b) => set.add(b.name));
+    } catch {}
+    return Array.from(set).sort();
+  }, [tickets]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const accountEmail = (user?.email || email || '').trim();
-    if (!name.trim() || !title.trim() || !branch.trim() || !priority) {
-      setError('Name, branch, subject, and priority are required');
-      return;
-    }
-    if (!accountEmail) {
-      setError('Your account email is missing. Please sign in again.');
+    if (!name.trim() || !email.trim() || !title.trim() || !branch.trim()) {
+      setError('Name, email, branch, and subject are required');
       return;
     }
     setSaving(true);
     setError('');
     try {
       const ticket = await createTicket({
-        title: title.trim(),
-        description: capitalizeSentences(description.trim()),
-        priority: priority as Priority,
-        channel: 'portal',
-        customer_name: name.trim(),
-        customer_email: accountEmail,
-        branch: branch.trim(),
+        title: title.trim(), description: capitalizeSentences(description.trim()), priority, channel: 'portal',
+        customer_name: name.trim(), customer_email: email.trim(), branch: branch.trim(),
       });
-      if (attachPreview) {
-        const att: TicketAttachment = {
-          id: `att-${Date.now()}`,
-          name: attachPreview.name,
-          size: attachPreview.size,
-          mime: attachPreview.mime,
-          url: attachPreview.url,
-          created_at: new Date().toISOString(),
-          uploaded_by: accountEmail,
-        };
-        try {
-          await updateTicket(ticket.id, { attachments: [...(ticket.attachments || []), att] });
-          ticket.attachments = [...(ticket.attachments || []), att];
-        } catch {
-          /* attachment optional — ticket still created */
-        }
-      }
       setCreated(ticket);
-      setTitle('');
-      setDescription('');
-      setPriority('');
-      setBranch('');
-      setAttachPreview(null);
-      setAttachError('');
+      setView('success');
+      setTitle(''); setDescription(''); setPriority('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Could not submit ticket');
+      setError(err instanceof Error ? err.message : 'Could not submit request');
     } finally {
       setSaving(false);
     }
@@ -399,12 +286,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
   };
 
   const statusColor: Record<string, string> = {
-    new: 'bg-violet-500 text-white dark:bg-violet-500 dark:text-white border border-violet-600/50',
-    open: 'bg-violet-500 text-white dark:bg-violet-500 dark:text-white border border-violet-600/50',
-    pending: 'bg-orange-500 text-white dark:bg-orange-500 dark:text-white border border-orange-600/50',
-    'on-hold': 'bg-yellow-400 text-yellow-950 dark:bg-yellow-400 dark:text-yellow-950 border border-yellow-500/60',
-    resolved: 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-white border border-emerald-600/50',
-    closed: 'bg-red-500 text-white dark:bg-red-500 dark:text-white border border-red-600/50',
+    new: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/60 dark:border-violet-400/40',
+    open: 'bg-violet-100 text-violet-800 dark:bg-violet-500/25 dark:text-violet-200 border border-violet-300/60 dark:border-violet-400/40',
+    pending: 'bg-orange-100 text-orange-800 dark:bg-orange-500/25 dark:text-orange-200 border border-orange-300/60 dark:border-orange-400/40',
+    'on-hold': 'bg-yellow-100 text-yellow-900 dark:bg-yellow-500/25 dark:text-yellow-100 border border-yellow-300/60 dark:border-yellow-400/40',
+    resolved: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/25 dark:text-emerald-200 border border-emerald-300/60 dark:border-emerald-400/40',
+    closed: 'bg-red-100 text-red-800 dark:bg-red-500/25 dark:text-red-200 border border-red-300/60 dark:border-red-400/40',
   };
 
   const navItems: { id: PortalView; label: string; icon: typeof Home }[] = [
@@ -412,6 +299,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     { id: 'community', label: 'Community', icon: Users },
     { id: 'submit', label: 'Submit a Ticket', icon: Ticket },
     { id: 'chat', label: 'Live Chat', icon: MessageSquare },
+    { id: 'track', label: 'Track Ticket', icon: Search },
     { id: 'mytickets', label: 'My Tickets', icon: User },
     { id: 'help', label: 'Help Articles', icon: BookOpen },
     { id: 'account', label: 'Account', icon: User },
@@ -541,7 +429,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   active ? 'portal-nav-active' : 'portal-nav-item'
                 }`}
               >
-                <Icon size={18} className={`shrink-0 ${({ home: "text-violet-700 dark:text-violet-300", community: "text-sky-600 dark:text-sky-400", submit: "text-amber-600 dark:text-amber-400", chat: "text-fuchsia-600 dark:text-fuchsia-400", track: "text-emerald-600 dark:text-emerald-400", mytickets: "text-emerald-600 dark:text-emerald-400", help: "text-indigo-700 dark:text-indigo-300", account: "text-pink-600 dark:text-pink-400" } as Record<string, string>)[item.id] || "text-violet-400"}`} />
+                <Icon size={18} className={`shrink-0 ${({ home: "text-violet-700 dark:text-violet-300", community: "text-sky-600 dark:text-sky-400", submit: "text-amber-600 dark:text-amber-400", chat: "text-fuchsia-600 dark:text-fuchsia-400", track: "text-emerald-600 dark:text-emerald-400", mytickets: "text-blue-600 dark:text-blue-400", help: "text-indigo-700 dark:text-indigo-300", account: "text-pink-600 dark:text-pink-400" } as Record<string, string>)[item.id] || "text-violet-400"}`} />
                 <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
@@ -572,108 +460,28 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
 
       <div className="portal-shell flex-1 flex flex-col min-w-0 h-full max-h-full overflow-hidden relative z-10">
         <PortalSpaceLoungeBg />
-        <header className="relative z-[60] min-h-[3.75rem] shrink-0 nexus-topbar flex items-center gap-3 px-4 lg:px-6 py-2.5">
-          <div className="md:hidden shrink-0"><BrandMark className="w-8 h-8" /></div>
-          {(() => {
-            const meta = VIEW_META[view];
-            const NavIcon = navItems.find((n) => n.id === view)?.icon
-              ?? (view === 'success' ? CheckCircle2 : Home);
-            return (
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-10 h-10 rounded-xl bg-violet-500/10 dark:bg-violet-400/15 flex items-center justify-center shrink-0 ${meta.iconColor}`}>
-                  <NavIcon size={20} strokeWidth={2.2} />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-base sm:text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight truncate">
-                    {meta.title}
-                  </div>
-                  <div className="text-xs sm:text-[13px] text-zinc-500 dark:text-zinc-400 leading-snug truncate">
-                    {meta.desc}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+        <header className="relative z-20 h-12 shrink-0 nexus-topbar flex items-center gap-3 px-4 lg:px-6">
+          <div className="md:hidden"><BrandMark className="w-8 h-8" /></div>
+          <div className="text-sm font-semibold text-zinc-800">{VIEW_TITLES[view]}</div>
           <div className="flex-1" />
-          <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-500">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Support online
           </div>
-          <div className="relative z-[80]" ref={portalNotifRef}>
-            <button
-              type="button"
-              onClick={() => setPortalNotifOpen((v) => !v)}
-              className="relative p-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-violet-500/15 dark:hover:bg-white/10 transition-colors"
-              title="Notifications"
-              aria-label="Notifications"
-            >
-              <Bell size={18} strokeWidth={2.2} />
-              {portalUnread > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-semibold flex items-center justify-center">
-                  {portalUnread > 9 ? '9+' : portalUnread}
-                </span>
-              )}
-            </button>
-            {portalNotifOpen && (
-              <div className="portal-notif-panel absolute right-0 top-full mt-1.5 w-80 max-w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-violet-300/40 dark:border-white/20 bg-white/85 dark:bg-zinc-950/75 backdrop-blur-xl shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-100 dark:border-white/10">
-                  <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">Notifications</span>
-                  {portalUnread > 0 && (
-                    <button
-                      type="button"
-                      className="text-[11px] text-violet-600 dark:text-violet-400 font-medium"
-                      onClick={() => {
-                        void markAllNotificationsRead();
-                        for (const t of myTickets) {
-                          if ((t.tags || []).includes('customer_unread')) {
-                            void updateTicket(t.id, {
-                              tags: (t.tags || []).filter((x) => x !== 'customer_unread'),
-                            });
-                          }
-                        }
-                      }}
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {portalNotifs.length === 0 ? (
-                    <div className="px-3 py-8 text-center text-xs text-zinc-400">No notifications yet</div>
-                  ) : (
-                    portalNotifs.slice(0, 30).map((n) => (
-                      <button
-                        key={n.id}
-                        type="button"
-                        onClick={() => void openPortalNotif(n)}
-                        className={`w-full text-left px-3 py-2.5 border-b border-zinc-50 dark:border-white/5 text-xs hover:bg-violet-50/60 dark:hover:bg-white/5 transition-colors ${
-                          n.read ? 'opacity-60' : 'bg-violet-50/40 dark:bg-violet-500/10'
-                        }`}
-                      >
-                        <div className="font-semibold text-zinc-800 dark:text-zinc-100">{n.title}</div>
-                        {n.body && <div className="text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-2">{n.body}</div>}
-                        <div className="text-[10px] text-zinc-400 mt-1 tabular-nums">{new Date(n.created_at).toLocaleString()}</div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
           <ThemeToggle />
-          {onBackToAgent && (
-            <button
-              type="button"
-              onClick={onBackToAgent}
-              className="switch-to-agent-top inline-flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 border border-violet-500/50 shadow-md"
-              title="Back to Agent Workspace"
-            >
-              <ExternalLink size={14} />
-              <span className="hidden sm:inline">Agent Workspace</span>
-            </button>
-          )}
           {requiresAuth && (
-            <button
+                          {onBackToAgent && (
+                <button
+                  type="button"
+                  onClick={onBackToAgent}
+                  className="switch-to-agent-top inline-flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 border border-violet-500/50 shadow-md"
+                  title="Back to Agent Workspace"
+                >
+                  <ExternalLink size={14} />
+                  <span className="hidden sm:inline">Agent Workspace</span>
+                </button>
+              )}
+<button
               type="button"
               onClick={() => void signOut()}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-violet-500/15 dark:hover:bg-white/10 border border-violet-700/25 dark:border-white/20 transition-colors"
@@ -688,25 +496,16 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
         <PortalAnnouncementMarquee />
 
         <main
-          className={`relative z-10 flex-1 min-h-0 ${
-            view === 'community'
-              ? 'overflow-hidden flex flex-col p-3 lg:p-5'
-              : view === 'submit'
-                ? 'overflow-y-auto p-3 lg:pl-3 lg:pr-5 lg:py-5'
-                : 'overflow-y-auto p-3 lg:p-5'
+          className={`relative z-10 flex-1 min-h-0 p-3 lg:p-5 flex flex-col ${
+            view === 'community' ? 'overflow-hidden' : 'overflow-y-auto'
           }`}
         >
-          {/* Community fills space under marquee (no underlap). Other tabs: natural flow + footer after content. */}
           <div
-            className={`w-full mx-auto flex flex-col ${
-              view === 'community'
-                ? 'max-w-6xl flex-1 min-h-0'
-                : view === 'mytickets'
-                  ? 'max-w-[1600px] min-h-full'
-                  : 'max-w-5xl min-h-full'
+            className={`w-full mx-auto flex flex-col flex-1 min-h-0 ${
+              view === 'community' ? 'max-w-6xl' : 'max-w-5xl min-h-full'
             }`}
           >
-            <div className={view === 'community' ? 'flex-1 min-h-0 flex flex-col' : 'pb-1 flex-1'}>
+            <div className={`flex-1 min-h-0 ${view === 'community' ? 'flex flex-col' : ''}`}>
             {view === 'home' && (
               <PortalHome displayName={displayName} onNavigate={(v) => setView(v)} />
             )}
@@ -715,292 +514,125 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             {view === 'chat' && <PortalLiveChat onBack={() => setView('home')} />}
             {view === 'submit' && (
-              <div className="w-full max-w-5xl mx-auto space-y-4 pb-2">
-                <section className="portal-overview-glass rounded-2xl px-5 py-4 sm:px-6 sm:py-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300/90">
-                    Support
-                  </p>
-                  <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                    Submit a Ticket
-                  </h1>
-                  <p className="mt-1.5 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed max-w-2xl">
-                    We typically respond within one business day. Use the form on the left and the guides on the right if you are unsure which subject or priority to pick.
-                  </p>
-                </section>
-
-                <div className="grid lg:grid-cols-12 gap-4 items-start">
-                  <div className="lg:col-span-5 space-y-4">
-                  <form
-                    onSubmit={submit}
-                    className="portal-overview-glass portal-submit-form-glow rounded-2xl p-4 sm:p-5 space-y-3.5 relative z-20"
-                  >
-                    {error && (
-                      <div className="text-sm text-rose-600 bg-rose-50/80 dark:bg-rose-950/40 dark:text-rose-300 px-3 py-2 rounded-lg">
-                        {error}
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Your name</label>
-                      <input
-                        value={name}
-                        readOnly
-                        required
-                        className={`${field} opacity-90 cursor-not-allowed bg-white/40 dark:bg-white/5`}
-                        title="Filled from your account — cannot be changed"
-                      />
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Locked to your registered account name.</p>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Branch *</label>
-                      <select value={branch} onChange={(e) => setBranch(e.target.value)} required className={field}>
-                        <option value="" disabled>
-                          Select branch…
-                        </option>
-                        {branchOptions.map((b) => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Subject *</label>
-                      <select value={title} onChange={(e) => setTitle(e.target.value)} required className={field}>
-                        <option value="" disabled>
-                          Select a request type…
-                        </option>
-                        {SUBJECT_OPTIONS.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Choose the closest match — clarify in Details.</p>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Details</label>
-                      <textarea
-                        value={description}
-                        onChange={(e) => setDescription(capitalizeSentences(e.target.value))}
-                        onBlur={(e) => setDescription(capitalizeSentences(e.target.value))}
-                        rows={4}
-                        placeholder="Describe what happened, steps to reproduce, and any error messages…"
-                        className={field}
-                      />
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-violet-700 dark:text-violet-300 bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20 cursor-pointer transition-colors">
-                          <ImagePlus size={14} />
-                          {attachPreview ? 'Change photo' : 'Add photo'}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              e.target.value = '';
-                              setAttachError('');
-                              if (!file) return;
-                              if (!file.type.startsWith('image/')) {
-                                setAttachError('Please choose an image file.');
-                                return;
-                              }
-                              if (file.size > MAX_ATTACHMENT_BYTES) {
-                                setAttachError('Image is too large (max 8 MB).');
-                                return;
-                              }
-                              const reader = new FileReader();
-                              reader.onload = () => {
-                                setAttachPreview({
-                                  name: file.name,
-                                  size: file.size,
-                                  mime: file.type,
-                                  url: String(reader.result || ''),
-                                });
-                              };
-                              reader.onerror = () => setAttachError('Could not read that image.');
-                              reader.readAsDataURL(file);
-                            }}
-                          />
-                        </label>
-                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Optional · max 8 MB</span>
-                        {attachPreview && (
-                          <button
-                            type="button"
-                            onClick={() => { setAttachPreview(null); setAttachError(''); }}
-                            className="inline-flex items-center gap-1 text-[11px] text-zinc-600 dark:text-zinc-300 hover:text-rose-600"
-                          >
-                            <X size={12} /> Remove
-                          </button>
-                        )}
-                      </div>
-                      {attachError && <p className="text-[11px] text-rose-600 mt-1">{attachError}</p>}
+              <div className="w-full flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-8">
+                <div className="w-full max-w-md shrink-0 self-start">
+                <div className="mb-4">
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Submit a Ticket</h1>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm sm:text-base mt-1.5">We typically respond within one business day.</p>
+                </div>
+                <form onSubmit={submit} className="portal-glass-card rounded-xl p-4 sm:p-5 space-y-3.5 relative z-20">
+                  {error && <div className="text-sm text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-300 px-3 py-2 rounded-lg">{error}</div>}
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Your name</label>
+                    <input
+                      value={name}
+                      readOnly
+                      required
+                      className={`${field} opacity-90 cursor-not-allowed bg-zinc-100/80 dark:bg-white/5`}
+                      title="Filled from your account — cannot be changed"
+                    />
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Locked to your registered account name.</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Branch *</label>
+                    <select value={branch} onChange={(e) => setBranch(e.target.value)} required className={field}>
+                      <option value="">Select branch…</option>
+                      {branchOptions.map((b) => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Subject *</label>
+                    <select value={title} onChange={(e) => setTitle(e.target.value)} required className={field}>
+                      <option value="" disabled>
+                        Select a request type…
+                      </option>
+                      {SUBJECT_OPTIONS.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Choose the closest match — you can clarify in Details.</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Details</label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      placeholder="Describe what happened, steps to reproduce, and any error messages…"
+                      className={field}
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-violet-700 dark:text-violet-300 bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20 cursor-pointer transition-colors">
+                        <ImagePlus size={14} />
+                        {attachPreview ? 'Change photo' : 'Add photo'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = '';
+                            setAttachError('');
+                            if (!file) return;
+                            if (!file.type.startsWith('image/')) {
+                              setAttachError('Please choose an image file.');
+                              return;
+                            }
+                            if (file.size > MAX_ATTACHMENT_BYTES) {
+                              setAttachError('Image is too large (max 8 MB).');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setAttachPreview({
+                                name: file.name,
+                                size: file.size,
+                                mime: file.type,
+                                url: String(reader.result || ''),
+                              });
+                            };
+                            reader.onerror = () => setAttachError('Could not read that image.');
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Optional · max 8 MB</span>
                       {attachPreview && (
-                        <div className="mt-2 rounded-lg overflow-hidden border border-white/30 dark:border-white/10 max-w-xs bg-white/20 dark:bg-black/20">
-                          <img src={attachPreview.url} alt={attachPreview.name} className="max-h-36 w-full object-contain" />
-                          <div className="px-2 py-1 text-[10px] text-zinc-500 truncate">{attachPreview.name}</div>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setAttachPreview(null); setAttachError(''); }}
+                          className="inline-flex items-center gap-1 text-[11px] text-zinc-600 dark:text-zinc-300 hover:text-rose-600"
+                        >
+                          <X size={12} /> Remove
+                        </button>
                       )}
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Priority *</label>
-                      <select
-                        value={priority}
-                        onChange={(e) => setPriority(e.target.value as Priority | '')}
-                        required
-                        className={field}
-                      >
-                        <option value="" disabled>
-                          Select priority…
-                        </option>
-                        {([
-                          { value: 'low', label: 'Low' },
-                          { value: 'medium', label: 'Medium' },
-                          { value: 'high', label: 'High' },
-                          { value: 'critical', label: 'Critical' },
-                        ] as { value: Priority; label: string }[]).map((p) => (
-                          <option key={p.value} value={p.value}>{p.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <button type="submit" disabled={saving} className={btnPrimary}>
-                      {saving ? 'Submitting…' : 'Submit a Ticket'}
-                    </button>
-                  </form>
-
-                  <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-300 flex items-center justify-center">
-                        <ClipboardList size={16} />
+                    {attachError && <p className="text-[11px] text-rose-600 mt-1">{attachError}</p>}
+                    {attachPreview && (
+                      <div className="mt-2 rounded-lg overflow-hidden border border-zinc-200 dark:border-white/10 max-w-xs">
+                        <img src={attachPreview.url} alt={attachPreview.name} className="max-h-36 w-full object-contain bg-black/5" />
+                        <div className="px-2 py-1 text-[10px] text-zinc-500 truncate">{attachPreview.name}</div>
                       </div>
-                      <div>
-                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">How submitting works</h2>
-                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400">From form to resolution</p>
-                      </div>
-                    </div>
-                    <ol className="space-y-2.5">
-                      {[
-                        { n: '1', t: 'Fill the form', d: 'Name is locked to your account. Choose branch, subject, details, and priority.' },
-                        { n: '2', t: 'We create a ticket ID', d: 'You get a unique ID (for example NX-2841) right after submit.' },
-                        { n: '3', t: 'Support triages', d: 'Agents use subject + priority to route your request to the right queue.' },
-                        { n: '4', t: 'Track progress', d: 'Open My Tickets anytime to follow status with your ticket ID and account email.' },
-                      ].map((s) => (
-                        <li key={s.n} className="flex gap-3 items-start rounded-xl border border-white/25 dark:border-white/10 bg-white/20 dark:bg-black/15 px-3 py-2.5">
-                          <span className="shrink-0 w-6 h-6 rounded-full bg-brand-600/90 text-white text-[11px] font-bold flex items-center justify-center">{s.n}</span>
-                          <div className="min-w-0">
-                            <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{s.t}</div>
-                            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug mt-0.5">{s.d}</p>
-                          </div>
-                        </li>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">Priority</label>
+                    <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className={field}>
+                      {([
+                        { value: 'low', label: 'Low' },
+                        { value: 'medium', label: 'Medium' },
+                        { value: 'high', label: 'High' },
+                        { value: 'critical', label: 'Critical' },
+                      ] as { value: Priority; label: string }[]).map((p) => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
                       ))}
-                    </ol>
-                  </section>
-
-                  <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-300 flex items-center justify-center">
-                        <Lightbulb size={16} />
-                      </div>
-                      <div>
-                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Tips for a faster response</h2>
-                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400">Help agents help you</p>
-                      </div>
-                    </div>
-                    <ul className="space-y-2 text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                      <li className="flex gap-2"><span className="text-violet-500 shrink-0">•</span><span>Include error messages, screenshots, and the exact time the issue started.</span></li>
-                      <li className="flex gap-2"><span className="text-violet-500 shrink-0">•</span><span>One main problem per ticket — open a second ticket if you have a separate request.</span></li>
-                      <li className="flex gap-2"><span className="text-violet-500 shrink-0">•</span><span>Use <span className="font-medium">Critical</span> only for outages or active security risk.</span></li>
-                      <li className="flex gap-2"><span className="text-violet-500 shrink-0">•</span><span>Check Help Articles first for password resets and common how-tos.</span></li>
-                    </ul>
-                    <div className="mt-3 flex items-start gap-2 rounded-xl border border-white/25 dark:border-white/10 bg-white/20 dark:bg-black/15 px-3 py-2.5">
-                      <Clock3 size={14} className="shrink-0 mt-0.5 text-emerald-500" />
-                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug">
-                        Typical first response is within <span className="font-medium text-zinc-800 dark:text-zinc-200">one business day</span>. High and Critical tickets are reviewed sooner during support hours.
-                      </p>
-                    </div>
-                  </section>
+                    </select>
                   </div>
-
-                  <div className="lg:col-span-7 space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
-                        <div className="flex items-center gap-2 mb-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-300 flex items-center justify-center">
-                            <Ticket size={16} />
-                          </div>
-                          <div>
-                            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">What is a Ticket?</h2>
-                            <p className="text-[11px] text-zinc-600 dark:text-zinc-400">Why this form exists</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                          <p>
-                            A <span className="font-medium text-zinc-900 dark:text-zinc-100">ticket</span> is a tracked support request.
-                            Submitting one creates a clear record for our team with your branch and priority.
-                          </p>
-                          <p>
-                            After you send it, you get a ticket ID to follow under <span className="font-medium">My Tickets</span>.
-                          </p>
-                          <ul className="list-disc pl-4 space-y-1 text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400">
-                            <li>Match the closest <span className="font-medium text-zinc-800 dark:text-zinc-200">Subject</span>.</li>
-                            <li>Add clear <span className="font-medium text-zinc-800 dark:text-zinc-200">Details</span> (photo optional).</li>
-                            <li>Set <span className="font-medium text-zinc-800 dark:text-zinc-200">Priority</span> honestly for triage.</li>
-                          </ul>
-                        </div>
-                      </section>
-
-                      <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
-                        <div className="flex items-center gap-2 mb-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-300 flex items-center justify-center">
-                            <Flag size={16} />
-                          </div>
-                          <div>
-                            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Priority Guide</h2>
-                            <p className="text-[11px] text-zinc-600 dark:text-zinc-400">Match impact at your branch</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          {PRIORITY_GUIDE.map((p) => (
-                            <div
-                              key={p.level}
-                              className="flex gap-2.5 items-start rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-3 py-2"
-                            >
-                              <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${p.color}`} />
-                              <div className="min-w-0">
-                                <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{p.level}</div>
-                                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug mt-0.5">{p.tip}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    </div>
-
-                    <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 flex items-center justify-center">
-                          <ListTree size={16} />
-                        </div>
-                        <div>
-                          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Subject Guide</h2>
-                          <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                            Pick the subject that best describes the main problem, then clarify in Details.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid sm:grid-cols-2 gap-2">
-                        {SUBJECT_GUIDE.map((item) => (
-                          <div
-                            key={item.subject}
-                            className={`rounded-xl border px-3 py-2 transition-colors ${
-                              title === item.subject
-                                ? 'border-violet-400/50 bg-violet-500/15'
-                                : 'border-white/25 dark:border-white/10 bg-white/20 dark:bg-black/15'
-                            }`}
-                          >
-                            <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">{item.subject}</div>
-                            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug mt-0.5">{item.tip}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  </div>
+                  <button type="submit" disabled={saving} className={btnPrimary}>{saving ? 'Submitting…' : 'Submit a Ticket'}</button>
+                </form>
                 </div>
+                {/* Right column reserved for upcoming Submit Ticket panel content */}
+                <div className="flex-1 min-w-0 hidden lg:block" aria-hidden="true" />
               </div>
             )}
             {created && (
@@ -1016,19 +648,19 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   aria-label="Close"
                   onClick={() => setCreated(null)}
                 />
-                <div className="portal-success-modal relative w-full max-w-sm rounded-2xl px-6 py-7 text-center space-y-4">
-                  <div className="portal-success-modal-icon mx-auto w-14 h-14 rounded-full flex items-center justify-center">
-                    <CheckCircle2 size={36} strokeWidth={2} />
+                <div className="relative w-full max-w-sm rounded-2xl border border-white/20 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 shadow-2xl shadow-violet-950/30 px-6 py-7 text-center space-y-4">
+                  <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                    <CheckCircle2 className="text-emerald-500" size={36} strokeWidth={2} />
                   </div>
                   <div>
-                    <h2 id="ticket-received-title" className="portal-success-modal-title text-xl font-semibold tracking-tight">
+                    <h2 id="ticket-received-title" className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
                       Request received
                     </h2>
-                    <p className="portal-success-modal-body mt-2 text-sm leading-relaxed">
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
                       Your ticket ID is{' '}
-                      <span className="portal-success-modal-id font-mono font-semibold">{created.id}</span>.
+                      <span className="font-mono font-semibold text-violet-700 dark:text-violet-300">{created.id}</span>.
                     </p>
-                    <p className="portal-success-modal-hint mt-1.5 text-xs">
+                    <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                       We typically respond within one business day. You can track status anytime.
                     </p>
                   </div>
@@ -1038,11 +670,11 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                       onClick={() => {
                         setTrackId(created.id);
                         setCreated(null);
-                        setView('mytickets');
+                        setView('track');
                       }}
-                      className="portal-success-modal-primary px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
+                      className="px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition-colors"
                     >
-                      My Tickets
+                      Track Ticket
                     </button>
                     <button
                       type="button"
@@ -1050,7 +682,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                         setCreated(null);
                         setView('home');
                       }}
-                      className="portal-success-modal-secondary px-4 py-2.5 text-sm rounded-xl transition-colors"
+                      className="px-4 py-2.5 border border-zinc-200 dark:border-white/15 text-sm rounded-xl bg-white/80 dark:bg-white/5 text-zinc-800 dark:text-zinc-100 hover:bg-white dark:hover:bg-white/10 transition-colors"
                     >
                       Overview
                     </button>
@@ -1058,7 +690,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                   <button
                     type="button"
                     onClick={() => setCreated(null)}
-                    className="portal-success-modal-dismiss text-xs underline-offset-2 hover:underline"
+                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
                   >
                     Stay on Submit a Ticket
                   </button>
@@ -1110,466 +742,27 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
                 )}
               </div>
             )}
-            {view === 'mytickets' && (() => {
-              const PAGE_SIZE = 20;
-              const filtered = myTickets.filter((t) => {
-                if (myTicketsDateFrom) {
-                  const from = new Date(myTicketsDateFrom);
-                  from.setHours(0, 0, 0, 0);
-                  if (new Date(t.created_at).getTime() < from.getTime()) return false;
-                }
-                if (myTicketsDateTo) {
-                  const to = new Date(myTicketsDateTo);
-                  to.setHours(23, 59, 59, 999);
-                  if (new Date(t.created_at).getTime() > to.getTime()) return false;
-                }
-                return true;
-              });
-              const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-              const page = Math.min(myTicketsPage, totalPages);
-              const slice = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-              const statusGuide = [
-                { key: 'open', label: 'Open', color: 'bg-violet-500 text-white border border-violet-600/40', meaning: 'Your ticket was received and is waiting in the queue for an agent to pick it up.' },
-                { key: 'pending', label: 'Pending', color: 'bg-orange-500 text-white border border-orange-600/40', meaning: 'An agent or tech support is actively working on your ticket and following up.' },
-                { key: 'on-hold', label: 'On Hold', color: 'bg-yellow-400 text-yellow-950 border border-yellow-500/50', meaning: 'Work is paused — often waiting on more details from you or a third party.' },
-                { key: 'resolved', label: 'Resolved', color: 'bg-emerald-500 text-white border border-emerald-600/40', meaning: 'The issue was addressed. You can still reply if something is still wrong.' },
-                { key: 'closed', label: 'Closed', color: 'bg-red-500 text-white border border-red-600/40', meaning: 'The ticket is closed (for example past SLA or fully completed). Contact support if you need it reopened.' },
-              ]
-              return (
-              <div className="w-full space-y-5">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">My Tickets</h1>
-                  <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-300 max-w-2xl">
-                    View and follow every support request linked to your account. Filter by date to find older tickets quickly.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-                  <div className="xl:col-span-9 portal-mytickets-panel flex flex-col rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-visible">
-                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200/70 dark:border-white/10">
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                      {filtered.length} ticket{filtered.length !== 1 ? 's' : ''}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">From</label>
-                      <input
-                        type="date"
-                        value={myTicketsDateFrom}
-                        onChange={(e) => { setMyTicketsDateFrom(e.target.value); setMyTicketsPage(1); }}
-                        className="portal-mytickets-input text-xs rounded-lg px-2 py-1.5 border border-zinc-200 dark:border-white/15"
-                      />
-                      <label className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">To</label>
-                      <input
-                        type="date"
-                        value={myTicketsDateTo}
-                        onChange={(e) => { setMyTicketsDateTo(e.target.value); setMyTicketsPage(1); }}
-                        className="portal-mytickets-input text-xs rounded-lg px-2 py-1.5 border border-zinc-200 dark:border-white/15"
-                      />
-                      {(myTicketsDateFrom || myTicketsDateTo) && (
-                        <button
-                          type="button"
-                          onClick={() => { setMyTicketsDateFrom(''); setMyTicketsDateTo(''); setMyTicketsPage(1); }}
-                          className="text-[11px] font-medium text-violet-600 dark:text-violet-300 hover:underline"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {filtered.length === 0 ? (
-                    <div className="px-4 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                      {myTickets.length === 0
-                        ? `No tickets linked to ${user?.email || 'your account'} yet.`
-                        : 'No tickets in this date range.'}
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm min-w-[900px]">
-                        <thead>
-                          <tr className="text-left text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400 border-b border-zinc-200/70 dark:border-white/10">
-                            <th className="px-4 py-2.5 font-semibold">ID</th>
-                            <th className="px-4 py-2.5 font-semibold">Subject</th>
-                            <th className="px-4 py-2.5 font-semibold">Branch</th>
-                            <th className="px-4 py-2.5 font-semibold">Status</th>
-                            <th className="px-4 py-2.5 font-semibold">Priority</th>
-                            <th className="px-4 py-2.5 font-semibold">Submitted</th>
-                            <th className="px-4 py-2.5 font-semibold text-right">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {slice.map((t) => (
-                            <>
-                            <tr key={t.id} className="border-b border-zinc-100/80 dark:border-white/5 hover:bg-violet-500/5 transition-colors">
-                              <td className="px-4 py-3 font-mono text-xs text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
-                                <span className="inline-flex items-center gap-1.5">
-                                  <span>{t.id}</span>
-                                  <button
-                                    type="button"
-                                    title="Copy ticket ID"
-                                    aria-label={`Copy ${t.id}`}
-                                    className="inline-flex p-1 rounded-md text-zinc-400 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      try {
-                                        await navigator.clipboard.writeText(t.id);
-                                        setCopiedTicketId(t.id);
-                                        window.setTimeout(() => setCopiedTicketId((cur) => (cur === t.id ? null : cur)), 1500);
-                                      } catch {
-                                        /* ignore */
-                                      }
-                                    }}
-                                  >
-                                    {copiedTicketId === t.id ? (
-                                      <Check size={13} className="text-emerald-500" />
-                                    ) : (
-                                      <Copy size={13} />
-                                    )}
-                                  </button>
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50 max-w-[240px]">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className="truncate" title={t.title}>{t.title}</div>
-                                  {(t.tags || []).includes('customer_unread') && (
-                                    <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-sky-500 text-white">New</span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{t.branch || '\u2014'}</td>
-                              <td className="px-4 py-3">
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusColor[t.status] || ''}`}>{t.status}</span>
-                              </td>
-                              <td className="px-4 py-3 capitalize text-zinc-700 dark:text-zinc-200">{t.priority}</td>
-                              <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                                {new Date(t.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                              </td>
-                              <td className="px-4 py-3 text-right relative" data-myticket-menu>
-                                <button
-                                  type="button"
-                                  className="relative inline-flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-500/10"
-                                  aria-label="Ticket actions"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (myTicketMenuId === t.id) {
-                                      setMyTicketMenu(null);
-                                      return;
-                                    }
-                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                    const menuH = 84;
-                                    const menuW = 160;
-                                    const gap = 4;
-                                    const spaceBelow = window.innerHeight - rect.bottom;
-                                    const openUp = spaceBelow < menuH + 12;
-                                    const top = openUp
-                                      ? Math.max(8, rect.top - menuH - gap)
-                                      : rect.bottom + gap;
-                                    let left = rect.right - menuW;
-                                    if (left < 8) left = 8;
-                                    if (left + menuW > window.innerWidth - 8) {
-                                      left = window.innerWidth - menuW - 8;
-                                    }
-                                    setMyTicketMenu({ id: t.id, top, left, openUp });
-                                  }}
-                                >
-                                  <MoreVertical size={16} />
-                                  {(t.tags || []).includes('customer_unread') && (
-                                    <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-sky-500 text-white text-[9px] font-bold leading-[14px] text-center">1</span>
-                                  )}
-                                </button>
-                                {myTicketMenuId === t.id && myTicketMenu && createPortal(
-                                  <div
-                                    data-myticket-menu
-                                    className="portal-mytickets-action-menu fixed z-[9998] w-40 rounded-xl border border-zinc-200/90 dark:border-white/15 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-xl py-1 text-left"
-                                    style={{
-                                      top: myTicketMenu.top,
-                                      left: myTicketMenu.left,
-                                    }}
-                                  >
-                                    <button
-                                      type="button"
-                                      className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
-                                      onClick={() => {
-                                        setMyTicketMenu(null);
-                                        const open = expandedTicketId !== t.id;
-                                        setExpandedTicketId(open ? t.id : null);
-                                        if (open && (t.tags || []).includes('customer_unread')) {
-                                          void updateTicket(t.id, {
-                                            tags: (t.tags || []).filter((x) => x !== 'customer_unread'),
-                                          });
-                                        }
-                                      }}
-                                    >
-                                      {expandedTicketId === t.id ? 'Collapse' : 'View'}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="w-full px-3 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
-                                      onClick={() => {
-                                        setMyTicketMenu(null);
-                                        setFollowUpTicket(t);
-                                        setFollowUpText('');
-                                      }}
-                                    >
-                                      Send Follow-Up
-                                    </button>
-                                  </div>,
-                                  document.body,
-                                )}
-                              </td>
-                            </tr>
-                            {expandedTicketId === t.id && (
-                              <tr key={t.id + '-detail'} className="border-b border-zinc-100/80 dark:border-white/5 bg-transparent dark:bg-black/20">
-                                <td colSpan={7} className="px-4 py-4">
-                                  <div className={`rounded-xl border p-4 sm:p-5 space-y-4 text-left shadow-sm backdrop-blur-md portal-ticket-expand ${
-                                    t.status === 'closed'
-                                      ? 'portal-ticket-expand--closed border-red-500/40 bg-red-50/80 dark:bg-[#1a0a0c]/90 dark:border-red-400/45'
-                                      : t.status === 'resolved'
-                                        ? 'portal-ticket-expand--resolved border-emerald-500/40 bg-emerald-50/80 dark:bg-[#0c1f17]/90 dark:border-emerald-400/45'
-                                        : t.status === 'pending'
-                                          ? 'portal-ticket-expand--pending border-orange-500/40 bg-orange-50/80 dark:bg-[#1a1208]/90 dark:border-orange-400/45'
-                                          : t.status === 'on-hold'
-                                            ? 'portal-ticket-expand--hold border-yellow-500/40 bg-yellow-50/80 dark:bg-[#1a1808]/90 dark:border-yellow-400/45'
-                                            : 'portal-ticket-expand--open border-violet-500/40 bg-violet-50/80 dark:bg-[#12081c]/90 dark:border-violet-400/45'
-                                  }`}>
-                                    <div className="flex flex-wrap items-start justify-between gap-2">
-                                      <div>
-                                        <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{t.title}</div>
-                                        <div className="text-xs text-zinc-500 mt-0.5 font-mono">{t.id} · {t.branch || 'No branch'}</div>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        className="text-xs font-medium px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-white/15 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5"
-                                        onClick={() => setExpandedTicketId(null)}
-                                      >
-                                        Collapse
-                                      </button>
-                                    </div>
-                                    {t.description && (
-                                      <div>
-                                        <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">Description</div>
-                                        <p className="text-sm text-zinc-700 dark:text-zinc-200 whitespace-pre-wrap">{t.description}</p>
-                                      </div>
-                                    )}
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                                      <div><span className="text-zinc-500">Submitted</span><div className="font-medium text-zinc-800 dark:text-zinc-100">{new Date(t.created_at).toLocaleString()}</div></div>
-                                      <div><span className="text-zinc-500">Channel</span><div className="font-medium text-zinc-800 dark:text-zinc-100 capitalize">{t.channel || '—'}</div></div>
-                                      <div><span className="text-zinc-500">Status</span><div className="font-medium capitalize text-zinc-800 dark:text-zinc-100">{t.status}</div></div>
-                                      <div><span className="text-zinc-500">Priority</span><div className="font-medium capitalize text-zinc-800 dark:text-zinc-100">{t.priority}</div></div>
-                                    </div>
-
-                                    {(() => {
-
-                                      const planTag = (t.tags || []).find((x) => x.startsWith('plan:') && !x.startsWith('plan_note:'));
-
-                                      const planNote = (t.tags || []).find((x) => x.startsWith('plan_note:'));
-
-                                      const plan = planTag ? planTag.slice(5) : '';
-
-                                      const note = planNote ? planNote.slice(10) : '';
-
-                                      if (!plan) return null;
-
-                                      return (
-
-                                        <div className="rounded-lg border border-violet-300/40 dark:border-violet-400/25 bg-violet-500/10 dark:bg-violet-950/50 px-3.5 py-3">
-
-                                          <div className="text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300 mb-1">Resolution Plan</div>
-
-                                          <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{plan}</div>
-
-                                          {note && <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 whitespace-pre-wrap">{note}</p>}
-
-                                        </div>
-
-                                      );
-
-                                    })()}
-
-
-                                    {(t.attachments || []).length > 0 && (
-
-                                      <div className="rounded-lg border border-zinc-200/60 dark:border-white/10 px-3.5 py-3 space-y-2">
-
-                                        <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Attachments</div>
-
-                                        <ul className="space-y-1.5">
-
-                                          {(t.attachments || []).map((a) => (
-
-                                            <li key={a.id}>
-
-                                              <a href={a.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-sky-600 dark:text-sky-400 hover:underline break-all">{a.name}</a>
-
-                                              <span className="text-[10px] text-zinc-500 ml-2">{a.size ? `${Math.round(a.size / 1024)} KB` : ''}</span>
-
-                                            </li>
-
-                                          ))}
-
-                                        </ul>
-
-                                      </div>
-
-                                    )}
-
-
-                                    <div className="pt-1 space-y-2.5">
-
-                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Agent Response</div>
-                                      {(t.messages || []).filter((m) => m.kind === 'public').length === 0 && (
-                                        <p className="text-xs text-zinc-500">No agent response yet. Support will reply here when they message you.</p>
-                                      )}
-                                      {(t.messages || [])
-                                        .filter((m) => m.kind === 'public')
-                                        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                                        .map((m) => (
-                                          <div key={m.id} className="rounded-xl px-3.5 py-3 text-sm bg-white dark:bg-zinc-900/95 border border-zinc-200 dark:border-white/20 shadow-sm">
-                                            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1.5">
-                                              <div className="text-sm font-bold text-zinc-900 dark:text-white">{m.author}</div>
-                                              <div className="text-[10px] text-zinc-500 dark:text-zinc-400 tabular-nums">{new Date(m.created_at).toLocaleString()}</div>
-                                            </div>
-                                            <div className="text-sm text-zinc-800 dark:text-zinc-100 whitespace-pre-wrap leading-relaxed">{m.text}</div>
-                                          </div>
-                                        ))}
-                                    </div>
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                            </>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {filtered.length > 0 && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-zinc-200/70 dark:border-white/10">
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Page {page} of {totalPages}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={page <= 1}
-                          onClick={() => setMyTicketsPage((p) => Math.max(1, p - 1))}
-                          className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-white/15 text-zinc-700 dark:text-zinc-200 disabled:opacity-40 hover:bg-zinc-50 dark:hover:bg-white/5"
-                        >
-                          Previous
-                        </button>
-                        <button
-                          type="button"
-                          disabled={page >= totalPages}
-                          onClick={() => setMyTicketsPage((p) => Math.min(totalPages, p + 1))}
-                          className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-white/15 text-zinc-700 dark:text-zinc-200 disabled:opacity-40 hover:bg-zinc-50 dark:hover:bg-white/5"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  </div>
-
-                  <aside className="xl:col-span-3 portal-mytickets-guide rounded-2xl border border-zinc-200/80 dark:border-white/10 p-4 sm:p-5 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 dark:bg-emerald-400/15 flex items-center justify-center shrink-0">
-                        <Info size={18} className="text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Status Guidelines</h2>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                          What each status means for your ticket.
-                        </p>
-                      </div>
-                    </div>
-                    <ul className="space-y-3.5">
-                      {statusGuide.map((s) => (
-                        <li key={s.key} className="grid grid-cols-[6.5rem_1fr] gap-x-3 items-start">
-                          <span className={`inline-flex justify-center items-center text-[10px] font-semibold px-2 py-1 rounded-full capitalize leading-none ${s.color}`}>{s.label}</span>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-0.5">{s.meaning}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </aside>
-                </div>
-
-                {followUpTicket && (
-                  <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={() => !followUpBusy && setFollowUpTicket(null)}>
-                    <div className="w-full max-w-md rounded-2xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Send size={16} className="text-emerald-600 dark:text-emerald-400" />
-                        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Send Follow-Up</h3>
-                      </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">{followUpTicket.id} · {followUpTicket.title}</p>
-                      <textarea
-                        value={followUpText}
-                        onChange={(e) => setFollowUpText(e.target.value)}
-                        rows={4}
-                        placeholder="Add an update or extra details for support\u2026"
-                        className="w-full text-sm rounded-xl border border-zinc-200 dark:border-white/15 bg-zinc-50 dark:bg-zinc-950/50 px-3 py-2 text-zinc-900 dark:text-zinc-100 mb-3"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button type="button" disabled={followUpBusy} onClick={() => setFollowUpTicket(null)} className="px-3 py-2 text-xs font-medium rounded-lg border border-zinc-200 dark:border-white/15">Cancel</button>
-                        <button
-                          type="button"
-                          disabled={followUpBusy || !followUpText.trim()}
-                          onClick={() => {
-                            void (async () => {
-                              if (!followUpTicket || !followUpText.trim()) return;
-                              setFollowUpBusy(true);
-                              try {
-                                const prev = followUpTicket.messages || [];
-                                const customerLabel = displayName || user?.email || 'Customer';
-                                const note = followUpText.trim();
-                                const msg = {
-                                  id: `msg-${Date.now()}`,
-                                  text: note,
-                                  kind: 'public' as const,
-                                  author: customerLabel,
-                                  created_at: new Date().toISOString(),
-                                };
-                                await updateTicket(followUpTicket.id, {
-                                  messages: [...prev, msg],
-                                  tags: Array.from(
-                                    new Set([...(followUpTicket.tags || []), 'follow_up', 'unread']),
-                                  ),
-                                });
-                                const subject = followUpTicket.title || 'Support request';
-                                const desc = (followUpTicket.description || '').trim().slice(0, 280);
-                                const bodyLines = [
-                                  `${customerLabel} wants a follow-up update on this ticket.`,
-                                  `Ticket: ${followUpTicket.id}`,
-                                  `Subject: ${subject}`,
-                                  desc ? `Details: ${desc}` : null,
-                                  note ? `Customer note: ${note}` : null,
-                                ].filter(Boolean);
-                                await notifyAgents({
-                                  title: 'Follow-up requested',
-                                  body: bodyLines.join('\n'),
-                                  link: 'tickets',
-                                });
-                                setFollowUpText('');
-                                setFollowUpTicket(null);
-                              } catch (err) {
-                                console.error(err);
-                              } finally {
-                                setFollowUpBusy(false);
-                              }
-                            })();
-                          }}
-                          className="px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40"
-                        >
-                          {followUpBusy ? 'Sending\u2026' : 'Send'}
-                        </button>
-                      </div>
-                    </div>
+            {view === 'mytickets' && (
+              <div className="max-w-2xl">
+                <h1 className="text-xl font-semibold text-zinc-900 mb-3">My Tickets</h1>
+                {myTickets.length === 0 ? (
+                  <div className="rounded-xl border border-zinc-200 bg-white/80 px-4 py-3 text-sm text-zinc-500">No tickets linked to {user?.email} yet.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {myTickets.map((t) => (
+                      <button key={t.id} type="button" onClick={() => { setTrackId(t.id); setTracked(t); setView('track'); }} className="w-full text-left rounded-xl border border-zinc-200 bg-white/80 px-4 py-3 hover:border-violet-300 transition-colors">
+                        <div className="flex justify-between gap-2">
+                          <span className="font-mono text-xs text-zinc-400">{t.id}</span>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${statusColor[t.status] || ''}`}>{t.status}</span>
+                        </div>
+                        <div className="font-medium text-zinc-900 mt-1">{t.title}</div>
+                        <div className="text-xs text-zinc-500 mt-0.5">{t.branch || 'No branch'} · {new Date(t.created_at).toLocaleString()}</div>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
-              );
-            })()}
-
+            )}
             {view === 'help' && (
               <div className="max-w-2xl">
                 <h1 className="text-xl font-semibold text-zinc-900 mb-3">Help Articles</h1>
@@ -1604,9 +797,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
             )}
             </div>
 
-            <footer className={`portal-footer relative z-10 shrink-0 px-2 py-3.5 rounded-xl ${
-              view === 'community' ? 'mt-3 mb-1' : 'mt-auto mb-2 pt-6'
-            }`}>
+            <footer className="portal-footer relative z-10 mt-auto shrink-0 mb-1 px-2 py-3.5 rounded-xl">
             <div className="text-center">
               <div className="text-[11px] sm:text-xs font-medium tracking-wide portal-footer-brand">
                 NexusOps Customer Portal · © 2026 Lizer &amp; Kirzhian

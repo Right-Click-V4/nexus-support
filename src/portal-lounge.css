@@ -1490,3 +1490,55 @@ html.nexus-dark .portal-notif-panel {
   border-color: rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
+
+
+.portal-sidebar{background:rgba(245,243,255,.72)!important;backdrop-filter:blur(18px);border-right:1px solid rgba(196,181,253,.35);color:#1e1b4b}
+html.nexus-dark .portal-sidebar{background:rgba(12,8,28,.78)!important;border-right-color:rgba(63,63,70,.45);color:#f4f4f5}
+.app-cosmos>aside.portal-sidebar{background:rgba(245,243,255,.72)!important}
+html.nexus-dark .app-cosmos>aside.portal-sidebar{background:rgba(12,8,28,.78)!important}
+.portal-sidebar-header{border-bottom:1px solid rgba(196,181,253,.3)}
+html.nexus-dark .portal-sidebar-header{border-bottom-color:rgba(63,63,70,.5)}
+.portal-sidebar-title{color:#1e1b4b}
+html.nexus-dark .portal-sidebar-title{color:#fafafa}
+.portal-sidebar-sub{color:#7c3aed}
+html.nexus-dark .portal-sidebar-sub{color:#a1a1aa}
+.portal-sidebar-label{color:#8b5cf6}
+html.nexus-dark .portal-sidebar-label{color:#71717a}
+.portal-sidebar-footer{border-top:1px solid rgba(196,181,253,.3)}
+html.nexus-dark .portal-sidebar-footer{border-top-color:rgba(63,63,70,.5)}
+.portal-nav-item{color:#4c1d95}
+.portal-nav-item:hover{background:rgba(139,92,246,.12)}
+html.nexus-dark .portal-nav-item{color:#a1a1aa}
+html.nexus-dark .portal-nav-item:hover{background:rgba(255,255,255,.06);color:#e4e4e7}
+.portal-nav-active{background:rgba(124,58,237,.18)!important;color:#2e1065!important}
+html.nexus-dark .portal-nav-active{background:rgba(124,58,237,.28)!important;color:#fff!important}
+.portal-shooting-star{position:absolute;left:0;width:110px;height:22px;opacity:0;animation:portal-comet-fly 30s linear infinite;background:none!important;box-shadow:none!important}
+.portal-shooting-1{top:16%;animation-delay:2s}
+.portal-shooting-2{top:40%;animation-delay:12s}
+.portal-shooting-3{top:65%;animation-delay:22s}
+.portal-comet-trail{position:absolute;right:14px;top:50%;height:3px;width:90px;border-radius:999px;transform:translateY(-50%);background:linear-gradient(90deg,transparent,rgba(34,211,238,.2) 40%,#fff);box-shadow:0 0 8px 2px rgba(34,211,238,.5)}
+.portal-comet-trail-a{width:90px;height:4px}
+.portal-comet-trail-b{width:68px;height:2.5px;opacity:.75}
+.portal-comet-trail-c{width:48px;height:2px;opacity:.55}
+.portal-comet-head{position:absolute;right:0;top:50%;width:10px;height:10px;transform:translateY(-50%);border-radius:50%;background:radial-gradient(circle,#fff,#a5f3fc 45%,#22d3ee 75%,transparent);box-shadow:0 0 12px 3px rgba(34,211,238,.9)}
+.portal-comet-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:#a5f3fc}
+.portal-comet-p1{right:28px;top:30%}
+.portal-comet-p2{right:44px;top:60%}
+.portal-comet-p3{right:58px;top:25%}
+@keyframes portal-comet-fly{0%,88%{opacity:0;transform:translate3d(-120px,0,0) rotate(-8deg)}90%{opacity:1}97%{opacity:.9;transform:translate3d(110vw,50px,0) rotate(-8deg)}100%{opacity:0}}
+
+
+/* mytickets-wider-v1 — sticky Action column */
+.portal-mytickets-action-col {
+  background: rgba(30, 20, 55, 0.95);
+  box-shadow: -6px 0 12px rgba(0, 0, 0, 0.15);
+}
+html.nexus-light .portal-mytickets-action-col,
+html:not(.nexus-dark):not(.dark) .portal-mytickets-action-col {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: -6px 0 12px rgba(15, 23, 42, 0.06);
+}
+html.nexus-dark .portal-mytickets-action-col,
+.dark .portal-mytickets-action-col {
+  background: rgba(24, 20, 42, 0.98);
+}

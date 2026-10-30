@@ -374,6 +374,9 @@ export function AgentShell() {
     if (!window.location.hash.toLowerCase().includes('portal')) {
       window.location.hash = 'portal';
     }
+    if (hasJustLoggedIn()) {
+      return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;
+    }
     return <BootLoader label="Opening customer portal…" />;
   }
 
