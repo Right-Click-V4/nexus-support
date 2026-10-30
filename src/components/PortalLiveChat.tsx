@@ -1,3 +1,4 @@
+/* status-colors-active-v1 */
 /* presence-active-filter-v1 */
 /* presence-filter-v1 */
 /* livechat-active-agents-v1 */
@@ -389,7 +390,7 @@ export default function PortalLiveChat({ onBack }: Props) {
                               const st = (a.status || '').toLowerCase();
                               if (st === 'busy' || st === 'in_call') return 'bg-amber-400';
                               if (st === 'away') return 'bg-yellow-300';
-                              if (st === 'custom') return 'bg-sky-400';
+                              if (st === 'custom') return 'bg-white';
                               return 'bg-emerald-400';
                             })()
                           }`}

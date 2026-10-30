@@ -1,3 +1,4 @@
+/* dark-default-v2 */
 const DARK_KEY = 'nexus-dark-v1';
 const COMPACT_KEY = 'nexus-compact-v1';
 
@@ -9,6 +10,7 @@ export function getDarkMode(): boolean {
     const v = localStorage.getItem(DARK_KEY);
     if (v === '0') return false;
     if (v === '1') return true;
+    localStorage.setItem(DARK_KEY, '1');
   } catch {}
   return true;
 }

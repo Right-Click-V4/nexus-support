@@ -13,6 +13,7 @@ export interface Agent {
   /** Optional note when status is custom. */
   status_message?: string | null;
   last_seen_at?: string | null;
+  status_emoji?: string | null;
   color: string;
   email?: string;
   user_id?: string | null;

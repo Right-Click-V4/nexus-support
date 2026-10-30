@@ -1,3 +1,4 @@
+/* status-emoji-profile-v1 */
 /* agent-presence-profile-v1 */
 import { useState, useEffect, useRef } from 'react';
 import { Camera, Trash2, ZoomIn, ZoomOut, Check } from 'lucide-react';
@@ -43,6 +44,8 @@ export default function ProfilePage() {
   const [timezone, setTimezone] = useState('UTC');
   const [status, setStatus] = useState<AgentStatus>('online');
   const [statusMessage, setStatusMessage] = useState('');
+  const [statusEmoji, setStatusEmoji] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
@@ -71,6 +74,7 @@ export default function ProfilePage() {
           : currentAgent.status,
       );
       setStatusMessage(currentAgent.status_message || '');
+      setStatusEmoji(currentAgent.status_emoji || '');
       setAvatarUrl(currentAgent.avatar_url || null);
       if (!currentAgent.avatar_url) {
         try {
@@ -220,7 +224,7 @@ export default function ProfilePage() {
         }
         await refresh();
       } else if (currentAgent) {
-        await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null);
+        await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null, statusEmoji || null);
       }
       if (currentAgent) {
         try {
@@ -228,7 +232,7 @@ export default function ProfilePage() {
           else localStorage.removeItem(`nexus-avatar-${currentAgent.id}`);
         } catch {}
       }
-      if (status !== currentAgent?.status) await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null);
+      if (status !== currentAgent?.status) await updateAgentStatus(status === 'offline' ? 'online' : status, status === 'custom' ? statusMessage.trim() || null : null, statusEmoji || null);
       setMsg('Profile saved. Open Team to see your photo.');
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Could not save profile');
@@ -370,30 +374,79 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-2">Status</label>
-              <select
-                value={status === 'offline' || status === 'online' ? 'online' : status}
-                onChange={(e) => {
-                  const v = e.target.value as AgentStatus;
-                  setStatus(v === 'online' ? 'online' : v);
-                }}
-                className="w-full px-4 py-2.5 text-sm border border-zinc-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
-              >
-                <option value="online">Available (default)</option>
-                <option value="away">Away</option>
-                <option value="busy">Busy</option>
-                <option value="in_call">In a Call / Meeting</option>
-                <option value="custom">Custom Status</option>
-              </select>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-2">Status</label>
+              <div className="flex gap-2 items-start">
+                <select
+                  value={status === 'offline' || status === 'online' ? 'online' : status}
+                  onChange={(e) => {
+                    const v = e.target.value as AgentStatus;
+                    const next = v === 'online' ? 'online' : v;
+                    setStatus(next);
+                    const msg = next === 'custom' ? statusMessage.trim() || null : null;
+                    void updateAgentStatus(next === 'offline' ? 'online' : next, msg, statusEmoji || null);
+                  }}
+                  className="flex-1 px-4 py-2.5 text-sm border border-zinc-200 dark:border-white/15 rounded-xl bg-white dark:bg-zinc-900/60 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
+                >
+                  <option value="online">Available (default)</option>
+                  <option value="away">Away</option>
+                  <option value="busy">Busy</option>
+                  <option value="in_call">In a Call / Meeting</option>
+                  <option value="custom">Custom Status</option>
+                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    title="Add emoji"
+                    onClick={() => setEmojiOpen((o) => !o)}
+                    className="h-[42px] min-w-[42px] px-2 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900/60 text-lg hover:bg-zinc-50 dark:hover:bg-white/5"
+                  >
+                    {statusEmoji || '😊'}
+                  </button>
+                  {emojiOpen && (
+                    <div className="absolute right-0 z-30 mt-1 p-2 w-56 rounded-xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xl grid grid-cols-6 gap-1">
+                      {['😊','🙂','😎','🫡','💼','📞','🎧','☕','🍔','🚗','🏠','💤','🔥','⚡','✅','❌','🟢','🟡','🟠','🔵','⚪','🛠️','💬','🚀'].map((em) => (
+                        <button
+                          key={em}
+                          type="button"
+                          className="h-8 w-8 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 text-base"
+                          onClick={() => {
+                            setStatusEmoji(em);
+                            setEmojiOpen(false);
+                            const msg = status === 'custom' ? statusMessage.trim() || null : null;
+                            void updateAgentStatus(status === 'offline' ? 'online' : status, msg, em);
+                          }}
+                        >
+                          {em}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        className="col-span-6 text-[11px] text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 py-1"
+                        onClick={() => {
+                          setStatusEmoji('');
+                          setEmojiOpen(false);
+                          const msg = status === 'custom' ? statusMessage.trim() || null : null;
+                          void updateAgentStatus(status === 'offline' ? 'online' : status, msg, null);
+                        }}
+                      >
+                        Clear emoji
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
               <p className="text-[11px] text-zinc-500 mt-1">
-                Online/Offline is automatic from your session. This sets how you appear while logged in.
+                Online/Offline is automatic from your session. Status updates Live Chat Active Now in real time.
               </p>
               {status === 'custom' && (
                 <input
                   value={statusMessage}
                   onChange={(e) => setStatusMessage(e.target.value)}
-                  placeholder="e.g. Back in 10 minutes"
-                  className="mt-2 w-full px-4 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
+                  onBlur={() => {
+                    void updateAgentStatus('custom', statusMessage.trim() || null, statusEmoji || null);
+                  }}
+                  placeholder="Write your custom status…"
+                  className="mt-2 w-full px-4 py-2.5 text-sm border border-zinc-200 dark:border-white/15 rounded-xl bg-white dark:bg-zinc-900/60 text-white dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
                 />
               )}
             </div>

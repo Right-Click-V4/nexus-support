@@ -1,3 +1,4 @@
+/* status-emoji-ctx-v1 */
 /* agent-presence-ctx-v1 */
 /* no-agent-toast-on-save-v1 */
 /* update-silent-notify-v1 */
@@ -71,7 +72,7 @@ interface TicketContextValue {
   softDeleteTicket: (id: string) => Promise<void>;
   addNote: (ticketId: string, text: string, author?: string) => Promise<void>;
   addMessage: (ticketId: string, text: string, kind?: 'public' | 'internal') => Promise<void>;
-  updateAgentStatus: (status: AgentStatus, statusMessage?: string | null) => Promise<void>;
+  updateAgentStatus: (status: AgentStatus, statusMessage?: string | null, statusEmoji?: string | null) => Promise<void>;
   touchPresence: () => Promise<void>;
   findTicket: (id: string, email?: string) => Ticket | undefined;
   ticketsForEmail: (email: string) => Ticket[];
@@ -541,12 +542,18 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateAgentStatus = async (status: AgentStatus, statusMessage?: string | null) => {
+  const updateAgentStatus = async (
+    status: AgentStatus,
+    statusMessage?: string | null,
+    statusEmoji?: string | null,
+  ) => {
     if (!currentAgent) return;
     const msg = statusMessage === undefined ? currentAgent.status_message ?? null : statusMessage;
+    const emoji = statusEmoji === undefined ? currentAgent.status_emoji ?? null : statusEmoji;
     const seen = status === 'offline' ? null : new Date().toISOString();
     const patch: Record<string, unknown> = { status, last_seen_at: seen };
     if (statusMessage !== undefined) patch.status_message = statusMessage;
+    if (statusEmoji !== undefined) patch.status_emoji = statusEmoji;
     if (supabase) {
       let { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
       if (error) {
@@ -556,14 +563,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         error = retry.error;
       }
       if (error) throw error;
-      const next = { ...currentAgent, status, status_message: msg, last_seen_at: seen };
+      const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
       setCurrentAgent(next);
       setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
       try {
         localStorage.setItem('nexus-presence-agent-id', currentAgent.id);
       } catch { /* ignore */ }
     } else {
-      const next = { ...currentAgent, status, status_message: msg, last_seen_at: seen };
+      const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
       setCurrentAgent(next);
       setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
     }
