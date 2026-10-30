@@ -1,3 +1,4 @@
+/* tab-session-closed-flag-v1 */
 /* tab-session-idle-v2 */
 /**
  * Auth session lifetime:
