@@ -25,26 +25,28 @@ jobs:
       - name: Apply critical fixes
         run: |
           set -e
-          if ! grep -q notifRef src/SystemApp.tsx 2>/dev/null; then
-            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/1b72983c13f2e5104682cc41c7fca903a53c452d/src/SystemApp.tsx" -o src/SystemApp.tsx || true
-          fi
-          for s in patch_boot_timeout.py patch_portal_postlogin_emoji.py patch_session_refresh_keep.py patch_session_idle_30s.py patch_presence_accurate.py patch_login_customer_first.py patch_status_theme_emoji.py; do
-            python3 scripts/$s || true
-          done
+          python3 scripts/patch_fix_force_offline_scope.py || true
+          python3 scripts/patch_boot_timeout.py || true
+          python3 scripts/patch_portal_postlogin_emoji.py || true
+          python3 scripts/patch_session_refresh_keep.py || true
+          python3 scripts/patch_session_idle_30s.py || true
+          python3 scripts/patch_presence_accurate.py || true
+          python3 scripts/patch_login_customer_first.py || true
+          python3 scripts/patch_status_theme_emoji.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: portal post-login + custom emoji" || true
+          git commit -m "fix: forceAgentOffline scope + portal post-login" || true
           git push || true
 
-      - name: Apply remaining portal patches
+      - name: Apply remaining patches
         run: |
           set -e
           for s in scripts/patch_*.py; do python3 "$s" || true; done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "chore: apply patches" || true
+          git commit -m "chore: apply remaining patches" || true
           git push || true
 
       - name: Setup Node
@@ -60,13 +62,13 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
+          python3 scripts/patch_fix_force_offline_scope.py || true
           python3 scripts/patch_boot_timeout.py || true
           python3 scripts/patch_portal_postlogin_emoji.py || true
-          python3 scripts/patch_status_theme_emoji.py || true
           npm run build
           touch dist/.nojekyll
 
-      - name: Deploy dist to gh-pages (keep existing preview/)
+      - name: Deploy dist to gh-pages
         env:
           TOKEN: ${{ secrets.PAGES_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
