@@ -247,7 +247,8 @@ export default function ProfilePage() {
         /* optional */
       }
       if (password.trim()) {
-        if (password.trim().length < 6) throw new Error('Password must be at least 6 characters');\n        if (!supabase) throw new Error('Cloud auth required to change password');
+        if (password.trim().length < 6) throw new Error('Password must be at least 6 characters');
+        if (!supabase) throw new Error('Cloud auth required to change password');
         const { error: pwErr } = await supabase.auth.updateUser({ password: password.trim() });
         if (pwErr) throw pwErr;
         setPassword('');
