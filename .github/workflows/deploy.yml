@@ -35,13 +35,13 @@ jobs:
           python3 scripts/patch_presence_accurate.py || true
           python3 scripts/patch_login_customer_first.py || true
           python3 scripts/patch_status_theme_emoji.py || true
-          # Re-restore platform if a later patch wiped it
+          python3 scripts/patch_status_active_labels.py || true
           python3 scripts/patch_restore_platform_ctx.py
           python3 scripts/patch_fix_cp_jsx_topbar.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: restore PlatformContext + CP JSX" || true
+          git commit -m "feat: Active Now status labels + custom emoji only" || true
           git push || true
 
       - name: Setup Node
@@ -60,6 +60,7 @@ jobs:
           python3 scripts/patch_restore_platform_ctx.py
           python3 scripts/patch_fix_cp_jsx_topbar.py || true
           python3 scripts/patch_fix_force_offline_scope.py || true
+          python3 scripts/patch_status_active_labels.py || true
           npm run build
           touch dist/.nojekyll
 
