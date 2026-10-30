@@ -16,6 +16,7 @@
 /* mytickets-table-v1 */
 /* followup-agent-notify-v1 */
 /* fix-expand-fragment-v1 */
+/* fix-cp-jsx-topbar-v1 */
 /* expand-darker-glass-v1 */
 /* details-tickets-theme-v1 */
 /* customer-new-expand-v1 */
