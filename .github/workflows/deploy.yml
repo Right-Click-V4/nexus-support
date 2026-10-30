@@ -29,26 +29,20 @@ jobs:
           python3 scripts/patch_restore_customer_portal.py
           python3 scripts/patch_restore_platform_ctx.py
           python3 scripts/patch_fix_cp_jsx_topbar.py || true
-          python3 scripts/patch_fix_force_offline_scope.py || true
-          python3 scripts/patch_boot_timeout.py || true
-          python3 scripts/patch_tickets_presence_fix.py || true
           python3 scripts/patch_ticket_ops_timeout.py || true
-          python3 scripts/patch_status_active_labels.py || true
-          python3 scripts/patch_toast_active_now.py || true
-          python3 scripts/patch_customer_notif_sync.py || true
           python3 scripts/patch_postlogin_force_exit.py || true
           python3 scripts/patch_profile_rework.py || true
           python3 scripts/patch_profile_fetch_resilient.py || true
           python3 scripts/patch_status_fab.py || true
           python3 scripts/patch_livechat_fix_v2.py || true
+          python3 scripts/patch_livechat_ui_404.py || true
           python3 scripts/patch_fix_profile_escape.py || true
-          python3 scripts/patch_ticket_ops_timeout.py || true
-          python3 scripts/patch_status_fab.py || true
           python3 scripts/patch_livechat_fix_v2.py || true
+          python3 scripts/patch_livechat_ui_404.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: livechat startsWith + profile success" || true
+          git commit -m "fix: livechat UI + 404 routes" || true
           git push || true
 
       - name: Setup Node
@@ -74,7 +68,7 @@ jobs:
           python3 scripts/patch_profile_fetch_resilient.py || true
           python3 scripts/patch_status_fab.py || true
           python3 scripts/patch_livechat_fix_v2.py || true
-          python3 scripts/patch_fix_profile_escape.py || true
+          python3 scripts/patch_livechat_ui_404.py || true
           npm run build
           touch dist/.nojekyll
 
