@@ -25,6 +25,7 @@ jobs:
       - name: Restore + critical patches
         run: |
           set -e
+          python3 scripts/patch_fix_profile_escape.py || true
           python3 scripts/patch_restore_customer_portal.py
           python3 scripts/patch_restore_platform_ctx.py
           python3 scripts/patch_fix_cp_jsx_topbar.py || true
@@ -37,16 +38,18 @@ jobs:
           python3 scripts/patch_customer_notif_sync.py || true
           python3 scripts/patch_postlogin_force_exit.py || true
           python3 scripts/patch_profile_rework.py || true
+          python3 scripts/patch_fix_profile_escape.py || true
           python3 scripts/patch_restore_customer_portal.py
           python3 scripts/patch_restore_platform_ctx.py
           python3 scripts/patch_fix_cp_jsx_topbar.py || true
           python3 scripts/patch_ticket_ops_timeout.py || true
           python3 scripts/patch_postlogin_force_exit.py || true
           python3 scripts/patch_profile_rework.py || true
+          python3 scripts/patch_fix_profile_escape.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: profile rework" || true
+          git commit -m "fix: profile escape + rework" || true
           git push || true
 
       - name: Setup Node
@@ -62,12 +65,14 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
+          python3 scripts/patch_fix_profile_escape.py || true
           python3 scripts/patch_restore_customer_portal.py
           python3 scripts/patch_restore_platform_ctx.py
           python3 scripts/patch_fix_cp_jsx_topbar.py || true
           python3 scripts/patch_ticket_ops_timeout.py || true
           python3 scripts/patch_postlogin_force_exit.py || true
           python3 scripts/patch_profile_rework.py || true
+          python3 scripts/patch_fix_profile_escape.py || true
           npm run build
           touch dist/.nojekyll
 
