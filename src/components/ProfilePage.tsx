@@ -1,3 +1,5 @@
+/* emoji-beside-custom-field-v1 */
+/* emoji-custom-only-v1 */
 /* status-emoji-profile-v1 */
 /* agent-presence-profile-v1 */
 import { useState, useEffect, useRef } from 'react';
@@ -382,8 +384,13 @@ export default function ProfilePage() {
                     const v = e.target.value as AgentStatus;
                     const next = v === 'online' ? 'online' : v;
                     setStatus(next);
+                    if (next !== 'custom') {
+                      setStatusEmoji('');
+                      setEmojiOpen(false);
+                    }
                     const msg = next === 'custom' ? statusMessage.trim() || null : null;
-                    void updateAgentStatus(next === 'offline' ? 'online' : next, msg, statusEmoji || null);
+                    const em = next === 'custom' ? statusEmoji || null : null;
+                    void updateAgentStatus(next === 'offline' ? 'online' : next, msg, em);
                   }}
                   className="flex-1 px-4 py-2.5 text-sm border border-zinc-200 dark:border-white/15 rounded-xl bg-white dark:bg-zinc-900/60 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
                 >

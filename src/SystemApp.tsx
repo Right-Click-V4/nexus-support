@@ -1,3 +1,4 @@
+/* portal-postlogin-fix-v1 */
 /* login-customer-first-v1 */
 /* presence-heartbeat-v1 */
 /* agent-presence-shell-v1 */
@@ -373,9 +374,6 @@ export function AgentShell() {
     if (!window.location.hash.toLowerCase().includes('portal')) {
       window.location.hash = 'portal';
     }
-    if (hasJustLoggedIn()) {
-      return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;
-    }
     return <BootLoader label="Opening customer portal…" />;
   }
 
@@ -617,7 +615,13 @@ export function PortalShell() {
   const { user, accountRole, authBusy } = useAuth();
   const admin = accountRole === 'admin' || isAdmin;
 
-  if (!ready || !site404Ready || authBusy || (user && !adminReady)) {
+  // Customers must not wait on adminReady (agents table check) — that caused endless post-login.
+  const portalBlocked =
+    !ready ||
+    !site404Ready ||
+    authBusy ||
+    (user && accountRole !== 'customer' && !adminReady);
+  if (portalBlocked) {
     if (hasJustLoggedIn()) {
       return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;
     }
