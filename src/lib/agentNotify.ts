@@ -1,3 +1,4 @@
+/* customer-notif-supabase-v1 */
 import { supabase, isSupabaseConfigured } from './supabase';
 
 export type NotifyPayload = {
@@ -97,7 +98,7 @@ export function onAgentNotify(handler: () => void) {
 const CUSTOMER_KEY = 'nexus-customer-notif-v1';
 const CUSTOMER_EVENT = 'nexus-customer-notify';
 
-/** Notify a customer by email (local). link: mytickets | chat */
+/** Notify a customer by email. Writes Supabase (when possible) + local + BC for realtime. */
 export async function notifyCustomer(payload: {
   email?: string | null;
   title: string;
@@ -116,6 +117,46 @@ export async function notifyCustomer(payload: {
     read: false,
     created_at,
   };
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      let userId: string | null = null;
+      const { data: cust } = await supabase
+        .from('customers')
+        .select('user_id,email')
+        .ilike('email', email)
+        .maybeSingle();
+      if (cust && (cust as { user_id?: string }).user_id) {
+        userId = (cust as { user_id: string }).user_id;
+      }
+      const row: Record<string, unknown> = {
+        title: payload.title,
+        body: payload.body,
+        link: payload.link || 'mytickets',
+        read: false,
+      };
+      if (userId) row.user_id = userId;
+      const { error } = await supabase.from('notifications').insert({
+        ...row,
+        customer_email: email,
+      });
+      if (error) {
+        const { error: e2 } = await supabase.from('notifications').insert(row);
+        if (e2 && userId) {
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            title: payload.title,
+            body: payload.body,
+            link: payload.link || 'mytickets',
+            read: false,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('notifyCustomer supabase failed', e);
+    }
+  }
+
   try {
     const raw = localStorage.getItem(CUSTOMER_KEY);
     const prev = raw ? JSON.parse(raw) : [];
@@ -124,5 +165,12 @@ export async function notifyCustomer(payload: {
   } catch {}
   try {
     window.dispatchEvent(new CustomEvent(CUSTOMER_EVENT, { detail: item }));
+  } catch {}
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const bc = new BroadcastChannel('nexus-customer-notify');
+      bc.postMessage(item);
+      bc.close();
+    }
   } catch {}
 }

@@ -1,3 +1,4 @@
+/* customer-notif-merge-v1 */
 import {
   createContext,
   useContext,
@@ -211,7 +212,27 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         })),
       );
     }
-    if (notifs.data) setNotifications(notifs.data as AppNotification[]);
+    if (notifs.data) {
+      let merged = notifs.data as AppNotification[];
+      try {
+        const email = (user?.email || '').trim().toLowerCase();
+        if (email) {
+          const raw = localStorage.getItem('nexus-customer-notif-v1');
+          const local = raw ? JSON.parse(raw) : [];
+          const mine = (Array.isArray(local) ? local : []).filter(
+            (n: { customer_email?: string }) => (n.customer_email || '').toLowerCase() === email,
+          );
+          const ids = new Set(merged.map((n) => n.id));
+          for (const n of mine) {
+            if (n && n.id && !ids.has(n.id)) {
+              merged = [n as AppNotification, ...merged];
+              ids.add(n.id);
+            }
+          }
+        }
+      } catch { /* ignore */ }
+      setNotifications(merged);
+    }
     if (autos.data) setAutomations(autos.data as Automation[]);
     if (can.data) setCanned(can.data as CannedResponse[]);
     if (surv.data) setSurveys(surv.data as SurveyResponse[]);
@@ -240,6 +261,43 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => { if (isSupabaseConfigured) void refreshPlatform(); }, [refreshPlatform]);
+
+  useEffect(() => {
+    const email = (user?.email || '').trim().toLowerCase();
+    if (!email) return;
+    const pullLocal = () => {
+      try {
+        const raw = localStorage.getItem('nexus-customer-notif-v1');
+        const local = raw ? JSON.parse(raw) : [];
+        const mine = (Array.isArray(local) ? local : []).filter(
+          (n: { customer_email?: string }) => (n.customer_email || '').toLowerCase() === email,
+        );
+        if (!mine.length) return;
+        setNotifications((prev) => {
+          const ids = new Set(prev.map((n) => n.id));
+          const add = mine.filter((n: { id?: string }) => n.id && !ids.has(n.id));
+          return add.length ? [...(add as AppNotification[]), ...prev] : prev;
+        });
+      } catch { /* ignore */ }
+    };
+    pullLocal();
+    const onEvt = () => pullLocal();
+    window.addEventListener('nexus-customer-notify', onEvt);
+    window.addEventListener('storage', onEvt);
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('nexus-customer-notify');
+      bc.onmessage = () => pullLocal();
+    } catch { /* ignore */ }
+    const tick = window.setInterval(pullLocal, 12000);
+    return () => {
+      window.removeEventListener('nexus-customer-notify', onEvt);
+      window.removeEventListener('storage', onEvt);
+      try { bc?.close(); } catch { /* ignore */ }
+      window.clearInterval(tick);
+    };
+  }, [user?.email]);
+
 
   // Lightweight announcements/releases refresh — works across normal + incognito tabs
   const refreshAnnouncementsLight = useCallback(async () => {
