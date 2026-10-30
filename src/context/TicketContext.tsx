@@ -1,3 +1,4 @@
+/* status-fetch-resilient-v1 */
 /* ticket-ops-timeout-v1 */
 /* tickets-presence-fix-v1 */
 /* status-emoji-ctx-v1 */
@@ -591,27 +592,27 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const patch: Record<string, unknown> = { status, last_seen_at: seen };
     if (statusMessage !== undefined) patch.status_message = statusMessage;
     if (statusEmoji !== undefined) patch.status_emoji = statusEmoji;
+    const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
+    setCurrentAgent(next);
+    setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
+    try {
+      localStorage.setItem('nexus-presence-agent-id', currentAgent.id);
+    } catch { /* ignore */ }
     if (supabase) {
-      let { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
-      if (error) {
-        const minimal: Record<string, unknown> = { status };
-        if (statusMessage !== undefined) minimal.status_message = statusMessage;
-        const retry = await supabase.from('agents').update(minimal).eq('id', currentAgent.id);
-        error = retry.error;
-      }
-      const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
-      setCurrentAgent(next);
-      setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
       try {
-        localStorage.setItem('nexus-presence-agent-id', currentAgent.id);
-      } catch { /* ignore */ }
-      if (error) {
-        // non-fatal for UI presence
+        let { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
+        if (error) {
+          const minimal: Record<string, unknown> = { status };
+          if (statusMessage !== undefined) minimal.status_message = statusMessage;
+          const retry = await supabase.from('agents').update(minimal).eq('id', currentAgent.id);
+          error = retry.error;
+        }
+        if (error) {
+          // non-fatal for UI presence
+        }
+      } catch {
+        // Failed to fetch / network — local status still applied
       }
-    } else {
-      const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
-      setCurrentAgent(next);
-      setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
     }
   };
 

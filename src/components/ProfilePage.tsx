@@ -1,3 +1,4 @@
+/* profile-fetch-resilient-v1 */
 /* profile-rework-v1 */
 /* status-active-labels-v1 */
 /* emoji-beside-custom-field-v1 */
@@ -205,32 +206,48 @@ export default function ProfilePage() {
             phone: phone.trim() || null,
             bio: bio.trim() || null,
           };
-          let lastErr: { message?: string } | null = null;
+          let lastErr: string | null = null;
+          let ok = false;
           const attempts: Record<string, unknown>[] = [
             { ...base, avatar_url: avatarUrl || null },
             { ...base },
             { name: name.trim(), initials, phone: phone.trim() || null },
             { name: name.trim(), initials },
           ];
-          let ok = false;
-          for (const patch of attempts) {
-            const { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
-            if (!error) {
-              ok = true;
-              break;
+          try {
+            for (const patch of attempts) {
+              const { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
+              if (!error) {
+                ok = true;
+                break;
+              }
+              lastErr = error.message || 'Could not save profile';
             }
-            lastErr = error;
+          } catch (netErr: unknown) {
+            lastErr =
+              netErr instanceof Error
+                ? netErr.message
+                : 'Network error talking to Supabase';
           }
-          if (!ok && lastErr) {
-            throw new Error(lastErr.message || 'Could not save profile');
+          if (!ok) {
+            const soft = (lastErr || '').toLowerCase();
+            if (soft.includes('failed to fetch') || soft.includes('network')) {
+              setErr(
+                'Could not reach Supabase (Failed to fetch). Status is updated on this device; ' +
+                  'when the database recovers, change Status once more or Save again. ' +
+                  'Check Supabase → Status (PostgREST/Auth should be Healthy).',
+              );
+            } else if (lastErr) {
+              throw new Error(lastErr);
+            }
           }
         }
         try {
           await refresh();
         } catch {
-          /* ignore */
+          /* ignore network */
         }
-      }
+}
       if (currentAgent) {
         try {
           if (avatarUrl) localStorage.setItem(`nexus-avatar-${currentAgent.id}`, avatarUrl);
@@ -257,7 +274,14 @@ export default function ProfilePage() {
         setMsg('Profile saved.');
       }
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Could not save profile');
+      const m = e instanceof Error ? e.message : 'Could not save profile';
+      if (/failed to fetch/i.test(m)) {
+        setErr(
+          'Could not reach Supabase (Failed to fetch). Check Project Status — PostgREST and Auth must be Healthy, then try Save again.',
+        );
+      } else {
+        setErr(m);
+      }
     } finally {
       setSaving(false);
     }
