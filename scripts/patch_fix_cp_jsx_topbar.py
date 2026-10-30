@@ -4,12 +4,8 @@ from pathlib import Path
 
 p = Path("src/components/CustomerPortal.tsx")
 t = p.read_text()
-if "fix-cp-jsx-topbar-v1" in t:
-    print("already")
-    raise SystemExit(0)
 
-old = """          <ThemeToggle />
-          {requiresAuth && (
+old = """          {requiresAuth && (
                           {onBackToAgent && (
                 <button
                   type="button"
@@ -32,8 +28,7 @@ old = """          <ThemeToggle />
             </button>
           )}"""
 
-new = """          <ThemeToggle />
-          {requiresAuth && (
+new = """          {requiresAuth && (
             <>
               {onBackToAgent && (
                 <button
@@ -60,10 +55,17 @@ new = """          <ThemeToggle />
 
 if old in t:
     t = t.replace(old, new, 1)
-    print("fixed")
+    print("fixed broken topbar jsx")
+elif "<>\n              {onBackToAgent && (" in t or "<>\n              {onBackToAgent && (" in t:
+    print("already fixed layout")
+elif "{requiresAuth && (" in t and "{onBackToAgent && (" in t[t.find("{requiresAuth && ("):t.find("{requiresAuth && (")+80]:
+    print("pattern still broken but exact match failed")
+    i = t.find("{requiresAuth && (")
+    print(repr(t[i:i+100]))
 else:
-    print("miss")
+    print("no broken pattern found")
 
-t = "/* fix-cp-jsx-topbar-v1 */\n" + t
+if "fix-cp-jsx-topbar-v1" not in t:
+    t = "/* fix-cp-jsx-topbar-v1 */\n" + t
 p.write_text(t)
 print("done")
