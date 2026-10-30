@@ -1,3 +1,4 @@
+/* ticket-ops-timeout-v1 */
 /* tickets-presence-fix-v1 */
 /* status-emoji-ctx-v1 */
 /* agent-presence-ctx-v1 */
@@ -82,6 +83,17 @@ interface TicketContextValue {
 }
 
 const TicketContext = createContext<TicketContextValue | null>(null);
+
+/** Never hang UI on a slow/hung Supabase request */
+function sbTimeout<T>(p: PromiseLike<T>, ms = 8000): Promise<T> {
+  return Promise.race([
+    Promise.resolve(p as PromiseLike<T>).then((v) => v as T),
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error('Request timed out. Please try again.')), ms);
+    }),
+  ]);
+}
+
 const STORAGE_KEY = 'nexus-tickets-v1';
 const AUTO_LS = 'nexus-auto-v1';
 
@@ -282,8 +294,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const loadRules = async (): Promise<Automation[]> => {
     if (supabase) {
-      const { data } = await supabase.from('automations').select('*');
-      if (data?.length) return data as Automation[];
+      try {
+        const res = await sbTimeout(supabase.from('automations').select('*'), 4000);
+        const data = res && typeof res === 'object' && 'data' in res ? (res as { data: Automation[] | null }).data : null;
+        if (data?.length) return data as Automation[];
+      } catch {
+        /* rules optional */
+      }
     }
     return loadAutomationsLocal();
   };
@@ -354,13 +371,18 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         updated_at: ticket.updated_at,
         tags: ticket.tags,
       };
-      const { error } = await supabase.from('tickets').insert(payload);
-      if (error) {
-        delete payload.tags;
-        const { error: e2 } = await supabase.from('tickets').insert(payload);
-        if (e2) throw e2;
+      try {
+        const ins = await sbTimeout(supabase.from('tickets').insert(payload), 10000);
+        const error = ins && typeof ins === 'object' && 'error' in ins ? (ins as { error: { message?: string } | null }).error : null;
+        if (error) {
+          delete payload.tags;
+          const ins2 = await sbTimeout(supabase.from('tickets').insert(payload), 10000);
+          const e2 = ins2 && typeof ins2 === 'object' && 'error' in ins2 ? (ins2 as { error: { message?: string } | null }).error : null;
+          if (e2) throw new Error(e2.message || 'Could not create ticket');
+        }
+      } catch (e) {
+        throw e instanceof Error ? e : new Error('Could not create ticket');
       }
-      /* Optimistic: show in agent workspace immediately, then re-fetch */
       setTickets((prev) => (prev.some((t) => t.id === ticket.id) ? prev : [ticket, ...prev]));
       try {
         if (typeof BroadcastChannel !== 'undefined') {
@@ -413,26 +435,31 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   ) => {
     const ticket = tickets.find((t) => t.id === id);
     const payload = { ...updates, updated_at: new Date().toISOString() };
+    setTickets((prev) =>
+      prev.map((row) =>
+        row.id === id
+          ? {
+              ...row,
+              ...updates,
+              updated_at: payload.updated_at,
+              assignee:
+                updates.assignee_id !== undefined
+                  ? agents.find((a) => a.id === updates.assignee_id) || null
+                  : row.assignee,
+            }
+          : row
+      )
+    );
     if (supabase) {
-      const { error } = await supabase.from('tickets').update(payload).eq('id', id);
-      if (error) throw error;
-      await refresh();
-    } else {
-      setTickets((prev) =>
-        prev.map((t) =>
-          t.id === id
-            ? {
-                ...t,
-                ...updates,
-                updated_at: payload.updated_at,
-                assignee:
-                  updates.assignee_id !== undefined
-                    ? agents.find((a) => a.id === updates.assignee_id) || null
-                    : t.assignee,
-              }
-            : t
-        )
-      );
+      try {
+        const up = await sbTimeout(supabase.from('tickets').update(payload).eq('id', id), 10000);
+        const error = up && typeof up === 'object' && 'error' in up ? (up as { error: { message?: string } | null }).error : null;
+        if (error) throw new Error(error.message || 'Could not update ticket');
+      } catch (e) {
+        void refresh({ silent: true });
+        throw e instanceof Error ? e : new Error('Could not update ticket');
+      }
+      void refresh({ silent: true });
     }
     const changed = Object.keys(updates).filter((k) => k !== 'messages' && k !== 'notes' && k !== 'attachments');
     if (changed.length) {

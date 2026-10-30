@@ -1,3 +1,4 @@
+/* presence-fast-online-v1 */
 /* toast-created-window-v1 */
 /* portal-postlogin-fix-v1 */
 /* login-customer-first-v1 */
@@ -181,13 +182,16 @@ export function AgentShell() {
     } else {
       void touchPresence?.();
     }
+    void touchPresence?.();
+    const quick = window.setTimeout(() => { void touchPresence?.(); }, 500);
+    return () => window.clearTimeout(quick);
   }, [presenceAgent?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!presenceAgent?.id) return;
     const tick = () => { void touchPresence?.(); };
     tick();
-    const id = window.setInterval(tick, 8000);
+    const id = window.setInterval(tick, 5000);
     return () => window.clearInterval(id);
   }, [presenceAgent?.id, touchPresence]);
 

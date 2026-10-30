@@ -1,3 +1,4 @@
+/* presence-poll-refresh-v1 */
 /* active-now-online-prefix-v1 */
 /* presence-window-v2 */
 /* active-now-status-labels-v1 */
@@ -51,7 +52,7 @@ interface Props {
 
 export default function PortalLiveChat({ onBack }: Props) {
   const { conversations, createChat, sendChatMessage, refreshPlatform } = usePlatform();
-  const { findTicket, agents } = useTickets();
+  const { findTicket, agents, refresh: refreshTickets } = useTickets();
   const { user } = useAuth();
 
   const accountName =
@@ -115,6 +116,15 @@ export default function PortalLiveChat({ onBack }: Props) {
       return status === 'online' || status === 'busy' || status === 'away' || status === 'in_call' || status === 'custom';
     });
   }, [agents, presenceTick]);
+
+  
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      void refreshTickets?.({ silent: true });
+    }, 8000);
+    void refreshTickets?.({ silent: true });
+    return () => window.clearInterval(id);
+  }, [refreshTickets]);
 
   const hasAgentOnline = onlineAgents.length > 0;
 
