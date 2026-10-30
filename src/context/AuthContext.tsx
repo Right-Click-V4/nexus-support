@@ -262,6 +262,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('nexus-live-tabs-v2');
       localStorage.removeItem('nexus-live-tabs-v3');
       localStorage.removeItem('nexus-last-tab-close-v1');
+      localStorage.removeItem('nexus-auth-closed-v1');
+      localStorage.removeItem('nexus-auth-last-beat-v1');
       sessionStorage.removeItem('nexus-auth-live-v2');
       sessionStorage.removeItem('nexus-auth-live-v3');
     } catch {
