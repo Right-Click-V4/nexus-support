@@ -22,77 +22,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
 
-      - name: Boot UI (loader + post-login ceremony)
+      - name: Apply critical fixes
         run: |
           set -e
           if ! grep -q notifRef src/SystemApp.tsx 2>/dev/null; then
-            echo "Restoring full SystemApp..."
-            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/1b72983c13f2e5104682cc41c7fca903a53c452d/src/SystemApp.tsx" -o src/SystemApp.tsx
+            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/1b72983c13f2e5104682cc41c7fca903a53c452d/src/SystemApp.tsx" -o src/SystemApp.tsx || true
           fi
-          python3 scripts/patch_postlogin_boot.py || true
-          python3 scripts/patch_boot_ui.py || true
-          python3 scripts/patch_agent_topbar.py || true
-          python3 scripts/patch_agent_chrome_dark.py || true
-          python3 scripts/patch_agent_icons_portal_btn.py || true
-          python3 scripts/patch_workspace_switcher.py || true
-          python3 scripts/patch_fix_cp_switcher_jsx.py || true
-          python3 scripts/patch_portal_staff_preview.py || true
-          python3 scripts/patch_followup_agent_notify.py || true
-          python3 scripts/patch_toast_menu_fix.py || true
-          python3 scripts/patch_menu_toast_polish.py || true
-          python3 scripts/patch_menu_portal_anchor.py || true
-          python3 scripts/patch_menu_theme_session.py || true
-          python3 scripts/patch_assignee_transfer.py || true
-          python3 scripts/patch_silent_ticket_notify.py || true
-          python3 scripts/patch_agent_notif_nav.py || true
-          python3 scripts/patch_copy_id_livechat.py || true
-          python3 scripts/patch_livechat_active.py || true
-          python3 scripts/patch_agent_presence.py || true
-          python3 scripts/patch_tab_session_idle.py || true
-          python3 scripts/patch_session_boot_order.py || true
-          python3 scripts/patch_presence_accurate.py || true
-          python3 scripts/patch_session_refresh_keep.py || true
-          python3 scripts/patch_session_idle_30s.py || true
-          python3 scripts/patch_login_customer_first.py || true
-          python3 scripts/patch_status_theme_emoji.py || true
-          python3 scripts/patch_boot_timeout.py || true
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/lib/tabSession.ts src/lib/uiPrefs.ts src/context/AuthContext.tsx src/SystemApp.tsx src/components/PortalLiveChat.tsx src/context/TicketContext.tsx src/types.ts src/components/LoginPage.tsx src/components/ProfilePage.tsx src/context/MaintenanceContext.tsx src/context/Site404Context.tsx || true
-          git commit -m "fix: boot timeouts" || true
-          git push || true
-
-      - name: Restore full Customer Portal if needed
-        run: |
-          set -e
-          if ! grep -q PortalLiveChat src/components/CustomerPortal.tsx 2>/dev/null; then
-            echo "Restoring full CustomerPortal..."
-            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/e973f0632f202e8dc0dabbbc65a8be25600c23f9/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx
-            sed -i 's/bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30/portal-sidebar flex-col relative z-30/' src/components/CustomerPortal.tsx
-            python3 scripts/patch_cp.py || true
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add src/components/CustomerPortal.tsx
-            git commit -m "fix: restore full CustomerPortal features" || true
-            git push || true
-          fi
-
-      - name: Apply portal and agent patches
-        run: |
-          set -e
-          for s in patch_topbar.py patch_remove_back.py patch_footer.py patch_footer_center.py patch_footer_in_main.py patch_scroll_lock.py patch_overview_rename.py fix_sidebar_light.py patch_chrome_darker.py patch_marquee.py patch_marquee_css.py patch_marquee_sep_css.py patch_channel.py patch_channel_title.py patch_announce_live_full.py patch_announce_v3.py patch_announce_rt.py patch_portal_reload.py patch_strip_display.py patch_overview_channel.py patch_announce_color_sync.py patch_pc_cleanup.py patch_dbtitle_color.py patch_portal_hard_reload.py patch_display_strip_v2.py patch_announce_realtime.py; do
-            python3 scripts/$s || true
-          done
-          if ! grep -q "DEFAULT_GROUP_ID" src/components/PortalCommunityChat.tsx 2>/dev/null; then
-            curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/a3f7b260cd8c6e3200bbe03b10c1524df894badc/src/components/PortalCommunityChat.tsx" -o src/components/PortalCommunityChat.tsx || true
-          fi
-          for s in patch_community_ux.py patch_community_panel.py patch_community_cloud_min.py patch_community_media.py patch_community_footer_space.py patch_footer_flow.py patch_community_glass_marquee.py patch_community_contrast.py patch_chrome_footer_v2.py patch_nav_signout.py patch_swap_signout.py patch_labels_titlecase.py patch_submit_form.py patch_submit_layout.py patch_branch_list.py patch_submit_left_subject.py patch_submit_guide.py patch_submit_overview_layout.py patch_submit_fill.py patch_submit_glow.py patch_priority_glow.py patch_submit_modal.py patch_modal_glow.py patch_details_tickets_theme.py patch_ticket_detail_unread.py patch_ticket_panel.py patch_ticket_detail_layout.py patch_status_assignee_colors.py patch_ticket_save_ui.py patch_closed_merge_track.py patch_trash_confirm_colors.py patch_light_mytickets.py patch_mytickets_guide.py patch_mytickets_actions.py patch_mytickets_jsx_fix.py patch_mytickets_wider.py patch_mytickets_menu_guide.py patch_status_colors_space.py patch_action_unify.py patch_menu_page20.py patch_tickets_page30.py patch_resolution_plan.py patch_res_view_msg.py patch_customer_new_expand.py patch_fix_expand_fragment.py patch_view_detail_polish.py patch_portal_bell.py patch_notify_customer.py patch_fix_platform_import.py patch_notif_z_expand_glass.py patch_expand_darker_glass.py patch_notif_above_marquee.py patch_sla_auto_close.py patch_sla_close_race.py patch_save_notify_back.py patch_tickets_badge_unread.py patch_tickets_ui_stats.py patch_agent_topbar.py patch_agent_chrome_dark.py patch_agent_icons_portal_btn.py patch_workspace_switcher.py patch_fix_cp_switcher_jsx.py patch_portal_staff_preview.py patch_followup_agent_notify.py patch_toast_menu_fix.py patch_menu_toast_polish.py patch_menu_portal_anchor.py patch_menu_theme_session.py patch_assignee_transfer.py patch_silent_ticket_notify.py patch_agent_notif_nav.py patch_copy_id_livechat.py patch_livechat_active.py patch_agent_presence.py patch_tab_session_idle.py patch_session_boot_order.py patch_presence_accurate.py patch_session_refresh_keep.py patch_session_idle_30s.py patch_login_customer_first.py patch_status_theme_emoji.py patch_boot_timeout.py patch_tickets_sync.py patch_tickets_noflicker.py patch_portal_layout.py; do
+          for s in patch_boot_timeout.py patch_portal_postlogin_emoji.py patch_session_refresh_keep.py patch_session_idle_30s.py patch_presence_accurate.py patch_login_customer_first.py patch_status_theme_emoji.py; do
             python3 scripts/$s || true
           done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: boot timeouts" || true
+          git commit -m "fix: portal post-login + custom emoji" || true
+          git push || true
+
+      - name: Apply remaining portal patches
+        run: |
+          set -e
+          for s in scripts/patch_*.py; do python3 "$s" || true; done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A || true
+          git commit -m "chore: apply patches" || true
           git push || true
 
       - name: Setup Node
@@ -108,12 +60,9 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          python3 scripts/patch_session_refresh_keep.py || true
-          python3 scripts/patch_session_idle_30s.py || true
-          python3 scripts/patch_presence_accurate.py || true
-          python3 scripts/patch_login_customer_first.py || true
-          python3 scripts/patch_status_theme_emoji.py || true
           python3 scripts/patch_boot_timeout.py || true
+          python3 scripts/patch_portal_postlogin_emoji.py || true
+          python3 scripts/patch_status_theme_emoji.py || true
           npm run build
           touch dist/.nojekyll
 
@@ -124,14 +73,11 @@ jobs:
           set -e
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          rm -rf work-gh-pages
-          mkdir work-gh-pages
-          cd work-gh-pages
+          rm -rf work-gh-pages && mkdir work-gh-pages && cd work-gh-pages
           git init
           git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           if git fetch origin gh-pages --depth=1 && git rev-parse origin/gh-pages >/dev/null 2>&1; then
-            git checkout -f origin/gh-pages
-            git checkout -B gh-pages
+            git checkout -f origin/gh-pages && git checkout -B gh-pages
             find . -mindepth 1 -maxdepth 1 ! -name preview ! -name '.git' -exec rm -rf {} +
           else
             git checkout --orphan gh-pages
