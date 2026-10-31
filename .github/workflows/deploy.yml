@@ -39,13 +39,14 @@ jobs:
           python3 scripts/patch_livechat_dark_presence.py || true
           python3 scripts/patch_livechat_lcp_dedupe.py || true
           python3 scripts/patch_dark_class_theme.py || true
-          python3 scripts/patch_livechat_dark_presence.py || true
+          python3 scripts/patch_no_demo_agents.py || true
           python3 scripts/patch_livechat_lcp_dedupe.py || true
           python3 scripts/patch_dark_class_theme.py || true
+          python3 scripts/patch_no_demo_agents.py || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A || true
-          git commit -m "fix: dark class theme + livechat" || true
+          git commit -m "fix: no demo agents" || true
           git push || true
 
       - name: Setup Node
@@ -75,6 +76,7 @@ jobs:
           python3 scripts/patch_livechat_dark_presence.py || true
           python3 scripts/patch_livechat_lcp_dedupe.py || true
           python3 scripts/patch_dark_class_theme.py || true
+          python3 scripts/patch_no_demo_agents.py || true
           npm run build
           touch dist/.nojekyll
 
