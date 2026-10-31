@@ -1,3 +1,4 @@
+/* livechat-archive-api-v1 */
 /* chat-sync-v1 */
 /* customer-notif-merge-v1 */
 import {
@@ -143,7 +144,9 @@ interface PlatformContextValue {
   deleteArticle: (id: string) => Promise<void>;
   createChat: (customer_name: string, customer_email?: string, meta?: CreateChatMeta) => Promise<ChatConversation>;
   sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer') => Promise<void>;
-  setChatStatus: (id: string, status: 'waiting' | 'active' | 'ended') => Promise<void>;
+  setChatStatus: (id: string, status: 'waiting' | 'active' | 'ended' | 'archived') => Promise<void>;
+  archiveChat: (id: string) => Promise<void>;
+  linkTicketId: (conversationId: string, ticketId: string) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   pushNotification: (title: string, body?: string, link?: string) => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
@@ -206,6 +209,18 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         if (!byConv[cid]) byConv[cid] = [];
         byConv[cid].push(m);
       }
+      // purge-archived-chats-v1
+      try {
+        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        for (const c of (chats.data || []) as { id: string; status?: string; archived_at?: string; updated_at?: string }[]) {
+          if ((c.status || '').toLowerCase() !== 'archived') continue;
+          const ts = new Date(c.archived_at || c.updated_at || 0).getTime();
+          if (ts && ts < cutoff) {
+            await supabase.from('chat_messages').delete().eq('conversation_id', c.id);
+            await supabase.from('chat_conversations').delete().eq('id', c.id);
+          }
+        }
+      } catch { /* ignore */ }
       setConversations(
         (chats.data as ChatConversation[]).map((c) => ({
           ...c,
@@ -568,16 +583,40 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setChatStatus = async (id: string, status: 'waiting' | 'active' | 'ended') => {
-    if (supabase) { await supabase.from('chat_conversations').update({ status }).eq('id', id); await refreshPlatform(); }
-    else setConversations((p) => p.map((c) => (c.id === id ? { ...c, status } : c)));
-  };
-  const deleteChat = async (id: string) => {
+  const setChatStatus = async (id: string, status: 'waiting' | 'active' | 'ended' | 'archived') => {
     if (supabase) {
-      await supabase.from('chat_messages').delete().eq('conversation_id', id);
-      await supabase.from('chat_conversations').delete().eq('id', id);
+      const patch: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+      if (status === 'archived') patch.archived_at = new Date().toISOString();
+      const { error } = await supabase.from('chat_conversations').update(patch).eq('id', id);
+      if (error && status === 'archived') {
+        await supabase.from('chat_conversations').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', id);
+      }
       await refreshPlatform();
-    } else setConversations((p) => p.filter((c) => c.id !== id));
+    } else {
+      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, status: status as ChatConversation['status'], updated_at: new Date().toISOString() } : c)));
+    }
+  };
+  const archiveChat = async (id: string) => { await setChatStatus(id, 'archived'); };
+  const deleteChat = async (id: string) => {
+    try {
+      if (supabase) {
+        await supabase.from('chat_messages').delete().eq('conversation_id', id);
+        const { error } = await supabase.from('chat_conversations').delete().eq('id', id);
+        if (error) console.error('deleteChat', error);
+        await refreshPlatform();
+      } else setConversations((prev) => prev.filter((c) => c.id !== id));
+    } catch (e) {
+      console.error('deleteChat', e);
+      throw e;
+    }
+  };
+  const linkTicketId = async (conversationId: string, ticketId: string) => {
+    if (supabase) {
+      await supabase.from('chat_conversations').update({ ticket_id: ticketId, updated_at: new Date().toISOString() }).eq('id', conversationId);
+      await refreshPlatform();
+    } else {
+      setConversations((prev) => prev.map((c) => (c.id === conversationId ? { ...c, ticket_id: ticketId } : c)));
+    }
   };
 
   const pushNotification = async (title: string, body?: string, link?: string) => {
@@ -770,7 +809,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const value: PlatformContextValue = {
     articles, conversations, notifications, automations, canned, surveys, reviews, announcements, forms, releases,
     unreadCount, refreshPlatform,
-    saveArticle, deleteArticle, createChat, sendChatMessage, setChatStatus, deleteChat,
+    saveArticle, deleteArticle, createChat, sendChatMessage, setChatStatus, archiveChat, deleteChat, linkTicketId,
     pushNotification, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllNotifications,
     saveAutomation, deleteAutomation, saveCanned, deleteCanned, addSurvey, addReview,
     saveAnnouncement, deleteAnnouncement, saveForm, deleteForm, saveRelease, deleteRelease,

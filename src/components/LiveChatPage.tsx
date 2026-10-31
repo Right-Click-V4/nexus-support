@@ -1,9 +1,10 @@
+/* livechat-archive-delete-v1 */
 /* chat-text-body-v1 */
 /* chat-viewer-publish-v1 */
 /* livechat-text-field-v1 */
 import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
-import { Send, Plus, Trash2, UserRound, RotateCcw, Paperclip, Ticket, ExternalLink } from 'lucide-react';
+import { Send, Plus, Trash2, UserRound, RotateCcw, Paperclip, Ticket, ExternalLink, Archive } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 import { useTickets } from '../context/TicketContext';
 import { publishChatViewer, clearChatViewer } from '../lib/chatPresence';
@@ -14,8 +15,9 @@ export default function LiveChatPage() {
     conversations,
     sendChatMessage,
     setChatStatus,
-    startConversation,
-    deleteConversation,
+    createChat,
+    deleteChat,
+    archiveChat,
     linkTicketId,
     refreshPlatform,
   } = usePlatform();
@@ -27,6 +29,9 @@ export default function LiveChatPage() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [as, setAs] = useState<'agent' | 'customer'>('agent');
+  const [listTab, setListTab] = useState<'live' | 'archive'>('live');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,18 +63,14 @@ export default function LiveChatPage() {
   }, [selectedId, refreshPlatform]);
 
   const selected = conversations.find((c) => c.id === selectedId) || null;
-  const activeCount = conversations.filter((c) => c.status !== 'ended').length;
   const linkedTicket = selected?.ticket_id ? findTicket(selected.ticket_id) : undefined;
 
   const startChat = async () => {
     if (!newName.trim()) return;
     setBusy(true);
     try {
-      const id = await startConversation({
-        customer_name: newName.trim(),
-        status: 'active',
-      });
-      setSelectedId(id);
+      const conv = await createChat(newName.trim());
+      setSelectedId(conv.id);
       setNewName('');
       setShowNew(false);
     } finally {
@@ -137,24 +138,61 @@ export default function LiveChatPage() {
     }
   };
 
-  const remove = async (id: string) => {
-    await deleteConversation(id);
-    if (selectedId === id) setSelectedId(null);
+  const requestDelete = (id: string) => setConfirmDeleteId(id);
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    setDeleteBusy(true);
+    try {
+      await deleteChat(confirmDeleteId);
+      if (selectedId === confirmDeleteId) setSelectedId(null);
+      setConfirmDeleteId(null);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Failed to delete chat');
+    } finally {
+      setDeleteBusy(false);
+    }
   };
+
+  const doArchive = async (id: string) => {
+    setBusy(true);
+    try {
+      await archiveChat(id);
+      setMsg('Chat archived. It will be removed automatically after 30 days.');
+      if (selectedId === id) setSelectedId(null);
+      setListTab('archive');
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Failed to archive');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const liveChats = conversations.filter((c) => (c.status || '') !== 'archived');
+  const archivedChats = conversations.filter((c) => (c.status || '') === 'archived');
+  const list = listTab === 'archive' ? archivedChats : liveChats;
+  const activeCount = liveChats.filter((c) => c.status !== 'ended').length;
 
   return (
     <div className="space-y-3">
-      <div className="bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-sm text-brand-800">
-        <strong>Chat ↔ ticket:</strong> Convert a chat into a ticket, or open a linked ticket ID. Files use Supabase Storage when available.
+      <div className="rounded-xl px-4 py-3 text-sm border border-violet-400/30 bg-violet-950/50 text-white">
+        <strong className="text-white">Chat ↔ ticket:</strong>{" "}
+        <span className="text-violet-100">Convert a chat into a ticket, or open a linked ticket ID. Files use Supabase Storage when available.</span>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex h-[calc(100vh-12rem)] min-h-[420px]">
         <div className="w-72 border-r border-slate-200 flex flex-col">
           <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-slate-800">Live chats ({activeCount})</span>
+            <span className="text-sm font-semibold text-slate-800">
+              {listTab === 'archive' ? `Archive (${archivedChats.length})` : `Live chats (${activeCount})`}
+            </span>
             <button type="button" onClick={() => setShowNew((v) => !v)} className="p-1.5 text-brand-600 hover:bg-white/5 rounded-lg" title="New chat">
               <Plus size={16} />
             </button>
+          </div>
+          <div className="px-3 py-2 border-b border-slate-200 flex gap-1">
+            <button type="button" onClick={() => setListTab('live')} className={clsx('flex-1 text-xs py-1.5 rounded-lg font-medium', listTab === 'live' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100')}>Live</button>
+            <button type="button" onClick={() => setListTab('archive')} className={clsx('flex-1 text-xs py-1.5 rounded-lg font-medium', listTab === 'archive' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100')}>Archive</button>
           </div>
 
           {showNew && (
@@ -168,7 +206,7 @@ export default function LiveChatPage() {
             {conversations.length === 0 && (
               <p className="text-xs text-slate-400 p-4 text-center">No chats yet. Customers use portal → Live chat.</p>
             )}
-            {conversations.map((c) => (
+            {list.map((c) => (
               <div
                 key={c.id}
                 className={clsx(
@@ -240,7 +278,7 @@ export default function LiveChatPage() {
                       <RotateCcw size={12} /> Reopen
                     </button>
                   )}
-                  <button type="button" onClick={() => remove(selected.id)} className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg" title="Delete chat">
+                  <button type="button" onClick={() => requestDelete(selected.id)} className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg" title="Delete chat">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -298,6 +336,23 @@ export default function LiveChatPage() {
           )}
         </div>
       </div>
+      {confirmDeleteId ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900/95 text-zinc-100 shadow-xl p-5 space-y-4">
+            <div className="text-sm font-semibold text-white">Delete this chat?</div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              This permanently removes the conversation and all messages. Archived chats are auto-deleted after 30 days; this cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" disabled={deleteBusy} onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 text-xs rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5">Cancel</button>
+              <button type="button" disabled={deleteBusy} onClick={() => void confirmDelete()} className="px-3 py-1.5 text-xs rounded-lg bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50">
+                {deleteBusy ? 'Deleting…' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
     </div>
   );
 }

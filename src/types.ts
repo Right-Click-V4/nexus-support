@@ -153,7 +153,8 @@ export interface ChatConversation {
   id: string;
   customer_name: string;
   customer_email?: string;
-  status: 'open' | 'closed' | 'waiting' | 'active' | 'ended';
+  status: 'open' | 'closed' | 'waiting' | 'active' | 'ended' | 'archived';
+  archived_at?: string;
   agent_id?: string;
   branch?: string;
   ticket_id?: string;
