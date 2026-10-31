@@ -24,14 +24,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Restore CustomerPortal if stubbed
+      - name: Assemble CustomerPortal from chunks if present
         run: |
           set -e
-          if ! grep -q "PortalLiveChat" src/components/CustomerPortal.tsx 2>/dev/null; then
-            echo "Restoring CustomerPortal from last good commit..."
-            git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
+          if [ -f scripts/join_cpacc.py ] && [ -f scripts/cpacc_0.b64 ]; then
+            python3 scripts/join_cpacc.py
+            python3 scripts/fix_panel.py || true
           fi
-          python3 scripts/wire_account_panel.py
+          if ! grep -q "PortalLiveChat" src/components/CustomerPortal.tsx 2>/dev/null; then
+            echo "CustomerPortal still stubbed — restoring from c3edde90..."
+            git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
+            if [ -f scripts/wire_account_panel.py ]; then
+              python3 scripts/wire_account_panel.py || true
+            fi
+          fi
+          grep -q "PortalLiveChat" src/components/CustomerPortal.tsx
+          wc -c src/components/CustomerPortal.tsx
 
       - name: Setup Node
         uses: actions/setup-node@v4

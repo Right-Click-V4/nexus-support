@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import base64
-root = Path(__file__).resolve().parents[1]
+import base64, sys
 parts = []
-for i in range(3):
-    p = root / 'scripts' / f'cpacc_{i}.b64'
+for i in range(4):
+    p = Path(f'scripts/cpacc_{i}.b64')
     if not p.exists():
-        raise SystemExit(f'missing {p}')
-    parts.append(base64.b64decode(p.read_text().strip()).decode())
-out = root / 'src' / 'components' / 'CustomerPortal.tsx'
-text = ''.join(parts)
-out.write_text(text)
-print(f'wrote {out} ({len(text)} chars)')
+        print('missing', p)
+        sys.exit(1)
+    parts.append(p.read_text().strip())
+raw = base64.b64decode(''.join(parts))
+out = Path('src/components/CustomerPortal.tsx')
+out.write_bytes(raw)
+text = raw.decode('utf-8')
+assert 'PortalLiveChat' in text
+assert 'AccountProfilePanel' in text
+assert 'Loading portal update' not in text
+print('assembled CustomerPortal', len(raw), 'bytes')
