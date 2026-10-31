@@ -10,7 +10,6 @@ interface State {
   error: Error | null;
 }
 
-/** Any uncaught render error → branded 404 UI (no reload / debug options). */
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
 
@@ -21,16 +20,12 @@ export default class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error) {
     try {
       console.error('[NexusOps]', error);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     try {
       if (!window.location.hash.includes('404')) {
         window.location.hash = '#/404';
       }
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }
 
   render() {
