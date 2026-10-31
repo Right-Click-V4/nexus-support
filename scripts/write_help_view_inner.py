@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+import zlib, base64
+from pathlib import Path
+raw = zlib.decompress(base64.b64decode("""eNrNWV1v20YU/SsE8xQIsCDZTrvI6MPawNYjFG0aG0YQeCHN3dFI5O4uubOkRYP+995Z2iJFUvYnQJ8iMXfOzL1z7szH7L7wD40UjO5sIWz9/Jv9rV/9xWnb+vWH7vX9q9uH/7dGCp+xMYbHz1/9/O0vf/nTN7/+/vtf/vab3/7+X3/4w+9+98Pv//jHP/3pT3/+81/+8te//e3vf//7P/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf//jHP/7xj3/84x//+Mc//vGPf/zjH//4xz/+8Y9//OMf""")).decode()
+# Note: placeholder - will replace with real compress
+Path("scripts/help_view_inner.txt").write_text("")
+print("placeholder")
