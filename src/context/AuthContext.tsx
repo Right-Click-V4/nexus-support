@@ -1,3 +1,4 @@
+/* auth-profile-update-v1 */
 /* login-speed-auth-v1 */
 /* supabase-paused-hint-v1 */
 /* force-offline-scope-v1 */
@@ -40,6 +41,13 @@ interface AuthContextValue {
   ) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updateProfile: (data: {
+    nickname?: string;
+    phone?: string;
+    job_title?: string;
+    avatar_url?: string | null;
+  }) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -330,6 +338,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw friendlyAuthError(error);
   };
 
+
+  const updateProfile = async (data: {
+    nickname?: string;
+    phone?: string;
+    job_title?: string;
+    avatar_url?: string | null;
+  }) => {
+    if (!supabase) throw new Error(configError || 'Supabase is not configured');
+    const payload: Record<string, unknown> = {};
+    if (data.nickname !== undefined) payload.nickname = data.nickname;
+    if (data.phone !== undefined) payload.phone = data.phone;
+    if (data.job_title !== undefined) payload.job_title = data.job_title;
+    if (data.avatar_url !== undefined) payload.avatar_url = data.avatar_url;
+    const { data: res, error } = await supabase.auth.updateUser({ data: payload });
+    if (error) throw friendlyAuthError(error);
+    if (res.user) setUser(res.user);
+    if (res.session) setSession(res.session);
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    if (!supabase) throw new Error(configError || 'Supabase is not configured');
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters');
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw friendlyAuthError(error);
+  };
+
   const signOut = async () => {
     if (!supabase) return;
     try {
@@ -363,6 +399,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         resetPassword,
+        updateProfile,
+        updatePassword,
       }}
     >
       {children}

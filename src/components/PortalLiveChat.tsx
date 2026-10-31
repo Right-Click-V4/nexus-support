@@ -1,3 +1,4 @@
+/* nickname-chat-v1 */
 /* on-hold-customer-v1 */
 /* desk-presence-active-now-v1 */
 /* active-now-real-only-v1 */
@@ -64,11 +65,13 @@ export default function PortalLiveChat({ onBack }: Props) {
   const { findTicket, agents, refresh: refreshTickets } = useTickets();
   const { user } = useAuth();
 
-  const accountName =
+    const legalChatName =
     (user?.user_metadata?.full_name as string | undefined)?.trim() ||
     (user?.user_metadata?.name as string | undefined)?.trim() ||
     user?.email?.split('@')[0] ||
     '';
+  const nickChat = (user?.user_metadata?.nickname as string | undefined)?.trim() || '';
+  const accountName = nickChat && legalChatName ? `${legalChatName} (${nickChat})` : legalChatName;
 
   const [name, setName] = useState(accountName);
   const [email, setEmail] = useState(user?.email || '');
