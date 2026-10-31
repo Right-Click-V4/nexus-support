@@ -1,3 +1,4 @@
+/* touch-presence-status-v1 */
 /* no-demo-agents-v1 */
 /* status-fetch-resilient-v1 */
 /* ticket-ops-timeout-v1 */
@@ -627,19 +628,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const touchPresence = async () => {
     if (!currentAgent || !supabase) return;
-    if ((currentAgent.status || 'offline') === 'offline') return;
+    const status =
+      (currentAgent.status || 'offline') === 'offline' ? 'online' : (currentAgent.status || 'online');
     const seen = new Date().toISOString();
-    setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at: seen } : prev));
+    setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at: seen, status } : prev));
     setAgents((prev) =>
-      prev.map((a) => (a.id === currentAgent.id ? { ...a, last_seen_at: seen } : a)),
+      prev.map((a) => (a.id === currentAgent.id ? { ...a, last_seen_at: seen, status } : a)),
     );
     try {
       const { error } = await supabase
         .from('agents')
-        .update({ last_seen_at: seen })
+        .update({ last_seen_at: seen, status })
         .eq('id', currentAgent.id);
       if (error) {
-        await supabase.from('agents').update({ status: currentAgent.status || 'online' }).eq('id', currentAgent.id);
+        await supabase.from('agents').update({ status }).eq('id', currentAgent.id);
       }
     } catch {
       /* ignore */

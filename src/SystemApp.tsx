@@ -1,3 +1,4 @@
+/* desk-presence-publish-v1 */
 /* hash-404-strict-v1 */
 /* status-fab-v1 */
 /* portal-force-ready-v1 */
@@ -44,6 +45,7 @@ import AdminFeaturesPage from './components/AdminFeaturesPage';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import NotFoundScreen from './components/NotFoundScreen';
 import { TicketProvider, useTickets } from './context/TicketContext';
+import { publishDeskPresence, clearDeskPresence } from './lib/deskPresence';
 import { PlatformProvider, usePlatform } from './context/PlatformContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MaintenanceProvider, useMaintenance } from './context/MaintenanceContext';
@@ -185,21 +187,50 @@ export function AgentShell() {
     if (!presenceAgent?.id) return;
     if ((presenceAgent.status || 'offline') === 'offline') {
       void setPresenceStatus('online');
-    } else {
-      void touchPresence?.();
     }
     void touchPresence?.();
-    const quick = window.setTimeout(() => { void touchPresence?.(); }, 500);
+    void publishDeskPresence({
+      id: presenceAgent.id,
+      name: presenceAgent.name || 'Agent',
+      status: presenceAgent.status || 'online',
+      avatar_url: presenceAgent.avatar_url,
+      initials: presenceAgent.initials,
+      color: presenceAgent.color,
+    });
+    const quick = window.setTimeout(() => {
+      void touchPresence?.();
+      void publishDeskPresence({
+        id: presenceAgent.id,
+        name: presenceAgent.name || 'Agent',
+        status: (presenceAgent.status || 'online') === 'offline' ? 'online' : (presenceAgent.status || 'online'),
+        avatar_url: presenceAgent.avatar_url,
+        initials: presenceAgent.initials,
+        color: presenceAgent.color,
+      });
+    }, 400);
     return () => window.clearTimeout(quick);
   }, [presenceAgent?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!presenceAgent?.id) return;
-    const tick = () => { void touchPresence?.(); };
+    const tick = () => {
+      void touchPresence?.();
+      void publishDeskPresence({
+        id: presenceAgent.id,
+        name: presenceAgent.name || 'Agent',
+        status: (presenceAgent.status || 'online') === 'offline' ? 'online' : (presenceAgent.status || 'online'),
+        avatar_url: presenceAgent.avatar_url,
+        initials: presenceAgent.initials,
+        color: presenceAgent.color,
+      });
+    };
     tick();
-    const id = window.setInterval(tick, 5000);
-    return () => window.clearInterval(id);
-  }, [presenceAgent?.id, touchPresence]);
+    const id = window.setInterval(tick, 4000);
+    return () => {
+      window.clearInterval(id);
+      void clearDeskPresence(presenceAgent.id);
+    };
+  }, [presenceAgent?.id, presenceAgent?.status, presenceAgent?.name, touchPresence]);
 
   useEffect(() => {
     const goOffline = () => {

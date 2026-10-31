@@ -1,3 +1,4 @@
+/* desk-presence-active-now-v1 */
 /* active-now-real-only-v1 */
 /* livechat-nexus-dark-hard-v1 */
 /* livechat-dark-presence-v1 */
@@ -22,6 +23,7 @@ import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
 import { MAX_CHAT_FILE_BYTES } from '../types';
 import { encodeChatFile, parseChatAttachment, isImageMime } from '../lib/chatAttachments';
+import { watchDeskPresence, type DeskAgent } from '../lib/deskPresence';
 import { watchChatViewers, type ChatViewer } from '../lib/chatPresence';
 
 const STORAGE_KEY = 'nexus-portal-chat-id';
@@ -113,31 +115,57 @@ export default function PortalLiveChat({ onBack }: Props) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [branch]);
 
+  const [deskAgents, setDeskAgents] = useState<DeskAgent[]>([]);
   const [presenceTick, setPresenceTick] = useState(0);
+  useEffect(() => {
+    return watchDeskPresence(setDeskAgents);
+  }, []);
   useEffect(() => {
     const id = window.setInterval(() => setPresenceTick((n) => n + 1), 5000);
     return () => window.clearInterval(id);
   }, []);
 
-    const onlineAgents = useMemo(() => {
-    const now = Date.now();
-    const LIVE_WINDOW_MS = 120_000;
+      const onlineAgents = useMemo(() => {
     const DEMO_NAMES = new Set([
       'sarah chen', 'marcus reed', 'aisha lane', 'tomás garcía', 'tomas garcia',
       'rachel kim', 'david okonkwo',
     ]);
-    return (agents || []).filter((a) => {
-      if (['1', '2', '3', '4', '5', '6'].includes(String(a.id))) return false;
-      if (DEMO_NAMES.has((a.name || '').toLowerCase())) return false;
+    const isDemo = (id: string, name: string) =>
+      ['1', '2', '3', '4', '5', '6'].includes(String(id)) || DEMO_NAMES.has((name || '').toLowerCase());
+    const now = Date.now();
+    const LIVE_WINDOW_MS = 180_000;
+    const byId = new Map<string, {
+      id: string; name: string; status: string; avatar_url?: string | null;
+      initials?: string; color?: string; last_seen_at?: string | null;
+    }>();
+    for (const a of agents || []) {
+      if (isDemo(String(a.id), a.name || '')) continue;
       const st = (a.approval_status || 'approved').toLowerCase();
-      if (st && st !== 'approved' && st !== 'active') return false;
+      if (st && st !== 'approved' && st !== 'active') continue;
       const status = (a.status || 'offline').toLowerCase();
-      if (status === 'offline' || status === '') return false;
+      if (status === 'offline' || status === '') continue;
       const seen = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
-      if (!seen || Number.isNaN(seen) || now - seen > LIVE_WINDOW_MS) return false;
-      return status === 'online' || status === 'busy' || status === 'away' || status === 'in_call' || status === 'custom';
-    });
-  }, [agents, presenceTick]);
+      const fresh = seen && !Number.isNaN(seen) && now - seen <= LIVE_WINDOW_MS;
+      const realId = String(a.id).includes('-') || String(a.id).length > 10;
+      if (fresh || (realId && status !== 'offline')) byId.set(String(a.id), a);
+    }
+    for (const d of deskAgents || []) {
+      if (isDemo(String(d.id), d.name || '')) continue;
+      const status = (d.status || 'online').toLowerCase();
+      if (status === 'offline') continue;
+      const prev = byId.get(String(d.id));
+      byId.set(String(d.id), {
+        id: d.id,
+        name: d.name || prev?.name || 'Agent',
+        status,
+        avatar_url: d.avatar_url ?? prev?.avatar_url,
+        initials: d.initials || prev?.initials,
+        color: d.color || prev?.color,
+        last_seen_at: new Date(d.at || now).toISOString(),
+      });
+    }
+    return Array.from(byId.values());
+  }, [agents, presenceTick, deskAgents]);
 
   
   useEffect(() => {
