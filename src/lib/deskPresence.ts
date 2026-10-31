@@ -1,4 +1,4 @@
-/** Real-time desk presence for Active Now. Safe subscribe order (no crash). */
+/** Desk presence: agent + customer share one Realtime channel. */
 import { supabase, isSupabaseConfigured } from './supabase';
 
 export type DeskAgent = {
@@ -14,19 +14,20 @@ export type DeskAgent = {
 const KEY = 'nexus-desk-presence-v1';
 const BC = 'nexus-desk-presence';
 const CHANNEL = 'desk-agents-v1';
-const LIVE_MS = 90_000;
+const LIVE_MS = 120_000;
 
 type PresenceChannel = ReturnType<NonNullable<typeof supabase>['channel']>;
 
-let publishCh: PresenceChannel | null = null;
-let watchCh: PresenceChannel | null = null;
+let sharedCh: PresenceChannel | null = null;
+let sharedReady: Promise<void> | null = null;
+let trackedId: string | null = null;
 
 function readLocal(): DeskAgent[] {
   try {
     const raw = localStorage.getItem(KEY);
     const list = raw ? (JSON.parse(raw) as DeskAgent[]) : [];
     const now = Date.now();
-    return (list || []).filter((a) => a && a.id && now - (a.at || 0) < LIVE_MS);
+    return (list || []).filter((a) => a?.id && now - (a.at || 0) < LIVE_MS);
   } catch {
     return [];
   }
@@ -54,6 +55,25 @@ function writeLocal(list: DeskAgent[]) {
   }
 }
 
+function ensureChannel(): PresenceChannel | null {
+  if (!isSupabaseConfigured || !supabase) return null;
+  if (sharedCh) return sharedCh;
+  try {
+    sharedCh = supabase.channel(CHANNEL, {
+      config: { presence: { key: 'desk' } },
+    });
+    sharedReady = new Promise((resolve) => {
+      sharedCh!.subscribe((status) => {
+        if (status === 'SUBSCRIBED') resolve();
+      });
+    });
+    return sharedCh;
+  } catch {
+    sharedCh = null;
+    return null;
+  }
+}
+
 export async function publishDeskPresence(agent: {
   id: string;
   name: string;
@@ -63,10 +83,12 @@ export async function publishDeskPresence(agent: {
   color?: string;
 } | null) {
   if (!agent?.id) return;
+  const statusRaw = (agent.status || 'online').toLowerCase();
+  const status = statusRaw === 'offline' || statusRaw === '' ? 'online' : statusRaw;
   const row: DeskAgent = {
     id: agent.id,
     name: agent.name || 'Agent',
-    status: (agent.status || 'online').toLowerCase() === 'offline' ? 'online' : agent.status || 'online',
+    status,
     avatar_url: agent.avatar_url || null,
     initials: agent.initials,
     color: agent.color,
@@ -76,31 +98,22 @@ export async function publishDeskPresence(agent: {
   const others = readLocal().filter((a) => a.id !== row.id);
   writeLocal([...others, row]);
 
-  if (!isSupabaseConfigured || !supabase) return;
-
+  const ch = ensureChannel();
+  if (!ch) return;
   try {
-    if (!publishCh) {
-      publishCh = supabase.channel(`desk-pub-${agent.id}`, {
-        config: { presence: { key: agent.id } },
-      });
-      publishCh.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED' && publishCh) {
-          try {
-            await publishCh.track(row);
-          } catch {
-            /* ignore */
-          }
-        }
-      });
-    } else {
-      try {
-        await publishCh.track(row);
-      } catch {
-        /* ignore */
-      }
-    }
+    await sharedReady;
+    trackedId = agent.id;
+    await ch.track({
+      id: row.id,
+      name: row.name,
+      status: row.status,
+      avatar_url: row.avatar_url,
+      initials: row.initials,
+      color: row.color,
+      at: row.at,
+    });
   } catch {
-    /* never crash the app for presence */
+    /* never crash */
   }
 }
 
@@ -108,21 +121,20 @@ export async function clearDeskPresence(agentId?: string | null) {
   if (agentId) {
     writeLocal(readLocal().filter((a) => a.id !== agentId));
   }
-  if (publishCh && supabase) {
+  if (sharedCh) {
     try {
-      await publishCh.untrack();
-      await supabase.removeChannel(publishCh);
+      await sharedCh.untrack();
     } catch {
       /* ignore */
     }
-    publishCh = null;
   }
+  if (agentId && trackedId === agentId) trackedId = null;
 }
 
-function fromWatchState(): DeskAgent[] {
-  if (!watchCh) return [];
+function fromPresence(): DeskAgent[] {
+  if (!sharedCh) return [];
   try {
-    const state = watchCh.presenceState() as Record<string, Array<Partial<DeskAgent>>>;
+    const state = sharedCh.presenceState() as Record<string, Array<Partial<DeskAgent>>>;
     const now = Date.now();
     const out: DeskAgent[] = [];
     for (const metas of Object.values(state)) {
@@ -148,7 +160,7 @@ function fromWatchState(): DeskAgent[] {
 export function getDeskPresence(): DeskAgent[] {
   const now = Date.now();
   const map = new Map<string, DeskAgent>();
-  for (const a of [...fromWatchState(), ...readLocal()]) {
+  for (const a of [...fromPresence(), ...readLocal()]) {
     if (!a?.id) continue;
     if (now - (a.at || 0) > LIVE_MS) continue;
     if ((a.status || '').toLowerCase() === 'offline') continue;
@@ -167,15 +179,18 @@ export function watchDeskPresence(onChange: (agents: DeskAgent[]) => void): () =
   };
   emit();
 
-  if (isSupabaseConfigured && supabase && !watchCh) {
+  const ch = ensureChannel();
+  if (ch) {
     try {
-      watchCh = supabase.channel(CHANNEL);
-      watchCh.on('presence', { event: 'sync' }, emit);
-      watchCh.on('presence', { event: 'join' }, emit);
-      watchCh.on('presence', { event: 'leave' }, emit);
-      void watchCh.subscribe();
+      try {
+        ch.on('presence', { event: 'sync' }, emit);
+        ch.on('presence', { event: 'join' }, emit);
+        ch.on('presence', { event: 'leave' }, emit);
+      } catch {
+        /* already subscribed — polling still works */
+      }
     } catch {
-      watchCh = null;
+      /* ignore */
     }
   }
 
@@ -189,7 +204,7 @@ export function watchDeskPresence(onChange: (agents: DeskAgent[]) => void): () =
   } catch {
     /* ignore */
   }
-  const tick = window.setInterval(emit, 3000);
+  const tick = window.setInterval(emit, 2000);
 
   return () => {
     window.removeEventListener('nexus-desk-presence', onEvt);
