@@ -1,3 +1,4 @@
+/* login-speed-tickets-v1 */
 /* touch-presence-status-v1 */
 /* no-demo-agents-v1 */
 /* status-fetch-resilient-v1 */
@@ -181,9 +182,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       ]);
     try {
       const [tRes, aRes, cRes] = await Promise.all([
-        withTimeout(supabase.from('tickets').select('*').order('created_at', { ascending: false }), 10000),
-        withTimeout(supabase.from('agents').select('*'), 10000),
-        withTimeout(supabase.from('customers').select('*'), 10000),
+        withTimeout(supabase.from('tickets').select('*').order('created_at', { ascending: false }), 5000),
+        withTimeout(supabase.from('agents').select('*'), 4000),
+        withTimeout(supabase.from('customers').select('*'), 4000),
       ]);
       const agentRows = aRes && typeof aRes === 'object' && 'data' in aRes ? (aRes as { data: Agent[] | null }).data : null;
       const customerRows = cRes && typeof cRes === 'object' && 'data' in cRes ? (cRes as { data: Customer[] | null }).data : null;

@@ -1,3 +1,4 @@
+/* login-speed-auth-v1 */
 /* supabase-paused-hint-v1 */
 /* force-offline-scope-v1 */
 /* auth-boot-timeout-v1 */
@@ -194,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         markTabSessionLive();
         let sess = null;
         try {
-          const result = await withTimeout(supabase.auth.getSession(), 4000);
+          const result = await withTimeout(supabase.auth.getSession(), 2500);
           if (result && typeof result === 'object' && result !== null && 'data' in result) {
             sess = (result as { data: { session: Session | null } }).data?.session ?? null;
           }
@@ -212,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void boot();
     window.setTimeout(() => {
       if (!cancelled) setLoading(false);
-    }, 6000);
+    }, 4000);
 
     const {
       data: { subscription },
@@ -250,7 +251,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw friendlyAuthError(error);
       if (!data.user) throw new Error('Authentication failed');
 
-      const role = await resolveRole(data.user, expectedRole);
+      let role = roleFromMetadata(data.user);
+      try {
+        const refined = await Promise.race([
+          resolveRole(data.user, expectedRole),
+          new Promise<typeof role>((r) => window.setTimeout(() => r(role), 2000)),
+        ]);
+        role = refined;
+      } catch {
+        /* keep metadata role */
+      }
       const normalized = role === 'admin' ? 'agent' : role;
 
       if (expectedRole && normalized !== expectedRole) {
@@ -262,7 +272,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      await assertApproved(data.user, role);
+      try {
+        await Promise.race([
+          assertApproved(data.user, role),
+          new Promise<void>((r) => window.setTimeout(() => r(), 2000)),
+        ]);
+      } catch (e) {
+        if (e instanceof Error && /pending|rejected/i.test(e.message)) throw e;
+      }
 
       setAccountRole(role);
       setUser(data.user);

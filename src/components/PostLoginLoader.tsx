@@ -1,9 +1,10 @@
+/* login-speed-v1 */
 /* postlogin-force-exit-v1 */
 /* postlogin-auto-clear-v1 */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-const MIN_MS = 3200;
-const FADE_MS = 900;
+const MIN_MS = 900;
+const FADE_MS = 400;
 const POST_LOGIN_KEY = 'nexus_post_login';
 
 export function markJustLoggedIn() {
@@ -290,10 +291,10 @@ export default function PostLoginLoader({
 
   useEffect(() => {
     const timers = [
-      window.setTimeout(() => setStepIdx(1), 750),
-      window.setTimeout(() => setStepIdx(2), 1600),
-      window.setTimeout(() => setStepIdx(3), 2500),
-      window.setTimeout(() => clearJustLoggedIn(), 3600),
+      window.setTimeout(() => setStepIdx(1), 200),
+      window.setTimeout(() => setStepIdx(2), 450),
+      window.setTimeout(() => setStepIdx(3), 700),
+      window.setTimeout(() => clearJustLoggedIn(), 1200),
     ];
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, []);
