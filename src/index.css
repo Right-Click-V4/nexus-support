@@ -1015,3 +1015,18 @@ html.nexus-dark .portal-mytickets-action-col,
 .dark .portal-mytickets-action-col {
   background: rgba(24, 20, 42, 0.98);
 }
+
+/* Live Chat panel — force dark glass when app theme is dark (nexus-dark) */
+.nexus-dark .livechat-shell {
+  background: rgba(9, 9, 11, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f4f4f5;
+}
+.nexus-dark .livechat-shell > div:first-child,
+.nexus-dark .livechat-shell > div:last-child {
+  background: rgba(9, 9, 11, 0.72) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.nexus-light .livechat-shell {
+  background: rgba(255, 255, 255, 0.55) !important;
+}

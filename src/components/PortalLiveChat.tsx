@@ -1,3 +1,4 @@
+/* livechat-nexus-dark-hard-v1 */
 /* livechat-dark-presence-v1 */
 /* livechat-ui-v3 */
 /* livechat-text-field-v1 */
@@ -486,7 +487,7 @@ export default function PortalLiveChat({ onBack }: Props) {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-zinc-200/40 dark:border-white/15 bg-white/50 dark:bg-zinc-950/80 backdrop-blur-xl shadow-lg shadow-black/10">
+    <div className="livechat-shell w-full max-w-4xl mx-auto flex flex-col min-h-[min(70vh,640px)] rounded-2xl overflow-hidden border border-zinc-200/50 dark:border-white/10 bg-white/55 dark:bg-zinc-950/85 backdrop-blur-xl shadow-lg shadow-black/20">
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 bg-white/55 dark:bg-zinc-950/70 backdrop-blur-md">
         <div className="flex items-center gap-2 min-w-0">
           <MessageCircle size={18} className="text-violet-600 dark:text-violet-300 shrink-0" />

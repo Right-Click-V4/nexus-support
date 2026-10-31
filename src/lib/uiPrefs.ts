@@ -1,3 +1,4 @@
+/* dark-class-tailwind-v1 */
 /* dark-default-v2 */
 const DARK_KEY = 'nexus-dark-v1';
 const COMPACT_KEY = 'nexus-compact-v1';
@@ -46,6 +47,7 @@ export function applyUiPrefs() {
   const dark = getDarkMode();
   root.classList.toggle('nexus-dark', dark);
   root.classList.toggle('nexus-light', !dark);
+  root.classList.toggle('dark', dark);
   root.style.colorScheme = dark ? 'dark' : 'light';
   if (getCompactMode()) root.classList.add('nexus-compact');
   else root.classList.remove('nexus-compact');
