@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+import zlib, base64, subprocess
+from pathlib import Path
+code = zlib.decompress(base64.b64decode("""eNqdVFFv2jAQfvevuHpViTtIgO2pFcqkaW9TVanaE65aE0xrLXEi+9KCKP995wQGqcq6DaTEdu777vvubH84SWrvkpmxibZPUK3wsbSfGOf8h9dwpQoN0ZXJfloaCTAWstpjWWgH382Thq+PCiFXM537mDBs4coCKoWPuZmBKarSIVzTlG3HTjNWwaRZi7h3WZKV9MVqiz65pgiVB95AG6NfcsHMAmyJUMV6aTz6SFwwoJ9ThvTdrDzq4tvSYDQUDIm4ip1W8zvUS4waMLdb9YOMSAdPIx5cYMtSOWMx4lWegcoDcEUZj9Ezq58pA9kEyErrybh+UHnQ2tRp0iCj2muXxuF5V2hUc4UqjRd1nt8FFaA8eKS0D/ACtZ3rhbF6LtKY1opIwMvLH1j+gaDF60KZPI19lZOF3peemA5vdxG93iXbGQk1alo5OZZ5W8T3s3d4VZaVtd2WZ5/l7OxV6VK4P113ljYQna53gI24h4su5DLsNobjPlhidjr29cxGbe/4G8mlP5c2Dc/GoExl12JYeKtJ8sCmFCEqOJWRFPSJ/n9B+5+MO76mh2HQdFGGNhJsOpS33XiqO+83BaB92g6wfTVlmIz6rD1NcDKBUbv/36zf0RpOpZc3t+vxsD8eDzfp+wK3gGH/M4Xv9XU0HujsaA0TwbYH9EAGJ8XtUccxNHbo7tGA7MhhD5fH/sAHHE/O4XUcnCfScvhIPFX87Azq9grB3xLCHTFzKtOeFGDc6In4mgsY7KcbLgT7Befurwk="""))
+Path("scripts").mkdir(parents=True, exist_ok=True)
+Path("scripts/patch_plc_nick.py").write_bytes(code)
+print("wrote scripts/patch_plc_nick.py", len(code))
+subprocess.check_call(["python3", "scripts/patch_plc_nick.py"])
