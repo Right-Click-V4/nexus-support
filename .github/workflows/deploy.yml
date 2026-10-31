@@ -51,7 +51,7 @@ jobs:
           python3 scripts/patch_chat_persist.py || true
           python3 scripts/patch_livechat_emoji_full.py || true
           python3 scripts/patch_portal_disabled.py || true
-          # Guard: never ship empty LiveChatPage
+          python3 scripts/patch_help_articles.py || true
           if [ ! -s src/components/LiveChatPage.tsx ] || ! grep -q 'export default' src/components/LiveChatPage.tsx; then
             echo "ERROR: LiveChatPage.tsx is empty or missing export" >&2
             exit 1
@@ -102,6 +102,7 @@ jobs:
           python3 scripts/patch_chat_persist.py || true
           python3 scripts/patch_livechat_emoji_full.py || true
           python3 scripts/patch_portal_disabled.py || true
+          python3 scripts/patch_help_articles.py || true
           if [ ! -s src/components/LiveChatPage.tsx ] || ! grep -q 'export default' src/components/LiveChatPage.tsx; then
             echo "ERROR: LiveChatPage.tsx is empty or missing export" >&2
             exit 1
