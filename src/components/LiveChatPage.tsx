@@ -1,3 +1,4 @@
+/* chat-text-body-v1 */
 /* chat-viewer-publish-v1 */
 /* livechat-text-field-v1 */
 import { useState, useEffect, useRef } from 'react';
@@ -86,7 +87,7 @@ export default function LiveChatPage() {
         return;
       }
       const transcript = (selected.messages || [])
-        .map((m) => `[${m.sender}] ${m.body}`)
+        .map((m) => `[${m.sender}] ${m.text || m.body || ''}`)
         .join('\n');
       const ticket = await createTicket({
         title: `Chat: ${selected.customer_name}`,
@@ -248,20 +249,20 @@ export default function LiveChatPage() {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {(selected.messages || []).map((m, i) => {
                   const isAgent = m.sender === 'agent';
-                  const isImg = typeof m.body === 'string' && /\.(png|jpe?g|gif|webp)(\?|$)/i.test(m.body);
+                  const isImg = typeof (m.text || m.body || '') === 'string' && /\.(png|jpe?g|gif|webp)(\?|$)/i.test((m.text || m.body || ''));
                   return (
                     <div key={m.id || i} className={clsx('max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm', isAgent ? 'ml-auto bg-brand-600 text-white' : 'bg-slate-100 text-slate-800')}>
                       <div className="text-[10px] font-semibold opacity-70 mb-0.5">{isAgent ? 'Agent' : 'Customer'}</div>
                       {isImg ? (
-                        <a href={m.body} target="_blank" rel="noreferrer" className="block">
-                          <img src={m.body} alt="attachment" className="max-h-48 rounded-lg" />
+                        <a href={(m.text || m.body || '')} target="_blank" rel="noreferrer" className="block">
+                          <img src={(m.text || m.body || '')} alt="attachment" className="max-h-48 rounded-lg" />
                         </a>
                       ) : (m.text || (m as { body?: string }).body || '').startsWith('http') ? (
-                        <a href={m.body} target="_blank" rel="noreferrer" className="underline break-all inline-flex items-center gap-1">
-                          {m.body} <ExternalLink size={12} />
+                        <a href={(m.text || m.body || '')} target="_blank" rel="noreferrer" className="underline break-all inline-flex items-center gap-1">
+                          {(m.text || m.body || '')} <ExternalLink size={12} />
                         </a>
                       ) : (
-                        <div className="whitespace-pre-wrap break-words">{m.body}</div>
+                        <div className="whitespace-pre-wrap break-words">{(m.text || m.body || '')}</div>
                       )}
                       <div className="text-[10px] opacity-60 mt-1">
                         {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}

@@ -1,3 +1,4 @@
+/* status-desk-publish-v1 */
 /* login-speed-tickets-v1 */
 /* touch-presence-status-v1 */
 /* no-demo-agents-v1 */
@@ -27,6 +28,7 @@ import type { Ticket, Agent, Customer, Priority, Channel, TicketNote, TicketMess
 import { computeSlaDue } from '../types';
 import { INITIAL_TICKETS, INITIAL_AGENTS, INITIAL_CUSTOMERS, nextTicketId } from '../data';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { publishDeskPresence } from '../lib/deskPresence';
 import { useAuth } from './AuthContext';
 import { notifyAgents, notifyCustomer } from '../lib/agentNotify';
 import { pushAudit } from '../lib/audit';
@@ -606,6 +608,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
     setCurrentAgent(next);
     setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
+    if (status !== 'offline') {
+      void publishDeskPresence({
+        id: next.id,
+        name: next.name || 'Agent',
+        status: next.status || 'online',
+        avatar_url: next.avatar_url,
+        initials: next.initials,
+        color: next.color,
+      });
+    }
     try {
       localStorage.setItem('nexus-presence-agent-id', currentAgent.id);
     } catch { /* ignore */ }

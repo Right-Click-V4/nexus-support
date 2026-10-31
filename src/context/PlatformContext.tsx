@@ -1,3 +1,4 @@
+/* chat-sync-v1 */
 /* customer-notif-merge-v1 */
 import {
   createContext,
@@ -208,7 +209,11 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       setConversations(
         (chats.data as ChatConversation[]).map((c) => ({
           ...c,
-          messages: byConv[c.id] || c.messages || [],
+          messages: (byConv[c.id] || c.messages || []).map((mm: ChatMessage & { body?: string }) => ({
+            ...mm,
+            text: mm.text || mm.body || '',
+            body: mm.body || mm.text || '',
+          })),
         })),
       );
     }
@@ -378,6 +383,13 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       } catch { /* ignore */ }
     };
   }, [refreshAnnouncementsLight]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const id = window.setInterval(() => { void refreshPlatform(); }, 3000);
+    return () => window.clearInterval(id);
+  }, [refreshPlatform]);
+
 
 
   useEffect(() => {
