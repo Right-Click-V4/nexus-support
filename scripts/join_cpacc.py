@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-import zlib, base64
 from pathlib import Path
+import base64
+root = Path(__file__).resolve().parents[1]
 parts = []
-for i in range(8):
-    p = Path(f"scripts/cpacc{i}.txt")
+for i in range(3):
+    p = root / 'scripts' / f'cpacc_{i}.b64'
     if not p.exists():
-        raise SystemExit(f"missing {p}")
-    parts.append(p.read_text().strip())
-c = "".join(parts)
-pad = (-len(c)) % 4
-if pad:
-    c += "=" * pad
-data = zlib.decompress(base64.b64decode(c))
-Path("src/components/CustomerPortal.tsx").write_bytes(data)
-print("wrote CustomerPortal.tsx", len(data))
+        raise SystemExit(f'missing {p}')
+    parts.append(base64.b64decode(p.read_text().strip()).decode())
+out = root / 'src' / 'components' / 'CustomerPortal.tsx'
+text = ''.join(parts)
+out.write_text(text)
+print(f'wrote {out} ({len(text)} chars)')
