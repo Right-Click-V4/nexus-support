@@ -24,6 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Always restore + wire so Account toast/avatar and tab content stay intact
       - name: Ensure full CustomerPortal
         run: |
           set -e
