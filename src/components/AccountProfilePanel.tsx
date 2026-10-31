@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
-import { Camera, Phone, Briefcase, Lock, KeyRound, LogOut } from 'lucide-react';
+import { Camera, Phone, Briefcase, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 function AccountProfilePanel({
   legalName,
@@ -43,6 +43,8 @@ function AccountProfilePanel({
   const [pwBusy, setPwBusy] = useState(false);
   const [pwMsg, setPwMsg] = useState('');
   const [pwErr, setPwErr] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [showPw2, setShowPw2] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -243,11 +245,47 @@ function AccountProfilePanel({
         <form onSubmit={changePw} className="space-y-3 max-w-md">
           <div>
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">New password</label>
-            <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} className={field} autoComplete="new-password" minLength={6} />
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                className={field + ' pr-10'}
+                autoComplete="new-password"
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                title={showPw ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirm password</label>
-            <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} className={field} autoComplete="new-password" minLength={6} />
+            <div className="relative">
+              <input
+                type={showPw2 ? 'text' : 'password'}
+                value={pw2}
+                onChange={(e) => setPw2(e.target.value)}
+                className={field + ' pr-10'}
+                autoComplete="new-password"
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw2((v) => !v)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                title={showPw2 ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showPw2 ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           {pwErr && <div className="text-sm text-rose-600 dark:text-rose-400">{pwErr}</div>}
           {pwMsg && <div className="text-sm text-emerald-700 dark:text-emerald-300">{pwMsg}</div>}
@@ -256,18 +294,6 @@ function AccountProfilePanel({
           </button>
         </form>
       </section>
-
-      {requiresAuth && (
-        <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-medium text-zinc-800 dark:text-zinc-100 border border-white/25 dark:border-white/15 rounded-xl bg-white/20 dark:bg-black/20 hover:bg-white/35 dark:hover:bg-white/10"
-          >
-            <LogOut size={16} /> Sign out
-          </button>
-        </section>
-      )}
     </div>
   );
 }
