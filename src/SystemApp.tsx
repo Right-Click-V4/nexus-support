@@ -1,3 +1,4 @@
+/* admin-features-page-always-v1 */
 /* desk-presence-publish-v1 */
 /* hash-404-strict-v1 */
 /* status-fab-v1 */
@@ -725,10 +726,8 @@ export function AgentShell() {
             {activeNav === 'releases' && <ReleasesPage />}
             {activeNav === 'settings' && <SettingsPage />}
             {activeNav === 'profile' && <ProfilePage />}
-            {activeNav === 'admin-features' && admin && <AdminFeaturesPage />}
-            {activeNav === 'admin-features' && !admin && (
-              <div className="text-sm text-zinc-500">Admin access required.</div>
-            )}
+            {activeNav === 'admin-features' && <AdminFeaturesPage />}
+            
             {!TITLES[activeNav] && (
               <NotFoundScreen onGoHome={() => setActiveNav('dashboard')} />
             )}

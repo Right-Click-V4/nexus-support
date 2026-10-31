@@ -1,3 +1,4 @@
+/* admin-features-always-v1 */
 /* status-dot-match-v1 */
 import {
   LayoutDashboard, Ticket, Building2, BookOpen, MessageSquare,
@@ -180,14 +181,12 @@ export default function Sidebar({
           <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Tools</div>
           <div className="space-y-0.5">{renderNav(toolItems)}</div>
         </div>
-        {isAdmin && (
-          <div>
+        <div>
             <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Admin</div>
             <div className="space-y-0.5">
               {renderNav([{ id: 'admin-features', label: 'Admin Features', icon: Shield }])}
             </div>
           </div>
-        )}
       </nav>
       <div className="p-3 border-t border-zinc-800/80 space-y-1">
         <button type="button" onClick={() => onNavigate('settings')} className={clsx('w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium', active === 'settings' ? 'bg-brand-600/20 text-white' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200')}>
