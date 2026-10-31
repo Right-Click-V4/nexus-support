@@ -10,12 +10,6 @@ interface State {
   error: Error | null;
 }
 
-/**
- * Uncaught errors → branded 404 UI (no debug/reload buttons).
- * We do NOT force location.hash to #/404, so a full refresh can boot
- * cleanly to the login page once the app is healthy again.
- * If the underlying bug is still present, the error fires again → 404 again.
- */
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
 
@@ -26,9 +20,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error) {
     try {
       console.error('[NexusOps]', error);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }
 
   private goLogin = () => {
@@ -37,11 +29,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       window.location.hash = '#/';
       window.location.reload();
     } catch {
-      try {
-        window.location.href = '/';
-      } catch {
-        /* ignore */
-      }
+      window.location.href = '/';
     }
   };
 

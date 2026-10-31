@@ -3,6 +3,7 @@ const src = `${BASE}${encodeURIComponent('404_ Monsters Overran the Station.png'
 
 export default function NotFoundScreen({
   onAdminSignIn,
+  onGoHome,
 }: {
   onAdminSignIn?: () => void;
   onGoHome?: () => void;
@@ -35,6 +36,18 @@ export default function NotFoundScreen({
         </div>
 
         <p className="nf-copy">This page doesn't exist — or the station got overrun.</p>
+        <div className="nf-actions">
+          {onGoHome ? (
+            <button type="button" onClick={onGoHome} className="nf-home-btn">
+              Back to login
+            </button>
+          ) : null}
+          {onAdminSignIn ? (
+            <button type="button" onClick={onAdminSignIn} className="nf-admin-btn">
+              Admin sign in
+            </button>
+          ) : null}
+        </div>
 
         {onAdminSignIn ? (
           <button type="button" onClick={onAdminSignIn} className="nf-admin-btn">
@@ -216,6 +229,9 @@ export default function NotFoundScreen({
           max-width: 36rem;
           text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
         }
+        .nf-actions { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:18px; }
+        .nf-home-btn { padding:10px 20px; border-radius:999px; border:1px solid rgba(167,139,250,0.45); background:rgba(124,58,237,0.9); color:#f5f3ff; font-size:13px; font-weight:600; cursor:pointer; }
+        .nf-home-btn:hover { background:rgba(139,92,246,0.95); }
         .nf-admin-btn {
           margin-top: 2px;
           padding: 0.55rem 1.1rem;
