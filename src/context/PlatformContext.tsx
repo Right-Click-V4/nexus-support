@@ -1,3 +1,4 @@
+/* chat-persist-overrides-v1 */
 /* delete-hold-v1 */
 /* livechat-archive-api-v1 */
 /* chat-sync-v1 */
@@ -168,6 +169,61 @@ interface PlatformContextValue {
 }
 
 const PlatformContext = createContext<PlatformContextValue | null>(null);
+
+
+const CHAT_DELETED_KEY = 'nexus-chat-deleted-v1';
+const CHAT_ARCHIVED_KEY = 'nexus-chat-archived-v1';
+
+function readChatDeleted(): Set<string> {
+  try {
+    const raw = localStorage.getItem(CHAT_DELETED_KEY);
+    const arr = raw ? (JSON.parse(raw) as string[]) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+function writeChatDeleted(ids: Set<string>) {
+  try {
+    localStorage.setItem(CHAT_DELETED_KEY, JSON.stringify([...ids]));
+  } catch { /* ignore */ }
+}
+function readChatArchived(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(CHAT_ARCHIVED_KEY);
+    const obj = raw ? JSON.parse(raw) : {};
+    return obj && typeof obj === 'object' ? obj : {};
+  } catch {
+    return {};
+  }
+}
+function writeChatArchived(map: Record<string, string>) {
+  try {
+    localStorage.setItem(CHAT_ARCHIVED_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
+}
+function markChatDeleted(id: string) {
+  const s = readChatDeleted();
+  s.add(id);
+  writeChatDeleted(s);
+  const arch = readChatArchived();
+  if (arch[id]) {
+    delete arch[id];
+    writeChatArchived(arch);
+  }
+}
+function markChatArchived(id: string) {
+  const arch = readChatArchived();
+  arch[id] = new Date().toISOString();
+  writeChatArchived(arch);
+}
+function clearChatArchived(id: string) {
+  const arch = readChatArchived();
+  if (arch[id]) {
+    delete arch[id];
+    writeChatArchived(arch);
+  }
+}
 
 export function PlatformProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -532,6 +588,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   ) => {
     let nextStatus: string = status;
     if (status === 'ended') nextStatus = 'archived';
+    if (nextStatus === 'archived') markChatArchived(id);
+    if (status === 'active' || nextStatus === 'active') clearChatArchived(id);
     const patch: Record<string, unknown> = { status: nextStatus, updated_at: new Date().toISOString() };
     if (nextStatus === 'archived') patch.archived_at = new Date().toISOString();
     setConversations((prev) =>
@@ -564,6 +622,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   };
   const archiveChat = async (id: string) => { await setChatStatus(id, 'archived'); };
   const deleteChat = async (id: string) => {
+    markChatDeleted(id);
     setConversations((prev) => prev.filter((c) => c.id !== id));
     if (!supabase) return;
     const withTimeout = <T,>(promise: PromiseLike<T>, ms: number) =>
