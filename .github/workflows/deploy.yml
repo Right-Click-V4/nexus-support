@@ -1,1 +1,75 @@
-PLACEHOLDER_DEPLOY
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore CustomerPortal if stubbed
+        run: |
+          set -e
+          if ! grep -q "PortalLiveChat" src/components/CustomerPortal.tsx 2>/dev/null; then
+            echo "Restoring CustomerPortal from last good commit..."
+            git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
+          fi
+          python3 scripts/wire_account_panel.py
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm run build
+          touch dist/.nojekyll
+
+      - name: Deploy dist to gh-pages
+        env:
+          TOKEN: ${{ secrets.PAGES_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          rm -rf work-gh-pages
+          mkdir work-gh-pages
+          cd work-gh-pages
+          git init
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch origin gh-pages --depth=1 && git rev-parse origin/gh-pages >/dev/null 2>&1; then
+            git checkout -f origin/gh-pages
+            git checkout -B gh-pages
+            find . -mindepth 1 -maxdepth 1 ! -name preview ! -name '.git' -exec rm -rf {} +
+          else
+            git checkout --orphan gh-pages
+          fi
+          cp -a ../dist/. .
+          touch .nojekyll
+          git add -A
+          git commit -m "deploy ${GITHUB_SHA}" || echo "No changes"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
