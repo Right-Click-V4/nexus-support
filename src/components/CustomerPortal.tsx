@@ -1,3 +1,4 @@
+/* portal-scroll-top-v1 */
 /* help-articles-glass-v1 */
 /* fix-cp-jsx-topbar-v1 */
 /* cp-full-restore-v2 */
@@ -215,6 +216,12 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
     conversations,
   } = usePlatform();
   const [view, setView] = useState<PortalView>('home');
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    // Also reset window scroll if any outer container scrolled
+    try { window.scrollTo(0, 0); } catch { /* ignore */ }
+  }, [view]);
   const [myTicketsPage, setMyTicketsPage] = useState(1);
   const [myTicketsDateFrom, setMyTicketsDateFrom] = useState('');
   const [myTicketsDateTo, setMyTicketsDateTo] = useState('');
@@ -723,6 +730,7 @@ export default function CustomerPortal({ onBackToAgent }: Props) {
         <PortalAnnouncementMarquee />
 
         <main
+          ref={mainRef}
           className={`relative z-10 flex-1 min-h-0 ${
             view === 'community'
               ? 'overflow-hidden flex flex-col p-3 lg:p-5'
