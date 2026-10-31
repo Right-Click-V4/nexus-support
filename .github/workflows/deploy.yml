@@ -27,6 +27,7 @@ jobs:
           set -e
           python3 scripts/patch_fix_profile_escape.py || true
           python3 scripts/patch_restore_customer_portal.py
+          python3 scripts/join_cpacc.py || true
           python3 scripts/patch_restore_platform_ctx.py
           python3 scripts/patch_fix_cp_jsx_topbar.py || true
           python3 scripts/patch_ticket_ops_timeout.py || true
@@ -78,64 +79,3 @@ jobs:
       - name: Build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: |
-          python3 scripts/patch_fix_profile_escape.py || true
-          python3 scripts/patch_restore_customer_portal.py
-          python3 scripts/patch_restore_platform_ctx.py
-          python3 scripts/patch_fix_cp_jsx_topbar.py || true
-          python3 scripts/patch_ticket_ops_timeout.py || true
-          python3 scripts/patch_postlogin_force_exit.py || true
-          python3 scripts/patch_profile_rework.py || true
-          python3 scripts/patch_profile_fetch_resilient.py || true
-          python3 scripts/patch_status_fab.py || true
-          python3 scripts/patch_livechat_fix_v2.py || true
-          python3 scripts/patch_livechat_ui_404.py || true
-          python3 scripts/patch_livechat_dark_presence.py || true
-          python3 scripts/patch_livechat_lcp_dedupe.py || true
-          python3 scripts/patch_dark_class_theme.py || true
-          python3 scripts/patch_no_demo_agents.py || true
-          python3 scripts/patch_desk_presence.py || true
-          python3 scripts/patch_desk_404.py || true
-          python3 scripts/patch_error_404_flow.py || true
-          python3 scripts/patch_login_speed.py || true
-          python3 scripts/patch_status_chat_sync.py || true
-          python3 scripts/patch_restore_admin_features.py || true
-          python3 scripts/patch_livechat_archive_delete.py || true
-          python3 scripts/patch_livechat_delete_hold.py || true
-          python3 scripts/patch_chat_persist.py || true
-          python3 scripts/patch_livechat_emoji_full.py || true
-          python3 scripts/patch_portal_disabled.py || true
-          python3 scripts/join_hc.py || true
-          python3 scripts/run_scroll_top.py || true
-          python3 scripts/run_auth_profile.py || true
-          python3 scripts/join_acc.py || true
-          python3 scripts/run_plc_nick.py || true
-          if [ ! -s src/components/LiveChatPage.tsx ] || ! grep -q 'export default' src/components/LiveChatPage.tsx; then
-            echo "ERROR: LiveChatPage.tsx is empty or missing export" >&2
-            exit 1
-          fi
-          npm run build
-          touch dist/.nojekyll
-
-      - name: Deploy dist to gh-pages
-        env:
-          TOKEN: ${{ secrets.PAGES_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          rm -rf work-gh-pages && mkdir work-gh-pages && cd work-gh-pages
-          git init
-          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          if git fetch origin gh-pages --depth=1 && git rev-parse origin/gh-pages >/dev/null 2>&1; then
-            git checkout -f origin/gh-pages && git checkout -B gh-pages
-            find . -mindepth 1 -maxdepth 1 ! -name preview ! -name '.git' -exec rm -rf {} +
-          else
-            git checkout --orphan gh-pages
-          fi
-          cp -a ../dist/. .
-          touch .nojekyll
-          git add -A
-          git commit -m "deploy ${GITHUB_SHA}" || echo "No changes"
-          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
