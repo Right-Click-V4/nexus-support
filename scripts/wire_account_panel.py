@@ -53,34 +53,35 @@ m = acc_pat.search(cp)
 if m:
     cp = cp[: m.start()] + acc_new + cp[m.end() :]
 
-old_cta = """                <section className=\"portal-overview-glass rounded-2xl p-4 sm:p-5\">
-                  <div className=\"flex items-center gap-2 mb-2\">
-                    <div className=\"w-8 h-8 rounded-lg bg-violet-500/15 text-violet-600 dark:text-violet-300 flex items-center justify-center\"><LifeBuoy size={16} /></div>
-                    <div>
-                      <h2 className=\"text-sm font-semibold text-zinc-900 dark:text-zinc-50\">Still need help?</h2>
-                      <p className=\"text-[11px] text-zinc-600 dark:text-zinc-400\">We are here when self-serve is not enough</p>
-                    </div>
-                  </div>
-                  <div className=\"flex flex-wrap gap-2\">"""
-new_cta = """                <section className=\"portal-overview-glass rounded-2xl p-5 sm:p-6 max-w-xl mx-auto text-center\">
-                  <div className=\"flex flex-col items-center gap-2 mb-3\">
-                    <div className=\"w-10 h-10 rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-300 flex items-center justify-center\"><LifeBuoy size={18} /></div>
-                    <div>
-                      <h2 className=\"text-sm font-semibold text-zinc-900 dark:text-zinc-50\">Still need help?</h2>
-                      <p className=\"text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5\">We are here when self-serve is not enough</p>
-                    </div>
-                  </div>
-                  <div className=\"flex flex-wrap justify-center gap-2\">"""
-if old_cta in cp:
-    cp = cp.replace(old_cta, new_cta)
+# Compact Still need help — no icon, thinner
+new_cta = (
+    '                <section className="portal-overview-glass rounded-2xl px-5 py-4 sm:px-6 sm:py-4 max-w-xl mx-auto text-center">\n'
+    '                  <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Still need help?</h2>\n'
+    '                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 mb-3">We are here when self-serve is not enough</p>\n'
+    '                  <div className="flex flex-wrap justify-center gap-2">'
+)
+cta_pat = re.compile(
+    r'<section className="portal-overview-glass rounded-2xl[^>]*>[\s\S]*?<h2[^>]*>Still need help\?</h2>[\s\S]*?<div className="flex flex-wrap[^>]*>',
+    re.M,
+)
+m2 = cta_pat.search(cp)
+if m2:
+    cp = cp[: m2.start()] + new_cta + cp[m2.end() :]
+    print('CTA compact no-icon')
+else:
+    print('CTA pattern not found')
 
 p.write_text(cp)
-print('CP wired', 'AccountProfilePanel' in cp, 'max-w-xl mx-auto' in cp)
+print('CP wired', 'AccountProfilePanel' in cp)
 
 panel = Path('src/components/AccountProfilePanel.tsx')
 if panel.exists():
     t = panel.read_text()
-    # Fix broken className: space or backslash before {email}
-    t = re.sub(r'truncate\\?\s*\{email\}', 'truncate' + chr(123) + 'email' + chr(125), t)
-    panel.write_text(t)
-    print('panel email line fixed')
+    out = []
+    for line in t.splitlines():
+        if 'truncate' in line and 'email' in line and 'className' in line:
+            out.append('              <div className="text-sm text-zinc-600 dark:text-zinc-400 truncate">{email}</div>')
+        else:
+            out.append(line)
+    panel.write_text('\n'.join(out) + ('\n' if t.endswith('\n') else ''))
+    print('panel email line normalized')
