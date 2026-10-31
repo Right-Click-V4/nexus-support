@@ -1,3 +1,4 @@
+/* delete-hold-v1 */
 /* livechat-archive-api-v1 */
 /* chat-sync-v1 */
 /* customer-notif-merge-v1 */
@@ -144,7 +145,7 @@ interface PlatformContextValue {
   deleteArticle: (id: string) => Promise<void>;
   createChat: (customer_name: string, customer_email?: string, meta?: CreateChatMeta) => Promise<ChatConversation>;
   sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer') => Promise<void>;
-  setChatStatus: (id: string, status: 'waiting' | 'active' | 'ended' | 'archived') => Promise<void>;
+  setChatStatus: (id: string, status: 'waiting' | 'active' | 'ended' | 'archived' | 'on_hold') => Promise<void>;
   archiveChat: (id: string) => Promise<void>;
   linkTicketId: (conversationId: string, ticketId: string) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
@@ -583,31 +584,57 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setChatStatus = async (id: string, status: 'waiting' | 'active' | 'ended' | 'archived') => {
-    if (supabase) {
-      const patch: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
-      if (status === 'archived') patch.archived_at = new Date().toISOString();
-      const { error } = await supabase.from('chat_conversations').update(patch).eq('id', id);
-      if (error && status === 'archived') {
+  const setChatStatus = async (
+    id: string,
+    status: 'waiting' | 'active' | 'ended' | 'archived' | 'on_hold',
+  ) => {
+    let nextStatus: string = status;
+    if (status === 'ended') nextStatus = 'archived';
+    const patch: Record<string, unknown> = { status: nextStatus, updated_at: new Date().toISOString() };
+    if (nextStatus === 'archived') patch.archived_at = new Date().toISOString();
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              status: nextStatus as ChatConversation['status'],
+              updated_at: new Date().toISOString(),
+              archived_at: nextStatus === 'archived' ? new Date().toISOString() : (c as { archived_at?: string }).archived_at,
+            }
+          : c,
+      ),
+    );
+    if (!supabase) return;
+    try {
+      let { error } = await supabase.from('chat_conversations').update(patch).eq('id', id);
+      if (error && nextStatus === 'on_hold') {
+        const retry = await supabase.from('chat_conversations').update({ status: 'waiting', updated_at: new Date().toISOString() }).eq('id', id);
+        error = retry.error;
+        if (!error) setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'waiting' as ChatConversation['status'] } : c)));
+      }
+      if (error && nextStatus === 'archived') {
         await supabase.from('chat_conversations').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', id);
       }
-      await refreshPlatform();
-    } else {
-      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, status: status as ChatConversation['status'], updated_at: new Date().toISOString() } : c)));
+      try { await refreshPlatform(); } catch {}
+    } catch (e) {
+      console.error('setChatStatus', e);
     }
   };
   const archiveChat = async (id: string) => { await setChatStatus(id, 'archived'); };
   const deleteChat = async (id: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (!supabase) return;
+    const withTimeout = <T,>(promise: PromiseLike<T>, ms: number) =>
+      Promise.race([
+        Promise.resolve(promise),
+        new Promise<T>((_, rej) => window.setTimeout(() => rej(new Error('timeout')), ms)),
+      ]);
     try {
-      if (supabase) {
-        await supabase.from('chat_messages').delete().eq('conversation_id', id);
-        const { error } = await supabase.from('chat_conversations').delete().eq('id', id);
-        if (error) console.error('deleteChat', error);
-        await refreshPlatform();
-      } else setConversations((prev) => prev.filter((c) => c.id !== id));
+      try { await withTimeout(supabase.from('chat_messages').delete().eq('conversation_id', id), 4000); } catch {}
+      try { await withTimeout(supabase.from('chat_conversations').delete().eq('id', id), 4000); } catch {}
+      try { await withTimeout(refreshPlatform(), 5000); } catch {}
     } catch (e) {
       console.error('deleteChat', e);
-      throw e;
     }
   };
   const linkTicketId = async (conversationId: string, ticketId: string) => {

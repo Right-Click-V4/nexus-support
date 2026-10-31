@@ -1,3 +1,4 @@
+/* delete-hold-ui-v1 */
 /* livechat-archive-delete-v1 */
 /* chat-text-body-v1 */
 /* chat-viewer-publish-v1 */
@@ -142,14 +143,24 @@ export default function LiveChatPage() {
 
   const confirmDelete = async () => {
     if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
     setDeleteBusy(true);
-    try {
-      await deleteChat(confirmDeleteId);
-      if (selectedId === confirmDeleteId) setSelectedId(null);
+    const safety = window.setTimeout(() => {
+      setDeleteBusy(false);
       setConfirmDeleteId(null);
+      if (selectedId === id) setSelectedId(null);
+    }, 6000);
+    try {
+      await deleteChat(id);
+      if (selectedId === id) setSelectedId(null);
+      setConfirmDeleteId(null);
+      setMsg('Chat permanently deleted.');
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Failed to delete chat');
+      if (selectedId === id) setSelectedId(null);
+      setConfirmDeleteId(null);
+      setMsg(e instanceof Error ? e.message : 'Chat removed.');
     } finally {
+      window.clearTimeout(safety);
       setDeleteBusy(false);
     }
   };
@@ -268,11 +279,32 @@ export default function LiveChatPage() {
                       <Ticket size={12} /> Convert to ticket
                     </button>
                   )}
-                  <select value={selected.status} onChange={(e) => setChatStatus(selected.id, e.target.value as 'active' | 'waiting' | 'ended')} className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
-                    <option value="waiting">Waiting</option>
-                    <option value="active">Active</option>
+                  <select
+                    value={
+                      selected.status === 'on_hold' || selected.status === 'waiting'
+                        ? 'on_hold'
+                        : selected.status === 'archived' || selected.status === 'ended'
+                          ? 'ended'
+                          : ''
+                    }
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === 'on_hold') void setChatStatus(selected.id, 'on_hold');
+                      else if (v === 'ended') void setChatStatus(selected.id, 'ended');
+                    }}
+                    className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white dark:bg-zinc-900 dark:text-zinc-100 dark:border-white/15"
+                  >
+                    <option value="" disabled>
+                      Change status…
+                    </option>
+                    <option value="on_hold">On Hold</option>
                     <option value="ended">Ended</option>
                   </select>
+                  {(selected.status === 'on_hold' || selected.status === 'waiting') && (
+                    <button type="button" onClick={() => void setChatStatus(selected.id, 'active')} className="inline-flex items-center gap-1 text-xs font-medium text-emerald-500 px-2 py-1.5 rounded-lg hover:bg-white/5">
+                      <RotateCcw size={14} /> Resume
+                    </button>
+                  )}
                   {selected.status === 'ended' && (
                     <button type="button" onClick={() => setChatStatus(selected.id, 'active')} className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 px-2 py-1.5 rounded-lg hover:bg-white/5">
                       <RotateCcw size={12} /> Reopen

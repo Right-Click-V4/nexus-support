@@ -1,3 +1,4 @@
+/* on-hold-customer-v1 */
 /* desk-presence-active-now-v1 */
 /* active-now-real-only-v1 */
 /* livechat-nexus-dark-hard-v1 */
@@ -93,6 +94,16 @@ export default function PortalLiveChat({ onBack }: Props) {
 
   const conversation = conversations.find((c) => c.id === chatId) || null;
   const messages = conversation?.messages || [];
+  const isOnHold = ['on_hold', 'waiting'].includes((conversation?.status || '').toLowerCase());
+
+  useEffect(() => {
+    const st = (conversation?.status || '').toLowerCase();
+    if (st === 'ended' || st === 'archived') {
+      try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+      setChatId(null);
+      setDraft('');
+    }
+  }, [conversation?.status]);
   useEffect(() => {
     return watchChatViewers(chatId, setChatViewers);
   }, [chatId]);
@@ -247,6 +258,7 @@ export default function PortalLiveChat({ onBack }: Props) {
   };
 
   const send = async () => {
+    if (isOnHold) return;
     if (!chatId || !draft.trim()) return;
     const text = draft.trim();
     setDraft('');
@@ -546,6 +558,15 @@ export default function PortalLiveChat({ onBack }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent">
+        {isOnHold ? (
+          <div className="rounded-xl border border-amber-400/40 bg-amber-500/15 px-4 py-3 text-sm text-amber-100">
+            <div className="font-semibold text-amber-50">Chat is on hold</div>
+            <p className="text-xs mt-1 text-amber-100/90">
+              An agent paused this conversation. Messaging is disabled for now — please wait and we will resume shortly.
+            </p>
+          </div>
+        ) : null}
+
         {messages.map((m) => {
           const mine = m.sender === 'customer';
           const raw = m.text || (m as { body?: string }).body || '';
@@ -609,7 +630,7 @@ export default function PortalLiveChat({ onBack }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {conversation?.status !== 'ended' && (
+      {conversation?.status !== 'ended' && conversation?.status !== 'archived' && (
         <div className="border-t border-zinc-200/50 dark:border-white/10 p-3 bg-white/50 dark:bg-zinc-950/75 backdrop-blur-md space-y-2">
           <div className="flex flex-wrap gap-1.5">
             {QUICK_REPLIES.map((q) => (
@@ -655,7 +676,7 @@ export default function PortalLiveChat({ onBack }: Props) {
             />
             <button
               type="button"
-              onClick={() => void send()}
+              disabled={isOnHold} onClick={() => void send()}
               disabled={!draft.trim()}
               className="p-2.5 rounded-xl bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-40"
             >
