@@ -1,3 +1,4 @@
+/* no-demo-agents-v1 */
 /* status-fetch-resilient-v1 */
 /* ticket-ops-timeout-v1 */
 /* tickets-presence-fix-v1 */
@@ -138,12 +139,17 @@ function initialsFromName(name: string): string {
 
 /** Keep only real agents for team UI (hide customer-role rows + duplicates). */
 function filterAgents(list: Agent[]): Agent[] {
+  const DEMO_IDS = new Set(['1', '2', '3', '4', '5', '6']);
+  const DEMO_NAMES = new Set([
+    'sarah chen', 'marcus reed', 'aisha lane', 'tomás garcía', 'tomas garcia',
+    'rachel kim', 'david okonkwo',
+  ]);
   const seen = new Set<string>();
   return list.filter((a) => {
-    const role = (a.role || '').toLowerCase();
-    if (role.includes('customer')) return false;
-    const st = (a.approval_status || 'approved').toLowerCase();
-    if (st === 'rejected' || st === 'pending') return false;
+    if (isSupabaseConfigured) {
+      if (DEMO_IDS.has(String(a.id))) return false;
+      if (DEMO_NAMES.has((a.name || '').toLowerCase())) return false;
+    }
     const key = (a.email || a.name || a.id).toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
@@ -154,7 +160,7 @@ function filterAgents(list: Agent[]): Agent[] {
 export function TicketProvider({ children }: { children: ReactNode }) {
   const { user, accountRole } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>(() => (isSupabaseConfigured ? [] : loadLocal()));
-  const [agents, setAgents] = useState<Agent[]>(INITIAL_AGENTS);
+  const [agents, setAgents] = useState<Agent[]>(() => (isSupabaseConfigured ? [] : INITIAL_AGENTS));
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
@@ -181,8 +187,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const agentRows = aRes && typeof aRes === 'object' && 'data' in aRes ? (aRes as { data: Agent[] | null }).data : null;
       const customerRows = cRes && typeof cRes === 'object' && 'data' in cRes ? (cRes as { data: Customer[] | null }).data : null;
       const ticketRows = tRes && typeof tRes === 'object' && 'data' in tRes ? (tRes as { data: Ticket[] | null }).data : null;
-      const agentList = filterAgents((agentRows || []).map(hydrateAvatar));
-      if (agentRows) setAgents(agentList);
+      const agentList = filterAgents((agentRows || []).map(hydrateAvatar)).filter(
+        (a) => !['1','2','3','4','5','6'].includes(String(a.id)) &&
+          !['Sarah Chen','Marcus Reed','Aisha Lane','Tomás García','Tomas Garcia','Rachel Kim','David Okonkwo'].includes(a.name),
+      );
+      if (aRes && typeof aRes === 'object' && 'data' in aRes) setAgents(agentList);
       if (customerRows) setCustomers(customerRows as Customer[]);
       if (ticketRows) {
         const list = (ticketRows as Ticket[]).map((row) => ({

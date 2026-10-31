@@ -1,3 +1,4 @@
+/* active-now-real-only-v1 */
 /* livechat-nexus-dark-hard-v1 */
 /* livechat-dark-presence-v1 */
 /* livechat-ui-v3 */
@@ -118,16 +119,22 @@ export default function PortalLiveChat({ onBack }: Props) {
     return () => window.clearInterval(id);
   }, []);
 
-  const onlineAgents = useMemo(() => {
+    const onlineAgents = useMemo(() => {
     const now = Date.now();
     const LIVE_WINDOW_MS = 120_000;
+    const DEMO_NAMES = new Set([
+      'sarah chen', 'marcus reed', 'aisha lane', 'tomás garcía', 'tomas garcia',
+      'rachel kim', 'david okonkwo',
+    ]);
     return (agents || []).filter((a) => {
+      if (['1', '2', '3', '4', '5', '6'].includes(String(a.id))) return false;
+      if (DEMO_NAMES.has((a.name || '').toLowerCase())) return false;
       const st = (a.approval_status || 'approved').toLowerCase();
-      if (st && st !== 'approved') return false;
+      if (st && st !== 'approved' && st !== 'active') return false;
       const status = (a.status || 'offline').toLowerCase();
       if (status === 'offline' || status === '') return false;
       const seen = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
-      if (seen && !Number.isNaN(seen)) return now - seen <= LIVE_WINDOW_MS;
+      if (!seen || Number.isNaN(seen) || now - seen > LIVE_WINDOW_MS) return false;
       return status === 'online' || status === 'busy' || status === 'away' || status === 'in_call' || status === 'custom';
     });
   }, [agents, presenceTick]);
