@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-import base64
+"""Ensure LiveChatPage is non-empty. Never overwrite a good file with empty data."""
 from pathlib import Path
-parts = []
-parts.append(Path('scripts/lcp_emoji_b64_0.txt').read_text().strip())
-parts.append(Path('scripts/lcp_emoji_b64_1.txt').read_text().strip())
-parts.append(Path('scripts/lcp_emoji_b64_2.txt').read_text().strip())
-parts.append(Path('scripts/lcp_emoji_b64_3.txt').read_text().strip())
-parts.append(Path('scripts/lcp_emoji_b64_4.txt').read_text().strip())
-raw = base64.b64decode(''.join(parts).encode()).decode()
-Path('src/components/LiveChatPage.tsx').write_text(raw)
-print('wrote LiveChatPage', len(raw))
+p = Path("src/components/LiveChatPage.tsx")
+if p.exists() and len(p.read_text().strip()) > 500 and "export default" in p.read_text():
+    print("LiveChatPage already present, skip")
+else:
+    print("LiveChatPage missing or empty — leave alone (content must be in repo)")
