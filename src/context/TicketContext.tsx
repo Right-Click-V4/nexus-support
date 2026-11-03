@@ -16,6 +16,7 @@
 // ticket-unread-v1
 // tickets-sync-v1
 // tickets-noflicker-v1
+// egress-optimize-v1
 import {
   createContext,
   useContext,
@@ -90,7 +91,6 @@ interface TicketContextValue {
 
 const TicketContext = createContext<TicketContextValue | null>(null);
 
-/** Never hang UI on a slow/hung Supabase request */
 function sbTimeout<T>(p: PromiseLike<T>, ms = 8000): Promise<T> {
   return Promise.race([
     Promise.resolve(p as PromiseLike<T>).then((v) => v as T),
@@ -102,6 +102,12 @@ function sbTimeout<T>(p: PromiseLike<T>, ms = 8000): Promise<T> {
 
 const STORAGE_KEY = 'nexus-tickets-v1';
 const AUTO_LS = 'nexus-auto-v1';
+
+const TICKET_COLS =
+  'id, title, description, priority, status, channel, assignee_id, customer_name, customer_email, branch, tags, created_at, updated_at, sla_due_at, first_response_at, deleted_at, csat, notes, messages, attachments';
+const AGENT_COLS =
+  'id, name, initials, role, status, status_message, last_seen_at, status_emoji, color, email, user_id, is_admin, avatar_url, branch, approval_status, phone, bio, timezone, skills, working_hours, ooo, signature';
+const CUSTOMER_COLS = 'id, name, email, company, role, branch, status, created_at';
 
 function loadLocal(): Ticket[] {
   try {
@@ -134,14 +140,6 @@ function hydrateAvatar(agent: Agent): Agent {
   return agent;
 }
 
-function initialsFromName(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return 'AG';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-/** Keep only real agents for team UI (hide customer-role rows + duplicates). */
 function filterAgents(list: Agent[]): Agent[] {
   const DEMO_IDS = new Set(['1', '2', '3', '4', '5', '6']);
   const DEMO_NAMES = new Set([
@@ -184,16 +182,22 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       ]);
     try {
       const [tRes, aRes, cRes] = await Promise.all([
-        withTimeout(supabase.from('tickets').select('*').order('created_at', { ascending: false }), 5000),
-        withTimeout(supabase.from('agents').select('*'), 4000),
-        withTimeout(supabase.from('customers').select('*'), 4000),
+        withTimeout(
+          supabase.from('tickets').select(TICKET_COLS).order('created_at', { ascending: false }).limit(120),
+          5000,
+        ),
+        withTimeout(supabase.from('agents').select(AGENT_COLS).limit(80), 4000),
+        withTimeout(supabase.from('customers').select(CUSTOMER_COLS).limit(200), 4000),
       ]);
       const agentRows = aRes && typeof aRes === 'object' && 'data' in aRes ? (aRes as { data: Agent[] | null }).data : null;
       const customerRows = cRes && typeof cRes === 'object' && 'data' in cRes ? (cRes as { data: Customer[] | null }).data : null;
       const ticketRows = tRes && typeof tRes === 'object' && 'data' in tRes ? (tRes as { data: Ticket[] | null }).data : null;
       const agentList = filterAgents((agentRows || []).map(hydrateAvatar)).filter(
-        (a) => !['1','2','3','4','5','6'].includes(String(a.id)) &&
-          !['Sarah Chen','Marcus Reed','Aisha Lane','Tomás García','Tomas Garcia','Rachel Kim','David Okonkwo'].includes(a.name),
+        (a) =>
+          !['1', '2', '3', '4', '5', '6'].includes(String(a.id)) &&
+          !['Sarah Chen', 'Marcus Reed', 'Aisha Lane', 'Tomás García', 'Tomas Garcia', 'Rachel Kim', 'David Okonkwo'].includes(
+            a.name,
+          ),
       );
       if (aRes && typeof aRes === 'object' && 'data' in aRes) setAgents(agentList);
       if (customerRows) setCustomers(customerRows as Customer[]);
@@ -209,7 +213,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         setTickets(list);
       }
     } catch {
-      /* never leave UI stuck on Loading tickets */
+      /* never leave UI stuck */
     } finally {
       setLoading(false);
     }
@@ -220,7 +224,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   useEffect(() => {
-    // Customers must never be auto-inserted into agents table
     if (!user || !supabase || accountRole === 'customer') {
       if (accountRole === 'customer') setCurrentAgent(null);
       if (!user) setCurrentAgent(null);
@@ -228,10 +231,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
     let cancelled = false;
     (async () => {
-      const { data: existing } = await supabase.from('agents').select('*').eq('user_id', user.id).maybeSingle();
+      const { data: existing } = await supabase
+        .from('agents')
+        .select(AGENT_COLS)
+        .eq('user_id', user.id)
+        .maybeSingle();
       if (cancelled) return;
       if (existing) {
-        // Only active workspace agent if approved
         if ((existing as Agent).approval_status && (existing as Agent).approval_status !== 'approved') {
           setCurrentAgent(null);
           return;
@@ -240,7 +246,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (user.email) {
-        const { data: byEmail } = await supabase.from('agents').select('*').eq('email', user.email).maybeSingle();
+        const { data: byEmail } = await supabase
+          .from('agents')
+          .select(AGENT_COLS)
+          .eq('email', user.email)
+          .maybeSingle();
         if (byEmail && !cancelled) {
           if ((byEmail as Agent).approval_status && (byEmail as Agent).approval_status !== 'approved') {
             setCurrentAgent(null);
@@ -253,8 +263,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
           return;
         }
       }
-      // Do NOT auto-create agent rows — new accounts stay pending until admin approves
-      // (created by signup trigger / AuthContext). Avoids bypassing Users → Pending.
       setCurrentAgent(null);
     })();
     return () => {
@@ -288,7 +296,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       focusTimer = window.setTimeout(() => soft(), 400);
     };
     window.addEventListener('focus', onFocus);
-    const poll = window.setInterval(soft, 30_000);
+    const poll = window.setInterval(soft, 60_000);
     return () => {
       supabase?.removeChannel(channel);
       try {
@@ -309,7 +317,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const loadRules = async (): Promise<Automation[]> => {
     if (supabase) {
       try {
-        const res = await sbTimeout(supabase.from('automations').select('*'), 4000);
+        const res = await sbTimeout(supabase.from('automations').select('id, name, enabled, trigger, actions, created_at').limit(50), 4000);
         const data = res && typeof res === 'object' && 'data' in res ? (res as { data: Automation[] | null }).data : null;
         if (data?.length) return data as Automation[];
       } catch {
@@ -324,7 +332,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     let priority = data.priority;
     let tags = [...(data.tags || [])];
-
     try {
       const rules = await loadRules();
       const applied = applyTicketCreatedAutomations(
@@ -335,16 +342,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
           branch: data.branch,
           customer_name: data.customer_name,
         },
-        rules
+        rules,
       );
       if (applied.priority) priority = applied.priority;
       if (applied.tagAdds?.length) tags = Array.from(new Set([...tags, ...applied.tagAdds]));
     } catch {
-      // rules optional
+      /* rules optional */
     }
-
     const sla_due_at = computeSlaDue(priority, now);
-    // New tickets stay unassigned until an agent claims/assigns them
     const assigneeId = data.assignee_id || null;
     const ticket: Ticket = {
       id,
@@ -420,7 +425,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       entity: 'ticket',
       entity_id: ticket.id,
       action: 'create',
-      detail: `${ticket.title}${autoAssignee ? ` · assigned ${autoAssignee}` : ''}${priority !== data.priority ? ` · auto priority ${priority}` : ''}`,
+      detail: ticket.title,
       actor: currentAgent?.name || user?.email || 'Agent',
     });
     return ticket;
@@ -461,8 +466,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
                   ? agents.find((a) => a.id === updates.assignee_id) || null
                   : row.assignee,
             }
-          : row
-      )
+          : row,
+      ),
     );
     if (supabase) {
       try {
@@ -484,44 +489,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         detail: changed.map((k) => `${k}=${JSON.stringify((updates as Record<string, unknown>)[k])}`).join(', '),
         actor: currentAgent?.name || user?.email || 'Agent',
       });
-      if (!opts?.silent) {
-        if (ticket?.customer_email) {
-          void notifyCustomer({
-            email: ticket.customer_email,
-            title: 'Ticket updated',
-            body: `${ticket.title || id} was updated by support.`,
-            link: 'mytickets',
-          });
-        }
+      if (!opts?.silent && ticket?.customer_email) {
+        void notifyCustomer({
+          email: ticket.customer_email,
+          title: 'Ticket updated',
+          body: `${ticket.title || id} was updated by support.`,
+          link: 'mytickets',
+        });
       }
     }
   };
-
-
-  const purgeExpiredTrash = async (list: Ticket[]) => {
-    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const expired = list.filter((t) => t.deleted_at && new Date(t.deleted_at).getTime() < cutoff);
-    if (!expired.length) return;
-    for (const t of expired) {
-      try {
-        if (supabase) {
-          await supabase.from('tickets').delete().eq('id', t.id);
-        }
-      } catch (e) {
-        console.warn('trash purge failed', t.id, e);
-      }
-    }
-    if (expired.length) {
-      setTickets((prev) => prev.filter((t) => !expired.some((e) => e.id === t.id)));
-    }
-  };
-
-
-  useEffect(() => {
-    if (!tickets.length) return;
-    void purgeExpiredTrash(tickets);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tickets.length]);
 
   const softDeleteTicket = async (id: string) => {
     await updateTicket(id, { deleted_at: new Date().toISOString() });
@@ -538,59 +515,43 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     } else {
       setTickets((prev) => prev.filter((t) => t.id !== id));
     }
-    pushAudit({ entity: 'ticket', entity_id: id, action: 'hard_delete', actor: currentAgent?.name || user?.email || 'Agent' });
+    pushAudit({
+      entity: 'ticket',
+      entity_id: id,
+      action: 'hard_delete',
+      actor: currentAgent?.name || user?.email || 'Agent',
+    });
   };
 
-  const authorName = () =>
-    currentAgent?.name || (user?.user_metadata?.full_name as string | undefined) || user?.email?.split('@')[0] || 'Agent';
-
   const addNote = async (ticketId: string, text: string, author?: string) => {
-    const note: TicketNote = {
-      id: `n-${Date.now()}`,
-      text: text.trim(),
-      author: author || authorName(),
-      created_at: new Date().toISOString(),
-    };
     const ticket = tickets.find((t) => t.id === ticketId);
     if (!ticket) return;
-    await updateTicket(ticketId, { notes: [...(ticket.notes || []), note] });
+    const note: TicketNote = {
+      id: `n-${Date.now()}`,
+      text,
+      author: author || currentAgent?.name || 'Agent',
+      created_at: new Date().toISOString(),
+    };
+    await updateTicket(ticketId, { notes: [...(ticket.notes || []), note] }, { silent: true });
   };
 
   const addMessage = async (ticketId: string, text: string, kind: 'public' | 'internal' = 'public') => {
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (!ticket) return;
     const msg: TicketMessage = {
       id: `m-${Date.now()}`,
-      text: text.trim(),
-      author: authorName(),
+      ticket_id: ticketId,
+      author: currentAgent?.name || user?.email || 'Agent',
+      text,
       kind,
       created_at: new Date().toISOString(),
     };
-    const ticket = tickets.find((t) => t.id === ticketId);
-    if (!ticket) return;
     const messages = [...(ticket.messages || []), msg];
-    const updates: Parameters<typeof updateTicket>[1] = { messages };
-    if (!ticket.first_response_at && kind === 'public') updates.first_response_at = msg.created_at;
-    if (kind === 'public') {
-      updates.tags = Array.from(new Set([...(ticket.tags || []).filter((t) => t !== 'customer_unread'), 'customer_unread']));
+    const updates: Partial<Ticket> = { messages };
+    if (!ticket.first_response_at && kind === 'public') {
+      updates.first_response_at = msg.created_at;
     }
-    await updateTicket(ticketId, updates);
-    if (kind === 'public') {
-      const assignee = ticket.assignee_id ? agents.find((a) => a.id === ticket.assignee_id) : null;
-      void notifyAgents({
-        title: 'Ticket reply',
-        body: `${ticketId}: new message on “${ticket.title}”`,
-        link: 'tickets',
-        userId: (assignee as Agent & { user_id?: string })?.user_id || undefined,
-      });
-
-      if (ticket.customer_email) {
-        void notifyCustomer({
-          email: ticket.customer_email,
-          title: 'New reply on your ticket',
-          body: ticket.title || ticketId,
-          link: 'mytickets',
-        });
-      }
-    }
+    await updateTicket(ticketId, updates, { silent: kind === 'internal' });
   };
 
   const updateAgentStatus = async (
@@ -605,7 +566,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const patch: Record<string, unknown> = { status, last_seen_at: seen };
     if (statusMessage !== undefined) patch.status_message = statusMessage;
     if (statusEmoji !== undefined) patch.status_emoji = statusEmoji;
-    const next = { ...currentAgent, status, status_message: msg, status_emoji: emoji, last_seen_at: seen };
+    const next = {
+      ...currentAgent,
+      status,
+      status_message: msg,
+      status_emoji: emoji,
+      last_seen_at: seen,
+    };
     setCurrentAgent(next);
     setAgents((prev) => prev.map((a) => (a.id === currentAgent.id ? next : a)));
     if (status !== 'offline') {
@@ -618,9 +585,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         color: next.color,
       });
     }
-    try {
-      localStorage.setItem('nexus-presence-agent-id', currentAgent.id);
-    } catch { /* ignore */ }
     if (supabase) {
       try {
         let { error } = await supabase.from('agents').update(patch).eq('id', currentAgent.id);
@@ -630,11 +594,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
           const retry = await supabase.from('agents').update(minimal).eq('id', currentAgent.id);
           error = retry.error;
         }
-        if (error) {
-          // non-fatal for UI presence
-        }
       } catch {
-        // Failed to fetch / network — local status still applied
+        /* non-fatal */
       }
     }
   };
@@ -642,12 +603,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const touchPresence = async () => {
     if (!currentAgent || !supabase) return;
     const status =
-      (currentAgent.status || 'offline') === 'offline' ? 'online' : (currentAgent.status || 'online');
+      (currentAgent.status || 'offline') === 'offline' ? 'online' : currentAgent.status || 'online';
     const seen = new Date().toISOString();
     setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at: seen, status } : prev));
     setAgents((prev) =>
       prev.map((a) => (a.id === currentAgent.id ? { ...a, last_seen_at: seen, status } : a)),
     );
+    const now = Date.now();
+    const last = (window as unknown as { __nexusLastPresenceWrite?: number }).__nexusLastPresenceWrite || 0;
+    if (now - last < 30_000) return;
+    (window as unknown as { __nexusLastPresenceWrite?: number }).__nexusLastPresenceWrite = now;
     try {
       const { error } = await supabase
         .from('agents')
@@ -674,12 +639,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const setAgentAdmin = async (agentId: string, is_admin: boolean) => {
     if (supabase) {
       await supabase.from('agents').update({ is_admin }).eq('id', agentId);
-      setAgents((prev) => prev.map((a) => (a.id === agentId ? { ...a, is_admin } : a)));
-      if (currentAgent?.id === agentId) setCurrentAgent({ ...currentAgent, is_admin });
-    } else {
-      setAgents((prev) => prev.map((a) => (a.id === agentId ? { ...a, is_admin } : a)));
-      if (currentAgent?.id === agentId) setCurrentAgent({ ...currentAgent, is_admin });
     }
+    setAgents((prev) => prev.map((a) => (a.id === agentId ? { ...a, is_admin } : a)));
+    if (currentAgent?.id === agentId) setCurrentAgent((p) => (p ? { ...p, is_admin } : p));
   };
 
   return (
