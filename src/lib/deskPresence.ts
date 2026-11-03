@@ -14,13 +14,15 @@ export type DeskAgent = {
 const KEY = 'nexus-desk-presence-v1';
 const BC = 'nexus-desk-presence';
 const CHANNEL = 'desk-agents-v1';
-const LIVE_MS = 120_000;
+/** How long a heartbeat counts as online (customer + agent views). */
+const LIVE_MS = 90_000;
 
 type PresenceChannel = ReturnType<NonNullable<typeof supabase>['channel']>;
 
 let sharedCh: PresenceChannel | null = null;
 let sharedReady: Promise<void> | null = null;
 let trackedId: string | null = null;
+let channelPresenceKey: string | null = null;
 
 function readLocal(): DeskAgent[] {
   try {
@@ -34,33 +36,54 @@ function readLocal(): DeskAgent[] {
 }
 
 function writeLocal(list: DeskAgent[]) {
+  const now = Date.now();
+  const cleaned = (list || []).filter((a) => a?.id && now - (a.at || 0) < LIVE_MS);
   try {
-    localStorage.setItem(KEY, JSON.stringify(list));
+    localStorage.setItem(KEY, JSON.stringify(cleaned));
   } catch {
     /* ignore */
   }
   try {
     if (typeof BroadcastChannel !== 'undefined') {
       const bc = new BroadcastChannel(BC);
-      bc.postMessage({ type: 'desk', list });
+      bc.postMessage({ type: 'desk', list: cleaned });
       bc.close();
     }
   } catch {
     /* ignore */
   }
   try {
-    window.dispatchEvent(new CustomEvent('nexus-desk-presence', { detail: list }));
+    window.dispatchEvent(new CustomEvent('nexus-desk-presence', { detail: cleaned }));
   } catch {
     /* ignore */
   }
 }
 
-function ensureChannel(): PresenceChannel | null {
+/**
+ * One shared channel for the desk. Each agent tracks under their own presence key (agent id)
+ * so multiple agents can appear online at once.
+ */
+function ensureChannel(agentId?: string): PresenceChannel | null {
   if (!isSupabaseConfigured || !supabase) return null;
-  if (sharedCh) return sharedCh;
+
+  if (sharedCh && (!agentId || channelPresenceKey === agentId)) return sharedCh;
+
+  if (sharedCh && agentId && channelPresenceKey !== agentId) {
+    try {
+      void supabase.removeChannel(sharedCh);
+    } catch {
+      /* ignore */
+    }
+    sharedCh = null;
+    sharedReady = null;
+    channelPresenceKey = null;
+  }
+
   try {
+    const key = agentId || `observer-${Math.random().toString(36).slice(2, 10)}`;
+    channelPresenceKey = key;
     sharedCh = supabase.channel(CHANNEL, {
-      config: { presence: { key: 'desk' } },
+      config: { presence: { key } },
     });
     sharedReady = new Promise((resolve) => {
       sharedCh!.subscribe((status) => {
@@ -70,6 +93,7 @@ function ensureChannel(): PresenceChannel | null {
     return sharedCh;
   } catch {
     sharedCh = null;
+    channelPresenceKey = null;
     return null;
   }
 }
@@ -84,7 +108,11 @@ export async function publishDeskPresence(agent: {
 } | null) {
   if (!agent?.id) return;
   const statusRaw = (agent.status || 'online').toLowerCase();
-  const status = statusRaw === 'offline' || statusRaw === '' ? 'online' : statusRaw;
+  if (statusRaw === 'offline') {
+    await clearDeskPresence(agent.id);
+    return;
+  }
+  const status = statusRaw || 'online';
   const row: DeskAgent = {
     id: agent.id,
     name: agent.name || 'Agent',
@@ -98,7 +126,7 @@ export async function publishDeskPresence(agent: {
   const others = readLocal().filter((a) => a.id !== row.id);
   writeLocal([...others, row]);
 
-  const ch = ensureChannel();
+  const ch = ensureChannel(agent.id);
   if (!ch) return;
   try {
     await sharedReady;
@@ -120,6 +148,8 @@ export async function publishDeskPresence(agent: {
 export async function clearDeskPresence(agentId?: string | null) {
   if (agentId) {
     writeLocal(readLocal().filter((a) => a.id !== agentId));
+  } else {
+    writeLocal([]);
   }
   if (sharedCh) {
     try {
@@ -140,14 +170,18 @@ function fromPresence(): DeskAgent[] {
     for (const metas of Object.values(state)) {
       for (const m of metas || []) {
         if (!m?.id) continue;
+        const at = Number(m.at || now);
+        if (now - at > LIVE_MS) continue;
+        const st = String(m.status || 'online').toLowerCase();
+        if (st === 'offline') continue;
         out.push({
           id: String(m.id),
           name: String(m.name || 'Agent'),
-          status: String(m.status || 'online'),
+          status: st,
           avatar_url: (m.avatar_url as string) || null,
           initials: m.initials as string | undefined,
           color: m.color as string | undefined,
-          at: Number(m.at || now),
+          at,
         });
       }
     }
@@ -164,7 +198,8 @@ export function getDeskPresence(): DeskAgent[] {
     if (!a?.id) continue;
     if (now - (a.at || 0) > LIVE_MS) continue;
     if ((a.status || '').toLowerCase() === 'offline') continue;
-    map.set(a.id, a);
+    const prev = map.get(a.id);
+    if (!prev || (a.at || 0) >= (prev.at || 0)) map.set(a.id, a);
   }
   return [...map.values()];
 }
@@ -182,15 +217,11 @@ export function watchDeskPresence(onChange: (agents: DeskAgent[]) => void): () =
   const ch = ensureChannel();
   if (ch) {
     try {
-      try {
-        ch.on('presence', { event: 'sync' }, emit);
-        ch.on('presence', { event: 'join' }, emit);
-        ch.on('presence', { event: 'leave' }, emit);
-      } catch {
-        /* already subscribed — polling still works */
-      }
+      ch.on('presence', { event: 'sync' }, emit);
+      ch.on('presence', { event: 'join' }, emit);
+      ch.on('presence', { event: 'leave' }, emit);
     } catch {
-      /* ignore */
+      /* already wired — interval still works */
     }
   }
 
