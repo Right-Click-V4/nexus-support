@@ -235,7 +235,7 @@ export function watchDeskPresence(onChange: (agents: DeskAgent[]) => void): () =
   } catch {
     /* ignore */
   }
-  const tick = window.setInterval(emit, 2000);
+  const tick = window.setInterval(emit, 10_000);
 
   return () => {
     window.removeEventListener('nexus-desk-presence', onEvt);
