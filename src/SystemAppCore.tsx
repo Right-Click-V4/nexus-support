@@ -62,7 +62,7 @@ export function AgentShell() {
   const { enabled: site404On, ready: site404Ready } = useSite404();
   const { isAdmin, adminReady } = useIsAdmin();
   const [adminLogin, setAdminLogin] = useState(false);
-  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllNotifications, conversations } = usePlatform();
+  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllNotifications } = usePlatform();
 
   useEffect(() => {
     if (!presenceAgent?.id) return;
@@ -167,7 +167,7 @@ export function AgentShell() {
       case 'settings': return <SettingsPage />;
       case 'profile': return <ProfilePage />;
       case 'admin-features': return <AdminFeaturesPage />;
-      default: return <Dashboard onNavigate={setActiveNav} />;
+      default: return <Dashboard />;
     }
   };
 
