@@ -62,11 +62,12 @@ jobs:
           test "$(wc -c < src/SystemApp.tsx)" -gt 20000
           test "$(wc -c < src/components/PortalLiveChat.tsx)" -gt 15000
 
-      - name: Slow polls + portal fixes
+      - name: Apply portal + ticket patches
         run: |
           set -e
           if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py; fi
           if [ -f scripts/portal_fixes.py ]; then python3 scripts/portal_fixes.py; fi
+          if [ -f scripts/fix_customer_tickets.py ]; then python3 scripts/fix_customer_tickets.py; fi
           echo "OK patches applied"
 
       - name: Setup Node
