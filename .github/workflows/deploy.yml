@@ -68,6 +68,7 @@ jobs:
           if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py; fi
           if [ -f scripts/portal_fixes.py ]; then python3 scripts/portal_fixes.py; fi
           if [ -f scripts/fix_customer_tickets.py ]; then python3 scripts/fix_customer_tickets.py; fi
+          if [ -f scripts/fix_create_ticket.py ]; then python3 scripts/fix_create_ticket.py; fi
           echo "OK patches applied"
 
       - name: Setup Node
