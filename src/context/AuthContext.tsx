@@ -5,6 +5,7 @@
 /* auth-boot-timeout-v1 */
 /* presence-force-offline-v1 */
 /* session-boot-order-v1 */
+/* portal-customer-role-v1 */
 import {
   createContext,
   useContext,
@@ -79,9 +80,14 @@ function roleFromMetadata(user: User): AccountRole {
   return 'agent';
 }
 
-async function resolveRole(user: User, _expectedRole?: 'agent' | 'customer'): Promise<AccountRole> {
+async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Promise<AccountRole> {
+  const meta = (user.user_metadata || {}) as Record<string, unknown>;
+  const hasExplicitMeta = !!(meta.role || meta.account_role);
   const fromMeta = roleFromMetadata(user);
-  if (!supabase) return fromMeta;
+  if (!supabase) {
+    if (!hasExplicitMeta && expectedRole) return expectedRole;
+    return fromMeta;
+  }
   try {
     const { data } = await supabase
       .from('profiles')
@@ -95,6 +101,8 @@ async function resolveRole(user: User, _expectedRole?: 'agent' | 'customer'): Pr
   } catch {
     /* fall through */
   }
+  // Portal login passes expectedRole=customer; do not default empty metadata to agent
+  if (!hasExplicitMeta && expectedRole) return expectedRole;
   return fromMeta;
 }
 
@@ -170,8 +178,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setLoading(false);
     };
 
-    // IMPORTANT: detect new session BEFORE startTabSession — starting the tab
-    // session touches the heartbeat and would hide an idle logout.
     let tabCtl: { tabId: string; stop: () => void } | null = null;
     let suppressAuthEvents = false;
 
@@ -289,6 +295,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (e instanceof Error && /pending|rejected/i.test(e.message)) throw e;
       }
 
+      // Persist role when metadata was empty so portal sessions stay customer
+      if (expectedRole === 'customer' && role === 'customer') {
+        try {
+          const meta = (data.user.user_metadata || {}) as Record<string, unknown>;
+          if (!meta.role && !meta.account_role) {
+            await supabase.auth.updateUser({ data: { role: 'customer' } });
+          }
+        } catch {
+          /* non-fatal */
+        }
+      }
+
       setAccountRole(role);
       setUser(data.user);
       setSession(data.session);
@@ -338,7 +356,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw friendlyAuthError(error);
   };
 
-
   const updateProfile = async (data: {
     nickname?: string;
     phone?: string;
@@ -360,8 +377,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = async (newPassword: string) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
     if (!newPassword || newPassword.length < 6) {
-      throw new Error('Password must be at least 6 characters');
-    }
+      throw new Error('Password must be at least 6 characters');\n    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw friendlyAuthError(error);
   };
