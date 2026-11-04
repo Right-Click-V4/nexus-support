@@ -24,25 +24,50 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Always restore + wire so Account toast/avatar and tab content stay intact
-      - name: Ensure full CustomerPortal
+      # Restore known-good tree from Deploy #918 (86280b5) when files were stubbed/broken
+      - name: Restore last working system (86280b5)
         run: |
           set -e
-          SZ=$(wc -c < src/components/CustomerPortal.tsx || echo 0)
-          if ! grep -q "PortalLiveChat" src/components/CustomerPortal.tsx 2>/dev/null || [ "$SZ" -lt 50000 ]; then
-            echo "Restoring CustomerPortal from c3edde90 (was stub/small: $SZ)..."
+          GOOD=86280b5d5fac3906c1fd833966bb64194200a6ec
+          restore_if_bad() {
+            local path="$1"
+            local min="$2"
+            local sz
+            sz=$(wc -c < "$path" 2>/dev/null || echo 0)
+            if [ ! -f "$path" ] || [ "$sz" -lt "$min" ]; then
+              echo "RESTORING $path (was $sz bytes, need >= $min)"
+              git show "$GOOD:$path" > "$path"
+              echo "  now $(wc -c < "$path") bytes"
+            else
+              echo "OK $path ($sz bytes)"
+            fi
+          }
+          restore_if_bad src/SystemApp.tsx 20000
+          restore_if_bad src/components/PortalLiveChat.tsx 15000
+          restore_if_bad src/components/CustomerPortal.tsx 50000
+          restore_if_bad src/context/TicketContext.tsx 15000
+          restore_if_bad src/lib/deskPresence.ts 2000
+          # If CustomerPortal is stub-sized, restore from c3edde + wire Account panel
+          CP_SZ=$(wc -c < src/components/CustomerPortal.tsx || echo 0)
+          if [ "$CP_SZ" -lt 50000 ] || ! grep -q "PortalLiveChat" src/components/CustomerPortal.tsx; then
+            echo "Restoring CustomerPortal from c3edde90 then wire..."
             git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
             if [ -f scripts/wire_account_panel.py ]; then
               python3 scripts/wire_account_panel.py
             fi
-          else
-            echo "CustomerPortal already full ($SZ bytes)"
+          elif ! grep -q "AccountProfilePanel" src/components/CustomerPortal.tsx; then
+            if [ -f scripts/wire_account_panel.py ]; then
+              python3 scripts/wire_account_panel.py
+            fi
           fi
+          # Final guards
           grep -q "PortalLiveChat" src/components/CustomerPortal.tsx
           grep -q "view === 'help'" src/components/CustomerPortal.tsx
-          grep -q "view === 'mytickets'" src/components/CustomerPortal.tsx
           grep -q "view === 'submit'" src/components/CustomerPortal.tsx
-          wc -c src/components/CustomerPortal.tsx
+          test "$(wc -c < src/SystemApp.tsx)" -gt 20000
+          test "$(wc -c < src/components/PortalLiveChat.tsx)" -gt 15000
+          echo "--- restore summary ---"
+          wc -c src/SystemApp.tsx src/components/PortalLiveChat.tsx src/components/CustomerPortal.tsx src/context/TicketContext.tsx
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
