@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install clean createTicket into TicketContext.tsx (no sbTimeout / no RETURNING)."""
+"""Install clean createTicket into TicketContext.tsx (session refresh + plain insert)."""
 from pathlib import Path
 
 p = Path("src/context/TicketContext.tsx")
@@ -39,6 +39,23 @@ new_fn = r"""  const createTicket = async (data: CreateTicketInput): Promise<Tic
     } catch {
       /* rules optional */
     }
+    // Prefer live session email (fixes stale/broken client state for one account)
+    let sessionEmail = (data.customer_email || user?.email || '').trim();
+    if (supabase) {
+      try {
+        const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+        if (refreshErr) {
+          console.warn('[createTicket] refreshSession', refreshErr.message);
+        }
+        const email = refreshed?.session?.user?.email || (await supabase.auth.getUser()).data.user?.email;
+        if (email) sessionEmail = email.trim();
+      } catch (e) {
+        console.warn('[createTicket] session check failed', e);
+      }
+      if (!sessionEmail) {
+        throw new Error('Your login session expired. Sign out, sign back in, then submit again.');
+      }
+    }
     const sla_due_at = computeSlaDue(priority, now);
     const ticket: Ticket = {
       id,
@@ -49,7 +66,7 @@ new_fn = r"""  const createTicket = async (data: CreateTicketInput): Promise<Tic
       channel: data.channel || 'portal',
       assignee_id: data.assignee_id || null,
       customer_name: data.customer_name,
-      customer_email: data.customer_email || '',
+      customer_email: sessionEmail,
       branch: data.branch?.trim() || undefined,
       tags: Array.from(new Set([...(tags || []), 'unread'])),
       created_at: now,
@@ -68,7 +85,7 @@ new_fn = r"""  const createTicket = async (data: CreateTicketInput): Promise<Tic
         status: 'open',
         channel: (ticket.channel as string) || 'portal',
         customer_name: ticket.customer_name,
-        customer_email: ticket.customer_email || '',
+        customer_email: sessionEmail,
       };
       if (ticket.branch) row.branch = ticket.branch;
       if (ticket.sla_due_at) row.sla_due_at = ticket.sla_due_at;
@@ -83,10 +100,20 @@ new_fn = r"""  const createTicket = async (data: CreateTicketInput): Promise<Tic
           status: 'new',
           channel: 'email',
           customer_name: ticket.customer_name,
-          customer_email: ticket.customer_email || '',
+          customer_email: sessionEmail,
         });
         if (error2) {
           const msg = [error2.message, error2.code, error2.details, error2.hint].filter(Boolean).join(' | ');
+          const low = (msg || '').toLowerCase();
+          if (low.includes('jwt') || low.includes('session') || low.includes('unauthorized') || low === 'bad request') {
+            throw new Error(
+              'Login session problem for this account. Sign out → clear site data for this site → sign in as ' +
+                sessionEmail +
+                ' again. (' +
+                (msg || 'Bad Request') +
+                ')',
+            );
+          }
           throw new Error(msg || error.message || 'Could not create ticket');
         }
       }
