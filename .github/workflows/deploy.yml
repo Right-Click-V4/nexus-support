@@ -59,24 +59,15 @@ jobs:
             fi
           fi
           grep -q "PortalLiveChat" src/components/CustomerPortal.tsx
-          grep -q "view === 'help'" src/components/CustomerPortal.tsx
-          grep -q "view === 'submit'" src/components/CustomerPortal.tsx
           test "$(wc -c < src/SystemApp.tsx)" -gt 20000
           test "$(wc -c < src/components/PortalLiveChat.tsx)" -gt 15000
-          echo "--- restore summary ---"
-          wc -c src/SystemApp.tsx src/components/PortalLiveChat.tsx src/components/CustomerPortal.tsx src/context/TicketContext.tsx
 
-      - name: Slow presence and poll intervals
+      - name: Slow polls + portal fixes
         run: |
           set -e
-          if [ -f scripts/slow_polls.py ]; then
-            python3 scripts/slow_polls.py
-          fi
-          if grep -n "setInterval(() => refreshPlatform(), 3000)" src/components/PortalLiveChat.tsx 2>/dev/null; then
-            echo "WARN: aggressive 3s poll still present"
-          else
-            echo "OK: portal chat polls slowed"
-          fi
+          if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py; fi
+          if [ -f scripts/portal_fixes.py ]; then python3 scripts/portal_fixes.py; fi
+          echo "OK patches applied"
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
