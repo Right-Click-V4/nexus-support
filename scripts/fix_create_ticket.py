@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make portal ticket create resilient: minimal payload, fallbacks, clearer errors."""
+"""Resilient portal ticket create — unique ids, minimal columns, full error text."""
 from pathlib import Path
 
 p = Path('src/context/TicketContext.tsx')
@@ -10,83 +10,51 @@ if not p.exists():
 t = p.read_text()
 orig = t
 
-old = """    if (supabase) {
-      const payload: Record<string, unknown> = {
-        id: ticket.id,
-        title: ticket.title,
-        description: ticket.description,
-        priority: ticket.priority,
-        status: ticket.status,
-        channel: ticket.channel,
-        assignee_id: ticket.assignee_id,
-        customer_name: ticket.customer_name,
-        customer_email: ticket.customer_email,
-        branch: ticket.branch || null,
-        notes: ticket.notes,
-        messages: ticket.messages,
-        attachments: ticket.attachments,
-        sla_due_at: ticket.sla_due_at,
-        created_at: ticket.created_at,
-        updated_at: ticket.updated_at,
-        tags: ticket.tags,
-      };
-      try {
-        const ins = await sbTimeout(supabase.from('tickets').insert(payload), 10000);
-        const error = ins && typeof ins === 'object' && 'error' in ins ? (ins as { error: { message?: string } | null }).error : null;
-        if (error) {
-          delete payload.tags;
-          const ins2 = await sbTimeout(supabase.from('tickets').insert(payload), 10000);
-          const e2 = ins2 && typeof ins2 === 'object' && 'error' in ins2 ? (ins2 as { error: { message?: string } | null }).error : null;
-          if (e2) throw new Error(e2.message || 'Could not create ticket');
-        }
-      } catch (e) {
-        throw e instanceof Error ? e : new Error('Could not create ticket');
-      }"""
+old_id = '    const id = nextTicketId(tickets);'
+new_id = """    const id = `NX-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, '0')}`;"""
+if old_id in t and 'Date.now().toString(36)' not in t:
+    t = t.replace(old_id, new_id, 1)
+    print('patched ticket id generation')
 
-new = """    if (supabase) {
+new_block = """    if (supabase) {
       const pri = String(ticket.priority || 'medium').toLowerCase();
-      const safePriority = ['critical', 'high', 'medium', 'low'].includes(pri) ? pri : 'medium';
-      const ch = String(ticket.channel || 'portal').toLowerCase();
-      const safeChannel = ['email', 'chat', 'phone', 'portal', 'social'].includes(ch) ? ch : 'email';
-      const basePayload: Record<string, unknown> = {
-        id: ticket.id,
-        title: ticket.title,
-        description: ticket.description || '',
-        priority: safePriority,
-        status: 'open',
-        channel: safeChannel,
-        customer_name: ticket.customer_name,
-        customer_email: ticket.customer_email || '',
-        created_at: ticket.created_at,
-        updated_at: ticket.updated_at,
+      const safePriority = (['critical', 'high', 'medium', 'low'] as const).includes(
+        pri as 'critical' | 'high' | 'medium' | 'low',
+      )
+        ? pri
+        : 'medium';
+      const fmtErr = (error: { message?: string; code?: string; details?: string; hint?: string } | null) => {
+        if (!error) return 'Could not create ticket';
+        const parts = [error.message, error.code && `code=${error.code}`, error.details, error.hint].filter(
+          Boolean,
+        );
+        return parts.join(' | ') || 'Could not create ticket';
       };
-      if (ticket.branch) basePayload.branch = ticket.branch;
-      if (ticket.sla_due_at) basePayload.sla_due_at = ticket.sla_due_at;
+      const tryInsert = async (payload: Record<string, unknown>) => {
+        const ins = await sbTimeout(supabase.from('tickets').insert(payload).select('id').maybeSingle(), 15000);
+        const error =
+          ins && typeof ins === 'object' && 'error' in ins
+            ? (ins as { error: { message?: string; code?: string; details?: string; hint?: string } | null }).error
+            : null;
+        return error;
+      };
       try {
-        const tryInsert = async (payload: Record<string, unknown>) => {
-          const ins = await sbTimeout(supabase.from('tickets').insert(payload), 12000);
-          const error =
-            ins && typeof ins === 'object' && 'error' in ins
-              ? (ins as { error: { message?: string; code?: string; details?: string } | null }).error
-              : null;
-          return error;
-        };
-        let error = await tryInsert(basePayload);
-        if (error) {
-          const minimal: Record<string, unknown> = {
-            id: ticket.id,
-            title: ticket.title,
-            description: ticket.description || '',
-            priority: safePriority,
-            status: 'open',
-            channel: 'email',
-            customer_name: ticket.customer_name,
-            customer_email: ticket.customer_email || '',
-          };
-          error = await tryInsert(minimal);
-        }
-        if (error) {
-          const minimal2: Record<string, unknown> = {
+        // Attempt A: minimal columns (matches supabase-schema.sql)
+        let error = await tryInsert({
+          id: ticket.id,
+          title: ticket.title,
+          description: ticket.description || '',
+          priority: safePriority,
+          status: 'new',
+          channel: 'email',
+          customer_name: ticket.customer_name,
+          customer_email: ticket.customer_email || '',
+        });
+        // Attempt B: add branch if present
+        if (error && ticket.branch) {
+          error = await tryInsert({
             id: ticket.id,
             title: ticket.title,
             description: ticket.description || '',
@@ -95,45 +63,65 @@ new = """    if (supabase) {
             channel: 'email',
             customer_name: ticket.customer_name,
             customer_email: ticket.customer_email || '',
-          };
-          error = await tryInsert(minimal2);
+            branch: ticket.branch,
+          });
+        }
+        // Attempt C: portal channel + open status
+        if (error) {
+          error = await tryInsert({
+            id: ticket.id,
+            title: ticket.title,
+            description: ticket.description || '',
+            priority: safePriority,
+            status: 'open',
+            channel: 'portal',
+            customer_name: ticket.customer_name,
+            customer_email: ticket.customer_email || '',
+          });
+        }
+        // Attempt D: no custom id
+        if (error) {
+          error = await tryInsert({
+            title: ticket.title,
+            description: ticket.description || '',
+            priority: safePriority,
+            status: 'new',
+            channel: 'email',
+            customer_name: ticket.customer_name,
+            customer_email: ticket.customer_email || '',
+          });
         }
         if (error) {
-          const msg = (error.message || 'Could not create ticket').toLowerCase();
-          if (msg.includes('row-level security') || msg.includes('rls') || msg.includes('policy')) {
+          const raw = fmtErr(error);
+          const low = raw.toLowerCase();
+          if (low.includes('row-level security') || low.includes('rls') || low.includes('42501')) {
             throw new Error(
-              'Ticket blocked by database security (RLS). Run scripts/rls_customer_tickets.sql in Supabase SQL Editor so customers can insert/read their tickets.',
+              'Blocked by RLS. In Supabase SQL Editor run scripts/rls_customer_tickets.sql (INSERT policy required). Detail: ' +
+                raw,
             );
           }
-          if (msg.includes('bad request') || msg.includes('check constraint') || msg.includes('invalid')) {
-            throw new Error(
-              (error.message || 'Bad Request') +
-                ' — check tickets table allows channel/priority/status values, and customer insert RLS policy is enabled.',
-            );
-          }
-          throw new Error(error.message || error.details || 'Could not create ticket');
-        }
-        try {
-          if (ticket.tags?.length) {
-            await supabase.from('tickets').update({ tags: ticket.tags }).eq('id', ticket.id);
-          }
-        } catch {
-          /* optional */
+          throw new Error(raw);
         }
       } catch (e) {
         throw e instanceof Error ? e : new Error('Could not create ticket');
       }"""
 
-if old in t:
-    t = t.replace(old, new, 1)
-    print('patched createTicket insert')
-elif 'safePriority' in t:
-    print('createTicket already patched')
+if 'fmtErr' in t and 'Attempt A: minimal' in t:
+    print('createTicket already fully patched')
+elif 'const createTicket' in t:
+    ci = t.find('const createTicket')
+    si = t.find('    if (supabase) {', ci)
+    seti = t.find('      setTickets((prev) => (prev.some((t) => t.id === ticket.id)', si)
+    if si > 0 and seti > si:
+        t = t[:si] + new_block + '\n' + t[seti:]
+        print('replaced createTicket supabase block')
+    else:
+        print('WARN: could not locate createTicket insert bounds', si, seti)
 else:
-    print('WARN: createTicket insert pattern not found')
+    print('WARN: no createTicket')
 
 if t != orig:
     p.write_text(t)
     print('wrote', len(t))
 else:
-    print('no change')
+    print('no file change')
