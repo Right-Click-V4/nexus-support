@@ -1,5 +1,5 @@
+/* analytics-dark-v1 */
 import { useMemo } from 'react';
-import { useTickets } from '../context/TicketContext';
 import {
   BarChart,
   Bar,
@@ -13,123 +13,69 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import ChartTooltip from './ChartTooltip';
-import { Ticket, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
+import { useTickets } from '../context/TicketContext';
+import { Ticket, Layers, CheckCircle2, TrendingUp } from 'lucide-react';
 
-const STATUS_ORDER = ['new', 'open', 'pending', 'on-hold', 'resolved'];
-const STATUS_COLORS: Record<string, string> = {
-  new: '#8b5cf6',
-  open: '#6366f1',
-  pending: '#a78bfa',
-  'on-hold': '#c4b5fd',
-  resolved: '#10b981',
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  urgent: '#e11d48',
-  high: '#f59e0b',
-  medium: '#8b5cf6',
-  low: '#a5b4fc',
-};
-
-const CHANNEL_COLORS = ['#7c3aed', '#8b5cf6', '#a78bfa', '#c4b5fd', '#6366f1', '#4f46e5'];
-
-function emptyChart(label: string) {
-  return (
-    <div className="h-full flex items-center justify-center text-sm text-slate-400">
-      No {label} data yet
-    </div>
-  );
-}
+const PRIORITY_COLORS = ['#f97316', '#8b5cf6', '#93c5fd'];
+const CHANNEL_COLORS = ['#8b5cf6', '#0ea5e9', '#d946ef', '#f59e0b', '#64748b'];
 
 export default function AnalyticsPage() {
   const { tickets } = useTickets();
-  const live = tickets.filter((t) => !t.deleted_at);
+  const live = useMemo(() => tickets.filter((t) => !t.deleted_at), [tickets]);
 
   const byStatus = useMemo(() => {
     const map: Record<string, number> = {};
-    STATUS_ORDER.forEach((s) => {
-      map[s] = 0;
-    });
-    live.forEach((t) => {
-      map[t.status] = (map[t.status] || 0) + 1;
-    });
-    return STATUS_ORDER.map((name) => ({
-      name: name.replace('-', ' '),
-      value: map[name] || 0,
-      fill: STATUS_COLORS[name] || '#8b5cf6',
-    })).filter((d) => d.value > 0 || live.length === 0);
+    for (const t of live) {
+      const key = t.status === 'new' ? 'new' : t.status;
+      map[key] = (map[key] || 0) + 1;
+    }
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [live]);
 
   const byPriority = useMemo(() => {
-    const order = ['urgent', 'high', 'medium', 'low'];
+    const order = ['high', 'medium', 'low', 'critical'];
     const map: Record<string, number> = {};
-    live.forEach((t) => {
+    for (const t of live) {
       map[t.priority] = (map[t.priority] || 0) + 1;
-    });
+    }
     return order
-      .filter((p) => map[p])
-      .map((name) => ({
-        name,
-        value: map[name],
-        fill: PRIORITY_COLORS[name] || '#8b5cf6',
-      }));
+      .filter((k) => map[k])
+      .map((name) => ({ name, value: map[name] }));
   }, [live]);
 
   const byChannel = useMemo(() => {
     const map: Record<string, number> = {};
-    live.forEach((t) => {
-      map[t.channel] = (map[t.channel] || 0) + 1;
-    });
-    return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value], i) => ({
-        name,
-        value,
-        fill: CHANNEL_COLORS[i % CHANNEL_COLORS.length],
-      }));
+    for (const t of live) {
+      const ch = (t.channel || 'other').toLowerCase();
+      map[ch] = (map[ch] || 0) + 1;
+    }
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [live]);
 
-  const open = live.filter((t) => t.status !== 'resolved').length;
-  const resolved = live.filter((t) => t.status === 'resolved').length;
-  const resolutionRate = live.length ? Math.round((resolved / live.length) * 100) : 0;
+  const open = live.filter((t) => t.status === 'open' || t.status === 'new').length;
+  const resolved = live.filter((t) => t.status === 'resolved' || t.status === 'closed').length;
+  const rate = live.length ? Math.round((resolved / live.length) * 100) : 0;
 
   const metrics = [
-    {
-      label: 'Total tickets',
-      value: String(live.length),
-      icon: Ticket,
-      tint: 'from-violet-500/15 to-fuchsia-500/10',
-      iconColor: 'text-violet-600',
-    },
-    {
-      label: 'Open',
-      value: String(open),
-      icon: Clock,
-      tint: 'from-amber-500/15 to-orange-500/10',
-      iconColor: 'text-amber-600',
-    },
-    {
-      label: 'Resolved',
-      value: String(resolved),
-      icon: CheckCircle2,
-      tint: 'from-emerald-500/15 to-teal-500/10',
-      iconColor: 'text-emerald-600',
-    },
-    {
-      label: 'Resolution rate',
-      value: `${resolutionRate}%`,
-      icon: TrendingUp,
-      tint: 'from-indigo-500/15 to-violet-500/10',
-      iconColor: 'text-indigo-600',
-    },
+    { label: 'Total tickets', value: live.length, tint: 'from-violet-500/15 to-fuchsia-500/10', icon: Ticket, iconColor: 'text-violet-600 dark:text-violet-300' },
+    { label: 'Open', value: open, tint: 'from-amber-500/15 to-orange-500/10', icon: Layers, iconColor: 'text-amber-600 dark:text-amber-300' },
+    { label: 'Resolved', value: resolved, tint: 'from-emerald-500/15 to-teal-500/10', icon: CheckCircle2, iconColor: 'text-emerald-600 dark:text-emerald-300' },
+    { label: 'Resolution rate', value: `${rate}%`, tint: 'from-sky-500/15 to-indigo-500/10', icon: TrendingUp, iconColor: 'text-sky-600 dark:text-sky-300' },
   ];
+
+  if (live.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-slate-400">
+        No ticket data yet.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">Analytics</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Ticket volume, priority mix, and channels</p>
+        <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Analytics</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Ticket volume, priority mix, and channels</p>
       </div>
 
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -138,14 +84,14 @@ export default function AnalyticsPage() {
           return (
             <div
               key={m.label}
-              className={`relative overflow-hidden rounded-2xl border border-violet-100/70 bg-gradient-to-br ${m.tint} p-5 shadow-sm`}
+              className={`relative overflow-hidden rounded-2xl border border-violet-100/70 dark:border-white/10 bg-gradient-to-br ${m.tint} p-5 shadow-sm`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">{m.label}</div>
-                  <div className="text-2xl font-bold text-slate-900 mt-1.5 tabular-nums">{m.value}</div>
+                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{m.label}</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1.5 tabular-nums">{m.value}</div>
                 </div>
-                <div className={`w-10 h-10 rounded-xl bg-white/80 border border-white flex items-center justify-center ${m.iconColor}`}>
+                <div className={`w-10 h-10 rounded-xl bg-white/80 dark:bg-white/10 border border-white dark:border-white/15 flex items-center justify-center ${m.iconColor}`}>
                   <Icon size={18} />
                 </div>
               </div>
@@ -155,91 +101,63 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-5">
-        <div className="bg-white rounded-2xl border border-violet-100/80 shadow-sm p-5">
+        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-violet-100/80 dark:border-white/10 shadow-sm p-5">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm font-semibold text-slate-800">By status</h3>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">By status</h3>
             <span className="text-[11px] text-slate-400">{live.length} tickets</span>
           </div>
           <div className="h-64 mt-2">
-            {byStatus.every((d) => d.value === 0) ? (
-              emptyChart('status')
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byStatus} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(139,92,246,0.06)' }} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={48}>
-                    {byStatus.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={byStatus}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.25)" />
+                <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-violet-100/80 shadow-sm p-5">
+        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-violet-100/80 dark:border-white/10 shadow-sm p-5">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm font-semibold text-slate-800">By priority</h3>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">By priority</h3>
           </div>
           <div className="h-64 mt-2">
-            {byPriority.length === 0 ? (
-              emptyChart('priority')
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={byPriority}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="48%"
-                    innerRadius={52}
-                    outerRadius={88}
-                    paddingAngle={3}
-                    stroke="none"
-                  >
-                    {byPriority.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<ChartTooltip />} />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={28}
-                    formatter={(value) => <span className="text-xs text-slate-600 capitalize">{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={byPriority} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                  {byPriority.map((_, i) => (
+                    <Cell key={i} fill={PRIORITY_COLORS[i % PRIORITY_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend
+                  formatter={(value) => <span className="text-xs text-slate-600 dark:text-slate-300 capitalize">{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-violet-100/80 shadow-sm p-5 lg:col-span-2">
+        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-violet-100/80 dark:border-white/10 shadow-sm p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm font-semibold text-slate-800">By channel</h3>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">By channel</h3>
           </div>
           <div className="h-64 mt-2">
-            {byChannel.length === 0 ? (
-              emptyChart('channel')
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byChannel} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(139,92,246,0.06)' }} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={56}>
-                    {byChannel.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={byChannel}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.25)" />
+                <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  {byChannel.map((_, i) => (
+                    <Cell key={i} fill={CHANNEL_COLORS[i % CHANNEL_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
