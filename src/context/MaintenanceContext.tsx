@@ -58,7 +58,7 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
 
     const poll = window.setInterval(() => {
       void fetchMaintenance().then(apply);
-    }, 2500);
+    }, 120_000);
 
     return () => {
       cancelled = true;
