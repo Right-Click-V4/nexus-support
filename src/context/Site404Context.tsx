@@ -55,7 +55,7 @@ export function Site404Provider({ children }: { children: ReactNode }) {
 
     const poll = window.setInterval(() => {
       void fetchSite404().then(apply);
-    }, 2500);
+    }, 120_000);
 
     return () => {
       cancelled = true;
