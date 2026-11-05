@@ -1,6 +1,7 @@
 /* tickets-claim-v1 */
+/* sla-resolved-not-closed-v1 */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Search, Download, Trash2, RotateCcw } from 'lucide-react';
+import { Plus, Search, Trash2, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
 import { useTickets } from '../context/TicketContext';
 import type { Priority, Status } from '../types';
@@ -74,7 +75,14 @@ export default function TicketsPage() {
     if (!breached.length) return;
     breached.forEach((t) => closedBreachRef.current.add(t.id));
     void Promise.all(
-      breached.map((t) => updateTicket(t.id, { status: 'closed' as Status }, { silent: true })),
+      breached.map(async (t) => {
+        try {
+          const tags = Array.from(new Set([...(t.tags || []), 'sla-auto-closed']));
+          await updateTicket(t.id, { status: 'resolved' as Status, tags }, { silent: true });
+        } catch {
+          /* already marked */
+        }
+      }),
     );
   }, [tickets, updateTicket]);
 
