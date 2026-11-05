@@ -105,10 +105,11 @@ export function AgentShell() {
       });
     };
     tick();
+    // Free plan: presence track rate-limited — heartbeat every 90s while tab visible
     const id = window.setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       tick();
-    }, 30_000);
+    }, 90_000);
     const onVis = () => { if (!document.hidden) tick(); };
     document.addEventListener('visibilitychange', onVis);
     return () => {
