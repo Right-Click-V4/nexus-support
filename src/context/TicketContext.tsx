@@ -106,7 +106,7 @@ const AUTO_LS = 'nexus-auto-v1';
 const TICKET_COLS =
   'id, title, description, priority, status, channel, assignee_id, customer_name, customer_email, branch, tags, created_at, updated_at, sla_due_at, first_response_at, deleted_at, notes, messages, attachments';
 const AGENT_COLS =
-  'id, name, initials, role, status, status_message, last_seen_at, status_emoji, color, email, user_id, is_admin, avatar_url, branch, approval_status, phone, bio, timezone, skills, ooo, signature';
+  'id, name, initials, role, status, status_message, last_seen_at, status_emoji, color, email, user_id, is_admin, avatar_url, branch, approval_status, phone, bio, timezone, skills, signature';
 const CUSTOMER_COLS = 'id, name, email, company, role, branch, status, created_at';
 
 function loadLocal(): Ticket[] {
@@ -327,7 +327,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     return loadAutomationsLocal();
   };
 
-  // NOTE: remainder of TicketContext (createTicket, updateTicket, etc.) continues below via second commit if needed
   const createTicket = async (data: CreateTicketInput): Promise<Ticket> => {
     const id = nextTicketId(tickets);
     const now = new Date().toISOString();
