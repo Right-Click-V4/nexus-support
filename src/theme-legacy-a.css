@@ -1,1 +1,115 @@
-PLACEHOLDER
+:root {
+  font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light;
+  color: #18181b;
+  background-color: #f4f4f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #a1a1aa; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #71717a; }
+
+/* community-contrast-v1 */
+html.nexus-light .portal-community-shell,
+html.nexus-dark .portal-community-shell {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+html.nexus-dark .portal-community-shell {
+  background: rgba(12, 10, 20, 0.28) !important;
+}
+.portal-community-rail {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.nexus-light .portal-community-rail {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #1e1b4b !important;
+}
+html.nexus-dark .portal-community-rail {
+  background: rgba(8, 6, 18, 0.22) !important;
+  color: #f4f4f5 !important;
+}
+.portal-community-shell .community-msg-other {
+  background: rgba(237, 233, 254, 0.95) !important;
+  color: #1e1b4b !important;
+  border-color: rgba(167, 139, 250, 0.35) !important;
+}
+html.nexus-dark .portal-community-shell .community-msg-other {
+  background: rgba(42, 36, 72, 0.92) !important;
+  color: #f4f4f5 !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+}
+
+/* agent-chrome-dark-v1 core */
+html.nexus-dark .app-cosmos {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124, 58, 237, 0.28), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(91, 33, 182, 0.22), transparent 50%),
+    linear-gradient(165deg, #0a0618 0%, #12081f 40%, #0c0714 100%) !important;
+  color: #e4e4e7;
+}
+html.nexus-dark .app-cosmos .bg-white,
+html.nexus-dark .app-cosmos [class*="rounded-xl"][class*="border"][class*="shadow"] {
+  background: rgba(18, 12, 36, 0.72) !important;
+  border-color: rgba(167, 139, 250, 0.22) !important;
+  color: #e4e4e7;
+}
+html.nexus-dark .app-cosmos input,
+html.nexus-dark .app-cosmos select,
+html.nexus-dark .app-cosmos textarea {
+  background: rgba(12, 8, 28, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f4f4f5 !important;
+}
+html.nexus-dark .app-cosmos .text-zinc-800,
+html.nexus-dark .app-cosmos .text-slate-900,
+html.nexus-dark .app-cosmos .text-slate-800 {
+  color: #f4f4f5 !important;
+}
+html.nexus-dark .app-cosmos .text-zinc-500,
+html.nexus-dark .app-cosmos .text-slate-500,
+html.nexus-dark .app-cosmos .text-slate-600 {
+  color: #a1a1aa !important;
+}
+html.nexus-dark .app-cosmos .border-slate-200,
+html.nexus-dark .app-cosmos .border-zinc-200 {
+  border-color: rgba(167, 139, 250, 0.22) !important;
+}
+
+/* tickets table */
+.tickets-table-panel { background: #ffffff; border-color: #e2e8f0; color: #0f172a; }
+html.nexus-dark .tickets-table-panel {
+  background: rgba(24, 20, 42, 0.92);
+  border-color: rgba(167, 139, 250, 0.22);
+  color: #f1f5f9;
+}
+.tickets-table-head { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+html.nexus-dark .tickets-table-head {
+  background: rgba(15, 12, 30, 0.95);
+  border-color: rgba(167, 139, 250, 0.18);
+  color: #c4b5fd;
+}
+html.nexus-dark .tickets-subject { color: #f8fafc; }
+html.nexus-dark .tickets-desc { color: #94a3b8; }
+html.nexus-dark .tickets-cell { color: #e2e8f0; }
