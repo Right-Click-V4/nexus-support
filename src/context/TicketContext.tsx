@@ -1,5 +1,6 @@
 /* status-desk-publish-v1 */
 /* automations-load-v2 */
+/* status-db-normalize-v1 */
 import {
   createContext,
   useContext,
@@ -16,7 +17,6 @@ import { publishDeskPresence } from '../lib/deskPresence';
 import { useAuth } from './AuthContext';
 import { notifyAgents, notifyCustomer } from '../lib/agentNotify';
 import { pushAudit } from '../lib/audit';
-import { pickAssignee } from '../lib/assign';
 import { applyTicketCreatedAutomations } from '../lib/automations';
 
 interface CreateTicketInput {
@@ -81,6 +81,16 @@ function sbTimeout<T>(p: PromiseLike<T>, ms = 8000): Promise<T> {
       window.setTimeout(() => reject(new Error('Request timed out. Please try again.')), ms);
     }),
   ]);
+}
+
+/** Map UI statuses to values accepted by tickets_status_check on Supabase. */
+function statusForDb(status: string | undefined | null): string {
+  const s = String(status || 'open').toLowerCase().trim();
+  if (s === 'closed') return 'resolved';
+  if (s === 'on_hold' || s === 'onhold') return 'on-hold';
+  if (s === 'new') return 'open';
+  if (['open', 'pending', 'resolved', 'on-hold'].includes(s)) return s;
+  return 'open';
 }
 
 const STORAGE_KEY = 'nexus-tickets-v1';
@@ -370,7 +380,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         title: ticket.title,
         description: ticket.description,
         priority: ticket.priority,
-        status: ticket.status,
+        status: statusForDb(ticket.status),
         channel: ticket.channel,
         assignee_id: ticket.assignee_id,
         customer_name: ticket.customer_name,
@@ -453,14 +463,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     opts?: { silent?: boolean },
   ) => {
     const ticket = tickets.find((t) => t.id === id);
-    const payload = { ...updates, updated_at: new Date().toISOString() };
+    const payload: Record<string, unknown> = { ...updates, updated_at: new Date().toISOString() };
+    if (payload.status != null) payload.status = statusForDb(String(payload.status));
     setTickets((prev) =>
       prev.map((row) =>
         row.id === id
           ? {
               ...row,
               ...updates,
-              updated_at: payload.updated_at,
+              status: (updates.status ? statusForDb(updates.status) : row.status) as Ticket['status'],
+              updated_at: payload.updated_at as string,
               assignee:
                 updates.assignee_id !== undefined
                   ? agents.find((a) => a.id === updates.assignee_id) || null
