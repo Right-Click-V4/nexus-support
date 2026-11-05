@@ -38,26 +38,39 @@ import ThemeToggle from './components/ThemeToggle';
 
 export function getModeFromHash(): 'agent' | 'portal' | 'notfound' {
   const h = (window.location.hash || '').replace(/^#\/?/, '').toLowerCase().split('?')[0].replace(/\/+$/, '');
-  if (h === '404' || h === 'not-found' || h === 'notfound' || h === '/') return 'notfound';
-  if (h.startsWith('portal')) return 'portal';
-  if (!h || h === 'agent' || h === 'app' || h === 'desk') return 'agent';
-  return 'notfound';
+  if (h === 'portal' || h.startsWith('portal/')) return 'portal';
+  if (h === '404' || h === 'notfound') return 'notfound';
+  return 'agent';
 }
 
 const TITLES: Record<string, string> = {
-  dashboard: 'Overview', tickets: 'Tickets', customers: 'Branches', team: 'Team', users: 'Users & access',
-  analytics: 'Analytics', knowledge: 'Knowledge Base', chat: 'Live Chat', automations: 'Automations',
-  macros: 'Macros', surveys: 'Surveys', quality: 'Quality', announcements: 'Announcements',
-  forms: 'Forms', releases: 'Releases', settings: 'Settings', profile: 'Profile', 'admin-features': 'Admin features',
+  overview: 'Overview',
+  tickets: 'Tickets',
+  branches: 'Branches',
+  knowledge: 'Knowledge Base',
+  chat: 'Live Chat',
+  analytics: 'Analytics',
+  team: 'Team',
+  automations: 'Automations',
+  macros: 'Macros',
+  surveys: 'Surveys',
+  quality: 'Quality',
+  announcements: 'Announcements',
+  forms: 'Forms',
+  releases: 'Releases',
+  users: 'Users',
+  settings: 'Settings',
+  profile: 'Profile',
+  admin: 'Admin Features',
 };
 
 export function AgentShell() {
-  const [activeNav, setActiveNav] = useState('dashboard');
+  const [activeNav, setActiveNav] = useState('overview');
   const [notifOpen, setNotifOpen] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
-  const { tickets, currentAgent, updateAgentStatus: setPresenceStatus, touchPresence } = useTickets();
+  const notifRef = useRef<HTMLDivElement | null>(null);
+  const { currentAgent, touchPresence, setPresenceStatus } = useTickets();
   const presenceAgent = currentAgent;
-  const { user, loading: authLoading, authBusy, requiresAuth, signOut, accountRole } = useAuth();
+  const { user, loading: authLoading, needsAuth, signOut, accountRole } = useAuth();
   const { enabled: maintenanceOn, ready: maintenanceReady } = useMaintenance();
   const { enabled: site404On, ready: site404Ready } = useSite404();
   const { isAdmin, adminReady } = useIsAdmin();
@@ -103,7 +116,7 @@ export function AgentShell() {
       document.removeEventListener('visibilitychange', onVis);
       void clearDeskPresence(presenceAgent.id);
     };
-  }, [presenceAgent?.id, presenceAgent?.status, presenceAgent?.name, touchPresence]);
+  }, [presenceAgent?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -113,50 +126,32 @@ export function AgentShell() {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  if (requiresAuth && authLoading && !authBusy) return <BootLoader label="Loading workspace…" />;
-  if (!maintenanceReady || !site404Ready) return <BootLoader label="Loading…" />;
-
-  const admin = accountRole === 'admin' || isAdmin || !!currentAgent?.is_admin;
-
-  if (maintenanceOn && !admin) {
-    if (adminLogin || authBusy) {
-      return <LoginPage audience="agent" onOpenPortal={() => { window.location.hash = 'portal'; }} />;
-    }
-    if (user && !adminReady) return <BootLoader label="Checking access…" />;
-    return <MaintenanceScreen onAdminSignIn={!user ? () => setAdminLogin(true) : undefined} />;
+  if (authLoading || !maintenanceReady || !site404Ready || !adminReady) {
+    return <BootLoader />;
   }
 
-  if (site404On && !admin) {
-    if (adminLogin || authBusy) {
-      return <LoginPage audience="agent" onOpenPortal={() => { window.location.hash = 'portal'; }} />;
-    }
-    if (user && !adminReady) return <BootLoader label="Checking access…" />;
-    return <NotFoundScreen onAdminSignIn={!user ? () => setAdminLogin(true) : undefined} onGoHome={() => { window.location.hash = ''; }} />;
+  if (maintenanceOn && !isAdmin) {
+    return <MaintenanceScreen />;
+  }
+  if (site404On && !isAdmin) {
+    return <NotFoundScreen />;
   }
 
-  if (requiresAuth && (!user || authBusy)) {
-    return <LoginPage audience="customer" onOpenPortal={() => { window.location.hash = 'portal'; }} />;
+  if (needsAuth || !user) {
+    return <LoginPage mode="agent" onAdminBypass={() => setAdminLogin(true)} />;
   }
 
-  if (requiresAuth && user && accountRole === 'customer' && !authBusy) {
-    if (!window.location.hash.toLowerCase().includes('portal')) window.location.hash = 'portal';
-    if (hasJustLoggedIn()) return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;
-    return <BootLoader label="Opening customer portal…" />;
-  }
-
-  const agentReady = !requiresAuth || (!!user && accountRole !== 'customer' && !authLoading && !authBusy);
-  const openCount = tickets.filter((t) => !t.deleted_at && (t.status === 'new' || (t.tags || []).includes('unread'))).length;
-  const displayName = currentAgent?.name || (user?.user_metadata?.full_name as string | undefined) || user?.email?.split('@')[0] || 'Agent';
+  const displayName = currentAgent?.name || user.email || 'Agent';
 
   const renderPage = () => {
     switch (activeNav) {
+      case 'overview': return <Dashboard />;
       case 'tickets': return <TicketsPage />;
-      case 'customers': return <CustomersPage />;
-      case 'team': return <TeamPage />;
-      case 'users': return <UsersAdminPage />;
-      case 'analytics': return <AnalyticsPage />;
+      case 'branches': return <CustomersPage />;
       case 'knowledge': return <KnowledgePage />;
       case 'chat': return <LiveChatPage />;
+      case 'analytics': return <AnalyticsPage />;
+      case 'team': return <TeamPage />;
       case 'automations': return <AutomationsPage />;
       case 'macros': return <MacrosPage />;
       case 'surveys': return <SurveysPage />;
@@ -164,17 +159,18 @@ export function AgentShell() {
       case 'announcements': return <AnnouncementsPage />;
       case 'forms': return <FormsPage />;
       case 'releases': return <ReleasesPage />;
+      case 'users': return <UsersAdminPage />;
       case 'settings': return <SettingsPage />;
       case 'profile': return <ProfilePage />;
-      case 'admin-features': return <AdminFeaturesPage />;
+      case 'admin': return <AdminFeaturesPage />;
       default: return <Dashboard />;
     }
   };
 
   return (
-    <PostLoginShell ready={agentReady} label="Opening agent workspace…" variant="agent">
-      <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Sidebar active={activeNav} onNavigate={setActiveNav} openTicketCount={openCount} />
+    <PostLoginShell>
+      <div className="app-cosmos flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+        <Sidebar active={activeNav} onNavigate={setActiveNav} />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 shrink-0 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between px-4 gap-3">
             <div className="min-w-0">
@@ -241,30 +237,22 @@ export function PortalShell() {
 }
 
 export function Root() {
-  const [mode, setMode] = useState(() => getModeFromHash());
+  const [mode, setMode] = useState(getModeFromHash);
   useEffect(() => {
     const onHash = () => setMode(getModeFromHash());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  if (mode === 'notfound') return <NotFoundScreen onGoHome={() => { window.location.hash = ''; }} />;
-  if (mode === 'portal') {
-    return (
-      <TicketProvider>
-        <PlatformProvider>
-          <PortalShell />
-        </PlatformProvider>
-      </TicketProvider>
-    );
-  }
   return (
     <TicketProvider>
       <PlatformProvider>
-        <AgentShell />
+        {mode === 'portal' ? <PortalShell /> : mode === 'notfound' ? <NotFoundScreen /> : <AgentShell />}
       </PlatformProvider>
     </TicketProvider>
   );
 }
 
-export default Root;
+export default function SystemAppCore() {
+  return <Root />;
+}
