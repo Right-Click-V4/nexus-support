@@ -14,20 +14,21 @@ export function installPollThrottle() {
   const remap: Record<number, number> = {
     500: 8_000,
     700: 8_000,
-    2000: 60_000,
+    2000: 90_000,
     2500: 120_000,
     3000: 180_000,
     4000: 120_000,
-    5000: 60_000,
-    8000: 30_000,
-    10000: 30_000,
-    15000: 45_000,
-    30000: 90_000,
+    5000: 90_000,
+    8000: 60_000,
+    10000: 60_000,
+    15000: 90_000,
+    30000: 120_000,
   };
 
   window.setInterval = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
     let ms = typeof timeout === 'number' ? timeout : 0;
     if (remap[ms] != null) ms = remap[ms];
+    if (ms > 0 && ms < 5_000) ms = 30_000;
     return original(handler, ms, ...args);
   }) as typeof window.setInterval;
 }
