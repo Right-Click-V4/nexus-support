@@ -16,6 +16,8 @@ const BC = 'nexus-desk-presence';
 const CHANNEL = 'desk-agents-v1';
 /** How long a heartbeat counts as online (customer + agent views). */
 const LIVE_MS = 90_000;
+/** Min gap between Realtime presence.track() calls (Free plan rate limit). */
+const TRACK_MIN_MS = 60_000;
 
 type PresenceChannel = ReturnType<NonNullable<typeof supabase>['channel']>;
 
@@ -23,6 +25,8 @@ let sharedCh: PresenceChannel | null = null;
 let sharedReady: Promise<void> | null = null;
 let trackedId: string | null = null;
 let channelPresenceKey: string | null = null;
+let lastTrackAt = 0;
+let lastTrackedPayload = '';
 
 function readLocal(): DeskAgent[] {
   try {
@@ -59,10 +63,6 @@ function writeLocal(list: DeskAgent[]) {
   }
 }
 
-/**
- * One shared channel for the desk. Each agent tracks under their own presence key (agent id)
- * so multiple agents can appear online at once.
- */
 function ensureChannel(agentId?: string): PresenceChannel | null {
   if (!isSupabaseConfigured || !supabase) return null;
 
@@ -87,12 +87,16 @@ function ensureChannel(agentId?: string): PresenceChannel | null {
     });
     sharedReady = new Promise((resolve) => {
       sharedCh!.subscribe((status) => {
-        if (status === 'SUBSCRIBED') resolve();
+        if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          resolve();
+        }
       });
+      window.setTimeout(() => resolve(), 4000);
     });
     return sharedCh;
   } catch {
     sharedCh = null;
+    sharedReady = null;
     channelPresenceKey = null;
     return null;
   }
@@ -123,14 +127,24 @@ export async function publishDeskPresence(agent: {
     at: Date.now(),
   };
 
+  // Always update local/broadcast (cheap)
   const others = readLocal().filter((a) => a.id !== row.id);
   writeLocal([...others, row]);
 
   const ch = ensureChannel(agent.id);
   if (!ch) return;
+
+  // Throttle Realtime presence.track — prevents ClientPresenceRateLimitReached
+  const payloadKey = `${row.id}|${row.status}|${row.name}`;
+  const now = Date.now();
+  if (now - lastTrackAt < TRACK_MIN_MS && lastTrackedPayload === payloadKey) return;
+  if (now - lastTrackAt < 15_000) return;
+
   try {
     await sharedReady;
     trackedId = agent.id;
+    lastTrackAt = Date.now();
+    lastTrackedPayload = payloadKey;
     await ch.track({
       id: row.id,
       name: row.name,
@@ -141,7 +155,7 @@ export async function publishDeskPresence(agent: {
       at: row.at,
     });
   } catch {
-    /* never crash */
+    /* rate limit is expected if still hot */
   }
 }
 
@@ -159,6 +173,8 @@ export async function clearDeskPresence(agentId?: string | null) {
     }
   }
   if (agentId && trackedId === agentId) trackedId = null;
+  lastTrackAt = 0;
+  lastTrackedPayload = '';
 }
 
 function fromPresence(): DeskAgent[] {
@@ -221,7 +237,7 @@ export function watchDeskPresence(onChange: (agents: DeskAgent[]) => void): () =
       ch.on('presence', { event: 'join' }, emit);
       ch.on('presence', { event: 'leave' }, emit);
     } catch {
-      /* already wired — interval still works */
+      /* already wired */
     }
   }
 
@@ -235,7 +251,7 @@ export function watchDeskPresence(onChange: (agents: DeskAgent[]) => void): () =
   } catch {
     /* ignore */
   }
-  const tick = window.setInterval(emit, 10_000);
+  const tick = window.setInterval(emit, 20_000);
 
   return () => {
     window.removeEventListener('nexus-desk-presence', onEvt);
