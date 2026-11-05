@@ -1,22 +1,5 @@
 /* status-desk-publish-v1 */
-/* login-speed-tickets-v1 */
-/* touch-presence-status-v1 */
-/* no-demo-agents-v1 */
-/* status-fetch-resilient-v1 */
-/* ticket-ops-timeout-v1 */
-/* tickets-presence-fix-v1 */
-/* status-emoji-ctx-v1 */
-/* agent-presence-ctx-v1 */
-/* no-agent-toast-on-save-v1 */
-/* update-silent-notify-v1 */
-/* no-auto-assign-v1 */
-/* customer-new-expand-v1 */
-// trash-confirm-v1
-// status-outline-v1
-// ticket-unread-v1
-// tickets-sync-v1
-// tickets-noflicker-v1
-// egress-optimize-v1
+/* automations-load-v2 */
 import {
   createContext,
   useContext,
@@ -192,13 +175,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const agentRows = aRes && typeof aRes === 'object' && 'data' in aRes ? (aRes as { data: Agent[] | null }).data : null;
       const customerRows = cRes && typeof cRes === 'object' && 'data' in cRes ? (cRes as { data: Customer[] | null }).data : null;
       const ticketRows = tRes && typeof tRes === 'object' && 'data' in tRes ? (tRes as { data: Ticket[] | null }).data : null;
-      const agentList = filterAgents((agentRows || []).map(hydrateAvatar)).filter(
-        (a) =>
-          !['1', '2', '3', '4', '5', '6'].includes(String(a.id)) &&
-          !['Sarah Chen', 'Marcus Reed', 'Aisha Lane', 'Tomás García', 'Tomas Garcia', 'Rachel Kim', 'David Okonkwo'].includes(
-            a.name,
-          ),
-      );
+      const agentList = filterAgents((agentRows || []).map(hydrateAvatar));
       if (aRes && typeof aRes === 'object' && 'data' in aRes) setAgents(agentList);
       if (customerRows) setCustomers(customerRows as Customer[]);
       if (ticketRows) {
@@ -315,16 +292,33 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   }, [tickets]);
 
   const loadRules = async (): Promise<Automation[]> => {
+    const local = loadAutomationsLocal();
     if (supabase) {
       try {
-        const res = await sbTimeout(supabase.from('automations').select('id, name, enabled, trigger, actions, created_at').limit(50), 4000);
-        const data = res && typeof res === 'object' && 'data' in res ? (res as { data: Automation[] | null }).data : null;
-        if (data?.length) return data as Automation[];
+        const res = await sbTimeout(
+          supabase
+            .from('automations')
+            .select(
+              'id, name, enabled, active, trigger, condition_field, condition_op, condition_value, action, action_value, actions, description',
+            )
+            .limit(80),
+          4000,
+        );
+        const data =
+          res && typeof res === 'object' && 'data' in res
+            ? (res as { data: Automation[] | null }).data
+            : null;
+        if (data?.length) {
+          const byId = new Map<string, Automation>();
+          for (const r of data as Automation[]) if (r?.id) byId.set(String(r.id), r);
+          for (const r of local) if (r?.id && !byId.has(String(r.id))) byId.set(String(r.id), r);
+          return Array.from(byId.values());
+        }
       } catch {
-        /* rules optional */
+        /* fall through to local */
       }
     }
-    return loadAutomationsLocal();
+    return local;
   };
 
   const createTicket = async (data: CreateTicketInput): Promise<Ticket> => {
@@ -392,11 +386,17 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       };
       try {
         const ins = await sbTimeout(supabase.from('tickets').insert(payload), 10000);
-        const error = ins && typeof ins === 'object' && 'error' in ins ? (ins as { error: { message?: string } | null }).error : null;
+        const error =
+          ins && typeof ins === 'object' && 'error' in ins
+            ? (ins as { error: { message?: string } | null }).error
+            : null;
         if (error) {
           delete payload.tags;
           const ins2 = await sbTimeout(supabase.from('tickets').insert(payload), 10000);
-          const e2 = ins2 && typeof ins2 === 'object' && 'error' in ins2 ? (ins2 as { error: { message?: string } | null }).error : null;
+          const e2 =
+            ins2 && typeof ins2 === 'object' && 'error' in ins2
+              ? (ins2 as { error: { message?: string } | null }).error
+              : null;
           if (e2) throw new Error(e2.message || 'Could not create ticket');
         }
       } catch (e) {
@@ -472,7 +472,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (supabase) {
       try {
         const up = await sbTimeout(supabase.from('tickets').update(payload).eq('id', id), 10000);
-        const error = up && typeof up === 'object' && 'error' in up ? (up as { error: { message?: string } | null }).error : null;
+        const error =
+          up && typeof up === 'object' && 'error' in up
+            ? (up as { error: { message?: string } | null }).error
+            : null;
         if (error) throw new Error(error.message || 'Could not update ticket');
       } catch (e) {
         void refresh({ silent: true });
@@ -551,10 +554,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (!ticket.first_response_at && kind === 'public') {
       updates.first_response_at = msg.created_at;
     }
-    await updateTicket(ticketId, updates as any, { silent: kind === 'internal' });
+    await updateTicket(ticketId, updates, { silent: kind === 'internal' });
   };
 
-  const updateAgentStatus = async (status: AgentStatus, statusMessage?: string | null, statusEmoji?: string | null) => {
+  const updateAgentStatus = async (
+    status: AgentStatus,
+    statusMessage?: string | null,
+    statusEmoji?: string | null,
+  ) => {
     if (!currentAgent || !supabase) return;
     const patch: Record<string, unknown> = {
       status,
@@ -571,9 +578,17 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const touchPresence = async () => {
     if (!currentAgent || !supabase) return;
+    const now = Date.now();
+    const g = globalThis as unknown as { __nexusTouchAt?: number };
+    if (g.__nexusTouchAt && now - g.__nexusTouchAt < 60_000) return;
+    g.__nexusTouchAt = now;
     const last_seen_at = new Date().toISOString();
-    await supabase.from('agents').update({ last_seen_at }).eq('id', currentAgent.id);
-    setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at } : prev));
+    try {
+      await supabase.from('agents').update({ last_seen_at }).eq('id', currentAgent.id);
+      setCurrentAgent((prev) => (prev ? { ...prev, last_seen_at } : prev));
+    } catch {
+      /* ignore */
+    }
   };
 
   const findTicket = (id: string, email?: string) => {
