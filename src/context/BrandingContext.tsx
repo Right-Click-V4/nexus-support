@@ -70,7 +70,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
     const poll = window.setInterval(() => {
       void fetchBranding().then(apply);
-    }, 4000);
+    }, 120_000);
 
     return () => {
       cancelled = true;
