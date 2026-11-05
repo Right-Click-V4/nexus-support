@@ -53,6 +53,7 @@ jobs:
             if [ -f scripts/wire_account_panel.py ]; then
               python3 scripts/wire_account_panel.py
             fi
+            if [ -f scripts/wire_help_kb.py ]; then python3 scripts/wire_help_kb.py; fi
           elif ! grep -q "AccountProfilePanel" src/components/CustomerPortal.tsx; then
             if [ -f scripts/wire_account_panel.py ]; then
               python3 scripts/wire_account_panel.py
@@ -67,6 +68,7 @@ jobs:
           set -e
           if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py; fi
           if [ -f scripts/portal_fixes.py ]; then python3 scripts/portal_fixes.py; fi
+          if [ -f scripts/wire_help_kb.py ]; then python3 scripts/wire_help_kb.py; fi
           if [ -f scripts/fix_customer_tickets.py ]; then python3 scripts/fix_customer_tickets.py; fi
           if [ -f scripts/install_clean_create_ticket.py ]; then python3 scripts/install_clean_create_ticket.py; fi
           grep -q "await supabase.from('tickets').insert(row)" src/context/TicketContext.tsx && echo "OK clean createTicket" || echo "WARN createTicket"
@@ -80,34 +82,13 @@ jobs:
         run: npm install
 
       - name: Build
+        run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: |
-          npm run build
-          touch dist/.nojekyll
+          GITHUB_ACTIONS: 'true'
 
-      - name: Deploy dist to gh-pages
-        env:
-          TOKEN: ${{ secrets.PAGES_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          rm -rf work-gh-pages
-          mkdir work-gh-pages
-          cd work-gh-pages
-          git init
-          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          if git fetch origin gh-pages --depth=1 && git rev-parse origin/gh-pages >/dev/null 2>&1; then
-            git checkout -f origin/gh-pages
-            git checkout -B gh-pages
-            find . -mindepth 1 -maxdepth 1 ! -name preview ! -name '.git' -exec rm -rf {} +
-          else
-            git checkout --orphan gh-pages
-          fi
-          cp -a ../dist/. .
-          touch .nojekyll
-          git add -A
-          git commit -m "deploy ${GITHUB_SHA}" || echo "No changes"
-          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
