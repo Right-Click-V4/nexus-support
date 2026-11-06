@@ -10,7 +10,7 @@ const isDemo = (id: string, name: string) =>
   ['1', '2', '3', '4', '5', '6'].includes(String(id)) || DEMO_NAMES.has((name || '').toLowerCase());
 
 /** Must match deskPresence LIVE_MS — only recent heartbeats count. */
-export const ONLINE_WINDOW_MS = 90_000;
+export const ONLINE_WINDOW_MS = 45_000;
 
 export type OnlineAgentRow = {
   id: string;
