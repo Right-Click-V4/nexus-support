@@ -45,33 +45,57 @@
   z-index: 1;
 }
 .login-trail-ribbon-glow {
-  stroke-width: 10;
+  stroke-width: 20;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.35;
+  opacity: 0.4;
 }
 .login-trail-ribbon {
-  stroke-width: 3.2;
+  stroke-width: 8;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.85;
+  opacity: 0.95;
 }
 .login-trail-ribbon-core {
-  stroke-width: 1.4;
+  stroke-width: 2.8;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.9;
+  opacity: 1;
+}
+.login-trail-wave {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.login-trail-wave-a {
+  stroke-width: 4;
+  opacity: 0.8;
+}
+.login-trail-wave-b {
+  stroke-width: 3.2;
+  opacity: 0.7;
 }
 .login-trail-spark {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, #f0abfc 35%, #a78bfa 65%, transparent 75%);
   pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(circle, #ffffff 0%, #f0abfc 40%, #a78bfa 70%, transparent 78%);
   box-shadow:
-    0 0 6px rgba(232, 121, 249, 0.7),
-    0 0 14px rgba(167, 139, 250, 0.45),
-    0 0 22px rgba(103, 232, 249, 0.2);
-  z-index: 1;
+    0 0 8px rgba(255, 255, 255, 0.95),
+    0 0 16px rgba(232, 121, 249, 0.9),
+    0 0 26px rgba(167, 139, 250, 0.55);
+}
+.login-trail-spark-1 {
+  background: radial-gradient(circle, #ecfeff 0%, #67e8f9 45%, transparent 72%);
+  box-shadow:
+    0 0 8px rgba(103, 232, 249, 1),
+    0 0 18px rgba(34, 211, 238, 0.65);
+}
+.login-trail-spark-2 {
+  background: radial-gradient(circle, #fdf4ff 0%, #e879f9 50%, transparent 72%);
+  box-shadow:
+    0 0 7px rgba(240, 171, 252, 1),
+    0 0 16px rgba(192, 38, 211, 0.55);
 }
 .login-pilot {
   position: absolute;
@@ -80,9 +104,9 @@
   will-change: transform;
   z-index: 3;
   filter:
-    drop-shadow(0 0 10px rgba(232, 121, 249, 0.85))
-    drop-shadow(0 0 22px rgba(139, 92, 246, 0.55))
-    drop-shadow(0 0 36px rgba(103, 232, 249, 0.25));
+    drop-shadow(0 0 10px rgba(232, 121, 249, 0.9))
+    drop-shadow(0 0 24px rgba(139, 92, 246, 0.6))
+    drop-shadow(0 0 40px rgba(103, 232, 249, 0.3));
   animation: login-pilot-pulse 2.8s ease-in-out infinite;
 }
 @keyframes login-pilot-pulse {
