@@ -28,7 +28,6 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  /** True while signIn/signUp is validating — gates must keep the login form mounted */
   authBusy: boolean;
   requiresAuth: boolean;
   configError: string | null;
@@ -57,7 +56,6 @@ function friendlyAuthError(err: unknown): Error {
   if (!(err instanceof Error)) return new Error('Authentication failed');
   const msg = err.message || '';
   const lower = msg.toLowerCase();
-
   if (
     lower.includes('failed to fetch') ||
     lower.includes('networkerror') ||
@@ -212,7 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (result && typeof result === 'object' && result !== null && 'data' in result) {
             sess = (result as { data: { session: Session | null } }).data?.session ?? null;
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         await applySession(sess);
       } catch {
         if (!cancelled) {
@@ -254,7 +254,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     expectedRole?: 'agent' | 'customer'
   ) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
-
     setAuthBusy(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -263,7 +262,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (error) throw friendlyAuthError(error);
       if (!data.user) throw new Error('Authentication failed');
-
       let role = roleFromMetadata(data.user);
       try {
         const refined = await Promise.race([
@@ -275,7 +273,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         /* keep metadata role */
       }
       const normalized = role === 'admin' ? 'agent' : role;
-
       if (expectedRole && normalized !== expectedRole) {
         await supabase.auth.signOut();
         throw new Error(
@@ -284,7 +281,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             : 'This account is registered as an agent. Use the Agent tab to sign in.'
         );
       }
-
       try {
         await Promise.race([
           assertApproved(data.user, role),
@@ -293,7 +289,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         if (e instanceof Error && /pending|rejected/i.test(e.message)) throw e;
       }
-
       if (expectedRole === 'customer' && role === 'customer') {
         try {
           const meta = (data.user.user_metadata || {}) as Record<string, unknown>;
@@ -304,7 +299,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           /* non-fatal */
         }
       }
-
       setAccountRole(role);
       setUser(data.user);
       setSession(data.session);
@@ -325,12 +319,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: {
-          data: {
-            full_name: fullName || '',
-            role,
-          },
-        },
+        options: { data: { full_name: fullName || '', role } },
       });
       if (error) throw friendlyAuthError(error);
       if (data.session) {
@@ -394,23 +383,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    await forceAgentOffline();
+    try {
+      await forceAgentOffline();
+    } catch {
+      /* ignore */
+    }
     clearSupabaseAuthStorage();
-    // Always clear local auth state so login UI returns even if network fails
+    try {
+      const kill: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (k.startsWith('sb-') || k.toLowerCase().includes('supabase')) kill.push(k);
+      }
+      kill.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* ignore */
+    }
     setSession(null);
     setUser(null);
     setAccountRole('agent');
     if (supabase) {
       try {
-        await withTimeout(supabase.auth.signOut({ scope: 'local' }), 2500);
+        await withTimeout(supabase.auth.signOut({ scope: 'local' }), 1500);
       } catch {
         /* ignore */
       }
       try {
-        await withTimeout(supabase.auth.signOut(), 2500);
+        await withTimeout(supabase.auth.signOut({ scope: 'global' }), 1500);
       } catch {
         /* ignore */
       }
+    }
+    if (typeof window !== 'undefined') {
+      const portal = /portal/i.test(window.location.hash || '');
+      window.location.hash = portal ? 'portal' : '';
+      window.location.reload();
     }
   };
 
