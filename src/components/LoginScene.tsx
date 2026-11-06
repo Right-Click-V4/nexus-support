@@ -22,8 +22,8 @@ function useFallingStars(count: number) {
 }
 
 type TrailPoint = { x: number; y: number; t: number };
-const TRAIL_LEN = 56;
-const SAMPLE_MS = 16;
+const TRAIL_LEN = 64;
+const SAMPLE_MS = 14;
 
 function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -32,21 +32,34 @@ function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 
-/** Smooth SVG path through trail points (oldest → newest). */
-function trailPath(points: TrailPoint[]): string {
+function trailPath(points: TrailPoint[], amp = 0, phase = 0, freq = 0.22): string {
   if (points.length < 2) return '';
   const pts = [...points].reverse();
-  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-  for (let i = 1; i < pts.length; i++) {
-    const p0 = pts[i - 1];
-    const p1 = pts[i];
-    if (i === 1) {
-      d += ` L ${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`;
-    } else {
-      const midX = (p0.x + p1.x) / 2;
-      const midY = (p0.y + p1.y) / 2;
-      d += ` Q ${p0.x.toFixed(1)} ${p0.y.toFixed(1)} ${midX.toFixed(1)} ${midY.toFixed(1)}`;
+  const out: { x: number; y: number }[] = [];
+  let dist = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    if (i === 0) {
+      out.push({ x: p.x, y: p.y });
+      continue;
     }
+    const prev = pts[i - 1];
+    const dx = p.x - prev.x;
+    const dy = p.y - prev.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dist += len;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const wave = amp === 0 ? 0 : Math.sin(dist * freq + phase) * amp * (i / pts.length);
+    out.push({ x: p.x + nx * wave, y: p.y + ny * wave });
+  }
+  let d = `M ${out[0].x.toFixed(1)} ${out[0].y.toFixed(1)}`;
+  for (let i = 1; i < out.length; i++) {
+    const a = out[i - 1];
+    const b = out[i];
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    d += ` Q ${a.x.toFixed(1)} ${a.y.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
   }
   return d;
 }
@@ -57,7 +70,7 @@ function LogoPilotStage() {
   const history = useRef<TrailPoint[]>([]);
   const stageSizeRef = useRef({ w: 1, h: 1 });
   const [trail, setTrail] = useState<TrailPoint[]>([]);
-  const [pathD, setPathD] = useState('');
+  const [paths, setPaths] = useState({ core: '', waveA: '', waveB: '' });
   const [grad, setGrad] = useState({ x1: 0, y1: 0, x2: 1, y2: 0 });
 
   useEffect(() => {
@@ -99,6 +112,18 @@ function LogoPilotStage() {
       duration = Math.min(4800, Math.max(1600, travel));
     };
 
+    const publishTrail = (list: TrailPoint[]) => {
+      setTrail(list);
+      setPaths({
+        core: trailPath(list, 0, 0, 0),
+        waveA: trailPath(list, 8, 0, 0.3),
+        waveB: trailPath(list, 6, Math.PI * 0.9, 0.36),
+      });
+      const oldest = list[list.length - 1];
+      const newest = list[0];
+      if (oldest && newest) setGrad({ x1: oldest.x, y1: oldest.y, x2: newest.x, y2: newest.y });
+    };
+
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
       const stage = stageRef.current;
@@ -138,30 +163,16 @@ function LogoPilotStage() {
       if (t >= 1) pickTarget(sr.width, sr.height);
 
       const moved = Math.hypot(x - prevX, y - prevY);
-      if (now - lastSample >= SAMPLE_MS && moved >= 1.2) {
+      if (now - lastSample >= SAMPLE_MS && moved >= 0.9) {
         lastSample = now;
         prevX = x;
         prevY = y;
         history.current = [{ x, y, t: now }, ...history.current].slice(0, TRAIL_LEN);
-        const next = [...history.current];
-        setTrail(next);
-        setPathD(trailPath(next));
-        const oldest = next[next.length - 1];
-        const newest = next[0];
-        if (oldest && newest) {
-          setGrad({ x1: oldest.x, y1: oldest.y, x2: newest.x, y2: newest.y });
-        }
-      } else if (now - lastSample >= 120 && history.current.length > 8) {
+        publishTrail([...history.current]);
+      } else if (now - lastSample >= 90 && history.current.length > 10) {
         lastSample = now;
         history.current = history.current.slice(0, -2);
-        const next = [...history.current];
-        setTrail(next);
-        setPathD(trailPath(next));
-        const oldest = next[next.length - 1];
-        const newest = next[0];
-        if (oldest && newest) {
-          setGrad({ x1: oldest.x, y1: oldest.y, x2: newest.x, y2: newest.y });
-        }
+        publishTrail([...history.current]);
       }
     };
 
@@ -173,64 +184,68 @@ function LogoPilotStage() {
     <div ref={stageRef} className="login-pilot-stage absolute inset-0 overflow-hidden pointer-events-none">
       <svg className="login-trail-svg" width="100%" height="100%" aria-hidden>
         <defs>
-          <linearGradient
-            id="loginTrailGrad"
-            gradientUnits="userSpaceOnUse"
-            x1={grad.x1}
-            y1={grad.y1}
-            x2={grad.x2}
-            y2={grad.y2}
-          >
-            <stop offset="0%" stopColor="#67e8f9" stopOpacity="0" />
-            <stop offset="18%" stopColor="#67e8f9" stopOpacity="0.05" />
-            <stop offset="45%" stopColor="#a78bfa" stopOpacity="0.22" />
-            <stop offset="72%" stopColor="#e879f9" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#f5d0fe" stopOpacity="0.95" />
+          <linearGradient id="loginTrailViolet" gradientUnits="userSpaceOnUse" x1={grad.x1} y1={grad.y1} x2={grad.x2} y2={grad.y2}>
+            <stop offset="0%" stopColor="#4c1d95" stopOpacity="0" />
+            <stop offset="20%" stopColor="#8b5cf6" stopOpacity="0.35" />
+            <stop offset="55%" stopColor="#e879f9" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#fce7f3" stopOpacity="1" />
           </linearGradient>
-          <linearGradient
-            id="loginTrailCore"
-            gradientUnits="userSpaceOnUse"
-            x1={grad.x1}
-            y1={grad.y1}
-            x2={grad.x2}
-            y2={grad.y2}
-          >
-            <stop offset="0%" stopColor="#c4b5fd" stopOpacity="0" />
-            <stop offset="40%" stopColor="#f0abfc" stopOpacity="0.12" />
-            <stop offset="75%" stopColor="#f0abfc" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.95" />
+          <linearGradient id="loginTrailCyan" gradientUnits="userSpaceOnUse" x1={grad.x1} y1={grad.y1} x2={grad.x2} y2={grad.y2}>
+            <stop offset="0%" stopColor="#0e7490" stopOpacity="0" />
+            <stop offset="35%" stopColor="#22d3ee" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#a5f3fc" stopOpacity="0.9" />
+          </linearGradient>
+          <linearGradient id="loginTrailCore" gradientUnits="userSpaceOnUse" x1={grad.x1} y1={grad.y1} x2={grad.x2} y2={grad.y2}>
+            <stop offset="0%" stopColor="#a78bfa" stopOpacity="0" />
+            <stop offset="45%" stopColor="#f0abfc" stopOpacity="0.65" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
           </linearGradient>
           <filter id="loginTrailGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4.5" result="blur" />
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="loginTrailSoft" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
-        {pathD && (
+        {paths.waveA && (
+          <path className="login-trail-wave login-trail-wave-a" d={paths.waveA} fill="none" stroke="url(#loginTrailCyan)" filter="url(#loginTrailSoft)" />
+        )}
+        {paths.waveB && (
+          <path className="login-trail-wave login-trail-wave-b" d={paths.waveB} fill="none" stroke="url(#loginTrailViolet)" filter="url(#loginTrailSoft)" />
+        )}
+        {paths.core && (
           <>
-            <path className="login-trail-ribbon-glow" d={pathD} fill="none" stroke="url(#loginTrailGrad)" />
-            <path className="login-trail-ribbon" d={pathD} fill="none" stroke="url(#loginTrailGrad)" filter="url(#loginTrailGlow)" />
-            <path className="login-trail-ribbon-core" d={pathD} fill="none" stroke="url(#loginTrailCore)" />
+            <path className="login-trail-ribbon-glow" d={paths.core} fill="none" stroke="url(#loginTrailViolet)" />
+            <path className="login-trail-ribbon" d={paths.core} fill="none" stroke="url(#loginTrailViolet)" filter="url(#loginTrailGlow)" />
+            <path className="login-trail-ribbon-core" d={paths.core} fill="none" stroke="url(#loginTrailCore)" />
           </>
         )}
       </svg>
       {trail.map((p, i) => {
-        const age = i / Math.max(1, trail.length - 1);
-        const fade = 1 - age;
-        if (fade < 0.08 || i % 3 === 1) return null;
+        const fade = 1 - i / Math.max(1, trail.length - 1);
+        if (fade < 0.08) return null;
+        const kind = i % 3;
+        const size = kind === 0 ? 2.5 + fade * 5.5 : kind === 1 ? 1.8 + fade * 4 : 1.2 + fade * 3;
         return (
           <span
             key={`spark-${i}-${Math.round(p.x)}-${Math.round(p.y)}`}
-            className="login-trail-spark"
+            className={`login-trail-spark login-trail-spark-${kind}`}
             style={{
-              left: p.x,
-              top: p.y,
-              opacity: fade * fade * 0.7,
-              width: 1.5 + fade * 3.5,
-              height: 1.5 + fade * 3.5,
-              transform: 'translate(-50%, -50%) scale(' + (0.6 + fade * 0.5) + ')',
+              left: p.x + ((i % 5) - 2) * 3.5 * fade,
+              top: p.y + ((i % 3) - 1) * 3 * fade,
+              opacity: 0.3 + fade * 0.7,
+              width: size,
+              height: size,
+              transform: 'translate(-50%, -50%)',
             }}
           />
         );
