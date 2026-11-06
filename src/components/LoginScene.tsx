@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SpaceFlybys } from './LoginFlybys';
+import { NexusLogoMark, NexusWordmark } from './NexusBrand';
+export { NexusLogoMark, NexusWordmark };
 
 function useFallingStars(count: number) {
   return useMemo(
@@ -18,9 +20,6 @@ function useFallingStars(count: number) {
     [count]
   );
 }
-
-import { NexusLogoMark, NexusWordmark } from './NexusBrand';
-export { NexusLogoMark, NexusWordmark };
 
 type TrailPoint = { x: number; y: number };
 const TRAIL_LEN = 32;
@@ -106,7 +105,6 @@ export function CosmicFallBackground() {
     <div className="login-cosmos-sky absolute inset-0 overflow-hidden" aria-hidden>
       <div className="login-galaxy-band" />
       <div className="login-nebula login-nebula-a" />
-      <div className="login-nebula login-nebula-b" />
       <div className="login-dust" />
       <div className="absolute inset-0">
         {twinkles.map((s) => (
