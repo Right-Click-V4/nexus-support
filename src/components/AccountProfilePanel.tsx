@@ -29,6 +29,22 @@ function compressAvatar(dataUrl: string, maxEdge = 128, quality = 0.82): Promise
   });
 }
 
+/** Avatar cache must be per-account (email), never a shared browser key. */
+function avatarCacheKey(email: string) {
+  const e = (email || '').trim().toLowerCase();
+  return e ? `nexus-portal-avatar:${e}` : '';
+}
+function writeAvatarCache(email: string, dataUrl: string) {
+  try {
+    const k = avatarCacheKey(email);
+    if (!k) return;
+    localStorage.setItem(k, dataUrl);
+    localStorage.removeItem('nexus-portal-avatar');
+  } catch {
+    /* ignore */
+  }
+}
+
 function AccountProfilePanel({
   legalName,
   email,
@@ -111,7 +127,7 @@ function AccountProfilePanel({
       const dataUrl = await compressAvatar(raw, 128, 0.82);
       setAvatar(dataUrl);
       try {
-        localStorage.setItem('nexus-portal-avatar', dataUrl);
+        writeAvatarCache(email, dataUrl);
       } catch {
         /* ignore */
       }
@@ -143,7 +159,7 @@ function AccountProfilePanel({
       });
       if (avatarToSave) {
         try {
-          localStorage.setItem('nexus-portal-avatar', avatarToSave);
+          writeAvatarCache(email, avatarToSave);
         } catch {
           /* ignore */
         }
