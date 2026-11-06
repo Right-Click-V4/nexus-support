@@ -22,12 +22,12 @@ function useFallingStars(count: number) {
 }
 
 type TrailPoint = { x: number; y: number; t: number };
-const TRAIL_LEN = 64;
-const SAMPLE_MS = 14;
+/** Fixed spatial trail length (px) — does not stretch with speed */
+const TRAIL_MAX_DIST = 140;
+const SAMPLE_MS = 16;
+const SPEED = 0.095;
+const TURN_RATE = 0.0028;
 
-function easeInOut(t: number) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-}
 function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
@@ -64,6 +64,19 @@ function trailPath(points: TrailPoint[], amp = 0, phase = 0, freq = 0.22): strin
   return d;
 }
 
+function trimTrail(list: TrailPoint[], maxDist: number): TrailPoint[] {
+  if (list.length < 2) return list;
+  let dist = 0;
+  const kept: TrailPoint[] = [list[0]];
+  for (let i = 1; i < list.length; i++) {
+    const step = Math.hypot(list[i].x - list[i - 1].x, list[i].y - list[i - 1].y);
+    dist += step;
+    if (dist > maxDist) break;
+    kept.push(list[i]);
+  }
+  return kept;
+}
+
 function LogoPilotStage() {
   const pilotRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -76,51 +89,54 @@ function LogoPilotStage() {
   useEffect(() => {
     let raf = 0;
     let lastSample = 0;
+    let lastTick = 0;
     let x = 0;
     let y = 0;
-    let fromX = 0;
-    let fromY = 0;
-    let toX = 0;
-    let toY = 0;
-    let toScale = 1;
-    let fromScale = 1;
+    let angle = -Math.PI / 2;
     let scale = 1;
-    let startT = 0;
-    let duration = 2500;
+    let scaleGoal = 1;
+    let targetX = 0;
+    let targetY = 0;
     let ready = false;
     let prevX = 0;
     let prevY = 0;
 
     const pickTarget = (w: number, h: number) => {
-      const marginX = w * 0.12;
-      const marginY = h * 0.1;
-      let nx = randomIn(marginX, w - marginX);
-      let ny = randomIn(marginY, h - marginY);
-      if (Math.random() < 0.25) ny = randomIn(h * 0.55, h * 0.88);
-      if (Math.random() < 0.25) ny = randomIn(h * 0.08, h * 0.28);
-      if (Math.random() < 0.2) nx = randomIn(marginX, w * 0.35);
-      if (Math.random() < 0.2) nx = randomIn(w * 0.55, w - marginX);
-      fromX = x;
-      fromY = y;
-      fromScale = scale;
-      toX = nx;
-      toY = ny;
-      toScale = randomIn(0.9, 1.12);
-      startT = performance.now();
-      const dist = Math.hypot(toX - fromX, toY - fromY);
-      const travel = dist * 2.4 + randomIn(280, 900);
-      duration = Math.min(4800, Math.max(1600, travel));
+      const marginX = w * 0.14;
+      const marginY = h * 0.12;
+      let bestX = randomIn(marginX, w - marginX);
+      let bestY = randomIn(marginY, h - marginY);
+      let bestScore = -Infinity;
+      for (let tries = 0; tries < 8; tries++) {
+        const nx = randomIn(marginX, w - marginX);
+        const ny = randomIn(marginY, h - marginY);
+        const desired = Math.atan2(ny - y, nx - x);
+        let delta = desired - angle;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        const dist = Math.hypot(nx - x, ny - y);
+        const score = dist * 0.4 - Math.abs(delta) * 120;
+        if (score > bestScore && dist > 80) {
+          bestScore = score;
+          bestX = nx;
+          bestY = ny;
+        }
+      }
+      targetX = bestX;
+      targetY = bestY;
+      scaleGoal = randomIn(0.94, 1.08);
     };
 
     const publishTrail = (list: TrailPoint[]) => {
-      setTrail(list);
+      const fixed = trimTrail(list, TRAIL_MAX_DIST);
+      setTrail(fixed);
       setPaths({
-        core: trailPath(list, 0, 0, 0),
-        waveA: trailPath(list, 8, 0, 0.3),
-        waveB: trailPath(list, 6, Math.PI * 0.9, 0.36),
+        core: trailPath(fixed, 0, 0, 0),
+        waveA: trailPath(fixed, 5, 0, 0.32),
+        waveB: trailPath(fixed, 4, Math.PI * 0.9, 0.38),
       });
-      const oldest = list[list.length - 1];
-      const newest = list[0];
+      const oldest = fixed[fixed.length - 1];
+      const newest = fixed[0];
       if (oldest && newest) setGrad({ x1: oldest.x, y1: oldest.y, x2: newest.x, y2: newest.y });
     };
 
@@ -134,14 +150,13 @@ function LogoPilotStage() {
 
       if (!ready) {
         x = sr.width * 0.5;
-        y = sr.height * 0.35;
+        y = sr.height * 0.38;
         prevX = x;
         prevY = y;
-        fromX = x;
-        fromY = y;
-        toX = x;
-        toY = y;
+        targetX = x;
+        targetY = y;
         ready = true;
+        lastTick = now;
         stageSizeRef.current = { w: sr.width, h: sr.height };
         pickTarget(sr.width, sr.height);
       }
@@ -153,25 +168,54 @@ function LogoPilotStage() {
         stageSizeRef.current = { w: sr.width, h: sr.height };
       }
 
-      const t = Math.min(1, (now - startT) / duration);
-      const e = easeInOut(t);
-      x = fromX + (toX - fromX) * e;
-      y = fromY + (toY - fromY) * e;
-      scale = fromScale + (toScale - fromScale) * e;
+      const dt = Math.min(32, Math.max(0, now - lastTick));
+      lastTick = now;
+
+      // Smooth steering — capped turn rate, no sharp corners
+      const targetAngle = Math.atan2(targetY - y, targetX - x);
+      let delta = targetAngle - angle;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      const maxTurn = TURN_RATE * dt;
+      if (delta > maxTurn) delta = maxTurn;
+      if (delta < -maxTurn) delta = -maxTurn;
+      angle += delta;
+
+      const step = SPEED * dt;
+      x += Math.cos(angle) * step;
+      y += Math.sin(angle) * step;
+      scale += (scaleGoal - scale) * Math.min(1, dt * 0.002);
+
+      const mX = sr.width * 0.08;
+      const mY = sr.height * 0.08;
+      if (x < mX) {
+        x = mX;
+        angle = Math.PI - angle;
+      } else if (x > sr.width - mX) {
+        x = sr.width - mX;
+        angle = Math.PI - angle;
+      }
+      if (y < mY) {
+        y = mY;
+        angle = -angle;
+      } else if (y > sr.height - mY) {
+        y = sr.height - mY;
+        angle = -angle;
+      }
+
       pilot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${scale})`;
 
-      if (t >= 1) pickTarget(sr.width, sr.height);
+      if (Math.hypot(targetX - x, targetY - y) < 48) {
+        pickTarget(sr.width, sr.height);
+      }
 
       const moved = Math.hypot(x - prevX, y - prevY);
-      if (now - lastSample >= SAMPLE_MS && moved >= 0.9) {
+      if (now - lastSample >= SAMPLE_MS && moved >= 1.0) {
         lastSample = now;
         prevX = x;
         prevY = y;
-        history.current = [{ x, y, t: now }, ...history.current].slice(0, TRAIL_LEN);
-        publishTrail([...history.current]);
-      } else if (now - lastSample >= 90 && history.current.length > 10) {
-        lastSample = now;
-        history.current = history.current.slice(0, -2);
+        history.current = [{ x, y, t: now }, ...history.current];
+        history.current = trimTrail(history.current, TRAIL_MAX_DIST + 20);
         publishTrail([...history.current]);
       }
     };
