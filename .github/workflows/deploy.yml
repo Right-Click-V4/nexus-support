@@ -41,7 +41,7 @@ jobs:
               echo "OK $path ($sz bytes)"
             fi
           }
-          restore_if_bad src/SystemApp.tsx 20000
+          # SystemApp is owned by main — do not restore old monolith over logout/auth fixes
           restore_if_bad src/components/PortalLiveChat.tsx 15000
           restore_if_bad src/components/CustomerPortal.tsx 50000
           restore_if_bad src/context/TicketContext.tsx 15000
@@ -60,7 +60,7 @@ jobs:
             fi
           fi
           grep -q "PortalLiveChat" src/components/CustomerPortal.tsx
-          test "$(wc -c < src/SystemApp.tsx)" -gt 20000
+          test -f src/SystemApp.tsx
           test "$(wc -c < src/components/PortalLiveChat.tsx)" -gt 15000
 
       - name: Apply portal + ticket patches
