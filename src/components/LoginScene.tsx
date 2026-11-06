@@ -27,7 +27,7 @@ const SAMPLE_MS = 14;
 const BASE_SPEED = 0.24;
 const TURN_RATE = 0.0045;
 
-type PilotMode = 'cruise' | 'pause' | 'lag' | 'dash' | 'bob_v' | 'bob_h';
+type PilotMode = 'cruise' | 'pause' | 'dash' | 'bob_v' | 'bob_h';
 
 function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -105,38 +105,40 @@ function LogoPilotStage() {
     let mode: PilotMode = 'cruise';
     let modeUntil = 0;
     let modeSpeed = 1;
+    let lastWeaveAt = 0;
     let bobPhase = 0;
     let bobAmp = 16;
 
     const pickMode = (now: number) => {
+      const weaveReady = now - lastWeaveAt >= 30000;
       const r = Math.random();
-      modeSpeed = randomIn(0.65, 1.55);
-      if (r < 0.14) {
-        mode = 'pause';
-        modeUntil = now + randomIn(350, 900);
-      } else if (r < 0.28) {
-        mode = 'lag';
-        modeSpeed = randomIn(0.2, 0.4);
-        modeUntil = now + randomIn(700, 1600);
-      } else if (r < 0.44) {
-        mode = 'dash';
-        modeSpeed = randomIn(1.8, 2.8);
-        modeUntil = now + randomIn(400, 1100);
-      } else if (r < 0.58) {
+      modeSpeed = randomIn(0.75, 1.45);
+
+      if (weaveReady && r < 0.12) {
         mode = 'bob_v';
         bobAmp = randomIn(12, 22);
         bobPhase = 0;
-        modeSpeed = randomIn(0.45, 0.75);
+        modeSpeed = randomIn(0.5, 0.8);
         modeUntil = now + randomIn(520, 780);
-      } else if (r < 0.72) {
+        lastWeaveAt = now;
+      } else if (weaveReady && r < 0.24) {
         mode = 'bob_h';
         bobAmp = randomIn(14, 26);
         bobPhase = 0;
-        modeSpeed = randomIn(0.45, 0.75);
+        modeSpeed = randomIn(0.5, 0.8);
         modeUntil = now + randomIn(520, 800);
+        lastWeaveAt = now;
+      } else if (r < 0.12) {
+        mode = 'pause';
+        modeUntil = now + randomIn(300, 700);
+      } else if (r < 0.28) {
+        mode = 'dash';
+        modeSpeed = randomIn(1.7, 2.5);
+        modeUntil = now + randomIn(400, 1000);
       } else {
         mode = 'cruise';
-        modeUntil = now + randomIn(1000, 2600);
+        modeSpeed = randomIn(0.85, 1.35);
+        modeUntil = now + randomIn(1600, 3800);
       }
     };
 
@@ -216,6 +218,7 @@ function LogoPilotStage() {
         lastTick = now;
         stageSizeRef.current = { w: sr.width, h: sr.height };
         pickTarget(sr.width, sr.height);
+        lastWeaveAt = now;
         pickMode(now);
       }
 
