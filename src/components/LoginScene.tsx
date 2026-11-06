@@ -397,19 +397,8 @@ function LogoPilotStage() {
       >
         <span className="login-pilot-halo" />
         <span className="login-pilot-orbit" />
-        <span className="login-pilot-3d">
-          <span className="login-pilot-body" aria-hidden />
-          <span className="login-pilot-rim" aria-hidden />
-          <span className="login-pilot-face login-pilot-face-back" aria-hidden>
-            <NexusLogoMark size={48} />
-          </span>
-          <span className="login-pilot-face login-pilot-face-mid" aria-hidden>
-            <NexusLogoMark size={50} />
-          </span>
-          <span className="login-pilot-face login-pilot-face-front">
-            <NexusLogoMark size={52} />
-          </span>
-          <span className="login-pilot-cap" aria-hidden />
+        <span className="login-pilot-spin">
+          <NexusLogoMark size={52} />
         </span>
       </div>
     </div>
