@@ -24,8 +24,10 @@ function useFallingStars(count: number) {
 type TrailPoint = { x: number; y: number; t: number };
 const TRAIL_MAX_DIST = 280;
 const SAMPLE_MS = 14;
-const SPEED = 0.24;
+const BASE_SPEED = 0.24;
 const TURN_RATE = 0.004;
+
+type PilotMode = 'cruise' | 'pause' | 'lag' | 'dash' | 'bob';
 
 function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -100,17 +102,49 @@ function LogoPilotStage() {
     let prevX = 0;
     let prevY = 0;
     let turnBoost = 1;
+    let mode: PilotMode = 'cruise';
+    let modeUntil = 0;
+    let bobPhase = 0;
+    let bobAmp = 18;
+
+    const pickMode = (now: number) => {
+      const r = Math.random();
+      if (r < 0.18) {
+        mode = 'pause';
+        modeUntil = now + randomIn(400, 1100);
+      } else if (r < 0.34) {
+        mode = 'lag';
+        modeUntil = now + randomIn(900, 2200);
+      } else if (r < 0.52) {
+        mode = 'dash';
+        modeUntil = now + randomIn(500, 1400);
+      } else if (r < 0.7) {
+        mode = 'bob';
+        bobAmp = randomIn(14, 32);
+        bobPhase = Math.random() * Math.PI * 2;
+        modeUntil = now + randomIn(1200, 2800);
+      } else {
+        mode = 'cruise';
+        modeUntil = now + randomIn(1400, 3200);
+      }
+    };
 
     const pickTarget = (w: number, h: number) => {
       const marginX = w * 0.12;
       const marginY = h * 0.1;
       const allowSharp = Math.random() < 0.35;
+      const verticalBias = Math.random() < 0.28;
       let bestX = randomIn(marginX, w - marginX);
       let bestY = randomIn(marginY, h - marginY);
       let bestScore = -Infinity;
       for (let tries = 0; tries < 10; tries++) {
-        const nx = randomIn(marginX, w - marginX);
-        const ny = randomIn(marginY, h - marginY);
+        let nx = randomIn(marginX, w - marginX);
+        let ny = randomIn(marginY, h - marginY);
+        if (verticalBias) {
+          nx = x + randomIn(-40, 40);
+          nx = Math.max(marginX, Math.min(w - marginX, nx));
+          ny = randomIn(marginY, h - marginY);
+        }
         const desired = Math.atan2(ny - y, nx - x);
         let delta = desired - angle;
         while (delta > Math.PI) delta -= Math.PI * 2;
@@ -119,7 +153,7 @@ function LogoPilotStage() {
         const score = allowSharp
           ? dist * 0.3 + Math.abs(delta) * 55
           : dist * 0.45 - Math.abs(delta) * 90;
-        if (score > bestScore && dist > 90) {
+        if (score > bestScore && dist > 80) {
           bestScore = score;
           bestX = nx;
           bestY = ny;
@@ -163,6 +197,7 @@ function LogoPilotStage() {
         lastTick = now;
         stageSizeRef.current = { w: sr.width, h: sr.height };
         pickTarget(sr.width, sr.height);
+        pickMode(now);
       }
 
       if (
@@ -175,18 +210,35 @@ function LogoPilotStage() {
       const dt = Math.min(32, Math.max(0, now - lastTick));
       lastTick = now;
 
-      const targetAngle = Math.atan2(targetY - y, targetX - x);
-      let delta = targetAngle - angle;
-      while (delta > Math.PI) delta -= Math.PI * 2;
-      while (delta < -Math.PI) delta += Math.PI * 2;
-      const maxTurn = TURN_RATE * turnBoost * dt;
-      if (delta > maxTurn) delta = maxTurn;
-      if (delta < -maxTurn) delta = -maxTurn;
-      angle += delta;
+      if (now >= modeUntil) pickMode(now);
 
-      const step = SPEED * dt;
-      x += Math.cos(angle) * step;
-      y += Math.sin(angle) * step;
+      let speedMul = 1;
+      if (mode === 'pause') speedMul = 0;
+      else if (mode === 'lag') speedMul = 0.28;
+      else if (mode === 'dash') speedMul = 2.35;
+      else if (mode === 'bob') speedMul = 0.55;
+      else speedMul = 1;
+
+      if (mode !== 'pause') {
+        const targetAngle = Math.atan2(targetY - y, targetX - x);
+        let delta = targetAngle - angle;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        const maxTurn = TURN_RATE * turnBoost * (mode === 'dash' ? 1.4 : 1) * dt;
+        if (delta > maxTurn) delta = maxTurn;
+        if (delta < -maxTurn) delta = -maxTurn;
+        angle += delta;
+
+        const step = BASE_SPEED * speedMul * dt;
+        x += Math.cos(angle) * step;
+        y += Math.sin(angle) * step;
+
+        if (mode === 'bob') {
+          bobPhase += dt * 0.0065;
+          y += Math.sin(bobPhase) * bobAmp * (dt / 16) * 0.35;
+        }
+      }
+
       scale += (scaleGoal - scale) * Math.min(1, dt * 0.002);
 
       const mX = sr.width * 0.08;
@@ -208,18 +260,24 @@ function LogoPilotStage() {
 
       pilot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${scale})`;
 
-      if (Math.hypot(targetX - x, targetY - y) < 56) {
+      if (mode !== 'pause' && Math.hypot(targetX - x, targetY - y) < 56) {
         pickTarget(sr.width, sr.height);
       }
 
       const moved = Math.hypot(x - prevX, y - prevY);
-      if (now - lastSample >= SAMPLE_MS && moved >= 1.0) {
+      if (now - lastSample >= SAMPLE_MS && moved >= 0.8) {
         lastSample = now;
         prevX = x;
         prevY = y;
         history.current = [{ x, y, t: now }, ...history.current];
         history.current = trimTrail(history.current, TRAIL_MAX_DIST + 30);
         publishTrail([...history.current]);
+      } else if (mode === 'pause' && now - lastSample >= 80) {
+        lastSample = now;
+        if (history.current.length > 12) {
+          history.current = history.current.slice(0, -3);
+          publishTrail([...history.current]);
+        }
       }
     };
 
