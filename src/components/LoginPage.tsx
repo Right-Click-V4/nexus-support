@@ -117,9 +117,18 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                 {isAgent ? 'Support operations platform' : 'Customer support portal'}
               </div>
             </div>
-            <div className="mt-8 lg:mt-10 max-w-lg xl:max-w-xl">
-              <div className="login-status-pill mb-4">
-                <span className="login-status-dot" /> Desk online
+            <div className="mt-8 lg:mt-10 max-w-lg xl:max-w-xl relative">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -left-16 -top-10 w-64 h-64 rounded-full opacity-40 blur-3xl"
+                style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.45) 0%, transparent 70%)' }}
+              />
+              <div className="relative">
+              <div className="login-status-pill mb-4 inline-flex items-center gap-2">
+                <span className="login-status-dot" />
+                <span>Desk online</span>
+                <span className="mx-1 text-fuchsia-300/30">·</span>
+                <span className="text-fuchsia-200/70">Avg reply under 5 min</span>
               </div>
               <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fuchsia-300/80 mb-3">
                 {isAgent ? 'Built for agent teams' : 'Built for customers'}
@@ -127,8 +136,12 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
               <h1 className="login-hero-title text-3xl sm:text-4xl xl:text-[2.75rem] font-semibold leading-[1.08] tracking-tight">
                 {leftTitle}
                 <span
-                  className="block text-fuchsia-200/90 font-normal mt-1"
-                  style={{ WebkitTextFillColor: 'rgba(245, 208, 254, 0.92)', background: 'none' }}
+                  className="block font-normal mt-1 bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage: 'linear-gradient(105deg, #f5d0fe 0%, #e9d5ff 40%, #c4b5fd 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
                 >
                   {leftSub}
                 </span>
@@ -136,6 +149,20 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
               <p className="mt-4 text-sm sm:text-[15px] text-fuchsia-100/75 leading-relaxed max-w-md">
                 {leftBlurb}
               </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {(isAgent
+                  ? ['Omnichannel inbox', 'SLA tracking', 'Branch routing']
+                  : ['Live status', 'Secure portal', '24/7 desk']
+                ).map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-fuchsia-100/85 backdrop-blur-sm"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              </div>
               <ul className="mt-6 space-y-2.5 max-w-md">
                 {caps.map((c, i) => (
                   <li key={c.title} className="login-cap">
@@ -286,136 +313,33 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   <div className="text-[13px] text-violet-200/75 mt-1">
                     {isAgent ? 'Register for Agent Workspace' : 'Register for Customer Portal'}
                   </div>
-                  <div className="login-role-chip mt-3">
-                    <span className="login-status-dot" style={{ width: 6, height: 6 }} />
-                    {isAgent ? 'Agent registration' : 'Customer registration'}
-                  </div>
                 </div>
-                {configError && (
-                  <div className="mb-3 text-sm text-amber-200 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">
-                    {configError}
-                  </div>
-                )}
                 {error && (
-                  <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">
-                    {error}
-                  </div>
-                )}
-                {info && (
-                  <div className="mb-3 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2">
-                    {info}
-                  </div>
+                  <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">{error}</div>
                 )}
                 <form onSubmit={submit} className="space-y-3.5">
                   <div>
                     <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Full name</label>
-                    <input
-                      required
-                      className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Jane Doe"
-                      autoComplete="off"
-                      name="nexus_name_manual"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                      data-form-type="other"
-                    />
+                    <input required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
-                    <input
-                      type="email"
-                      required
-                      className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@company.com"
-                      autoComplete="off"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      name="nexus_email_manual"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                      data-bwignore="true"
-                      data-form-type="other"
-                    />
+                    <input type="email" required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        minLength={6}
-                        className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="At least 6 characters"
-                        autoComplete="new-password"
-                        name="nexus_password_manual"
-                        data-lpignore="true"
-                        data-1p-ignore="true"
-                        data-bwignore="true"
-                        data-form-type="other"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition"
-                        onClick={() => setShowPassword((v) => !v)}
-                      >
-                        {showPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
+                    <input type="password" required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Confirm password</label>
-                    <div className="relative">
-                      <input
-                        type={showConfirm ? 'text' : 'password'}
-                        required
-                        minLength={6}
-                        className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Re-enter password"
-                        autoComplete="new-password"
-                        name="nexus_confirm_manual"
-                        data-lpignore="true"
-                        data-1p-ignore="true"
-                        data-bwignore="true"
-                        data-form-type="other"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition"
-                        onClick={() => setShowConfirm((v) => !v)}
-                      >
-                        {showConfirm ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
+                    <input type="password" required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
                   </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 hover:from-violet-400 hover:via-fuchsia-400 hover:to-violet-400 disabled:opacity-60 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30"
-                  >
+                  <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 text-white font-semibold text-sm py-2.5">
                     {loading ? 'Creating account…' : 'Create account'}
                   </button>
                   <p className="text-center text-xs text-violet-200/70 pt-1">
                     Already have an account?{' '}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMode('signin');
-                        setError('');
-                        setInfo('');
-                      }}
-                      className="text-white font-semibold hover:text-fuchsia-100"
-                    >
-                      Sign in
-                    </button>
+                    <button type="button" onClick={() => setMode('signin')} className="text-white font-semibold">Sign in</button>
                   </p>
                 </form>
               </div>
