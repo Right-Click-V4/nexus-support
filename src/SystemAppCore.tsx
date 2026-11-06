@@ -73,7 +73,7 @@ export function AgentShell() {
   const notifRef = useRef<HTMLDivElement | null>(null);
   const { currentAgent, touchPresence, setPresenceStatus } = useTickets();
   const presenceAgent = currentAgent;
-  const { user, loading: authLoading, requiresAuth, signOut, accountRole } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { enabled: maintenanceOn, ready: maintenanceReady } = useMaintenance();
   const { enabled: site404On, ready: site404Ready } = useSite404();
   const { isAdmin, adminReady } = useIsAdmin();
@@ -107,7 +107,6 @@ export function AgentShell() {
       });
     };
     tick();
-    // Free plan: presence track rate-limited — heartbeat every 90s while tab visible
     const id = window.setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       tick();
@@ -123,7 +122,7 @@ export function AgentShell() {
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (notifRef. current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
