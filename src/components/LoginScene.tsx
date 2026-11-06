@@ -22,11 +22,10 @@ function useFallingStars(count: number) {
 }
 
 type TrailPoint = { x: number; y: number; t: number };
-/** Fixed spatial trail length (px) — does not stretch with speed */
-const TRAIL_MAX_DIST = 140;
-const SAMPLE_MS = 16;
-const SPEED = 0.095;
-const TURN_RATE = 0.0028;
+const TRAIL_MAX_DIST = 280;
+const SAMPLE_MS = 14;
+const SPEED = 0.24;
+const TURN_RATE = 0.004;
 
 function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -100,14 +99,16 @@ function LogoPilotStage() {
     let ready = false;
     let prevX = 0;
     let prevY = 0;
+    let turnBoost = 1;
 
     const pickTarget = (w: number, h: number) => {
-      const marginX = w * 0.14;
-      const marginY = h * 0.12;
+      const marginX = w * 0.12;
+      const marginY = h * 0.1;
+      const allowSharp = Math.random() < 0.35;
       let bestX = randomIn(marginX, w - marginX);
       let bestY = randomIn(marginY, h - marginY);
       let bestScore = -Infinity;
-      for (let tries = 0; tries < 8; tries++) {
+      for (let tries = 0; tries < 10; tries++) {
         const nx = randomIn(marginX, w - marginX);
         const ny = randomIn(marginY, h - marginY);
         const desired = Math.atan2(ny - y, nx - x);
@@ -115,8 +116,10 @@ function LogoPilotStage() {
         while (delta > Math.PI) delta -= Math.PI * 2;
         while (delta < -Math.PI) delta += Math.PI * 2;
         const dist = Math.hypot(nx - x, ny - y);
-        const score = dist * 0.4 - Math.abs(delta) * 120;
-        if (score > bestScore && dist > 80) {
+        const score = allowSharp
+          ? dist * 0.3 + Math.abs(delta) * 55
+          : dist * 0.45 - Math.abs(delta) * 90;
+        if (score > bestScore && dist > 90) {
           bestScore = score;
           bestX = nx;
           bestY = ny;
@@ -125,6 +128,7 @@ function LogoPilotStage() {
       targetX = bestX;
       targetY = bestY;
       scaleGoal = randomIn(0.94, 1.08);
+      turnBoost = allowSharp ? 2.8 : 1;
     };
 
     const publishTrail = (list: TrailPoint[]) => {
@@ -171,12 +175,11 @@ function LogoPilotStage() {
       const dt = Math.min(32, Math.max(0, now - lastTick));
       lastTick = now;
 
-      // Smooth steering — capped turn rate, no sharp corners
       const targetAngle = Math.atan2(targetY - y, targetX - x);
       let delta = targetAngle - angle;
       while (delta > Math.PI) delta -= Math.PI * 2;
       while (delta < -Math.PI) delta += Math.PI * 2;
-      const maxTurn = TURN_RATE * dt;
+      const maxTurn = TURN_RATE * turnBoost * dt;
       if (delta > maxTurn) delta = maxTurn;
       if (delta < -maxTurn) delta = -maxTurn;
       angle += delta;
@@ -205,7 +208,7 @@ function LogoPilotStage() {
 
       pilot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${scale})`;
 
-      if (Math.hypot(targetX - x, targetY - y) < 48) {
+      if (Math.hypot(targetX - x, targetY - y) < 56) {
         pickTarget(sr.width, sr.height);
       }
 
@@ -215,7 +218,7 @@ function LogoPilotStage() {
         prevX = x;
         prevY = y;
         history.current = [{ x, y, t: now }, ...history.current];
-        history.current = trimTrail(history.current, TRAIL_MAX_DIST + 20);
+        history.current = trimTrail(history.current, TRAIL_MAX_DIST + 30);
         publishTrail([...history.current]);
       }
     };
