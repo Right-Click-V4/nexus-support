@@ -101,7 +101,6 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
   } catch {
     /* fall through */
   }
-  // Portal login passes expectedRole=customer; do not default empty metadata to agent
   if (!hasExplicitMeta && expectedRole) return expectedRole;
   return fromMeta;
 }
@@ -295,7 +294,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (e instanceof Error && /pending|rejected/i.test(e.message)) throw e;
       }
 
-      // Persist role when metadata was empty so portal sessions stay customer
       if (expectedRole === 'customer' && role === 'customer') {
         try {
           const meta = (data.user.user_metadata || {}) as Record<string, unknown>;
@@ -384,7 +382,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    if (!supabase) return;
     try {
       localStorage.removeItem('nexus-live-tabs-v1');
       localStorage.removeItem('nexus-live-tabs-v2');
@@ -399,7 +396,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await forceAgentOffline();
     clearSupabaseAuthStorage();
-    await supabase.auth.signOut();
+    // Always clear local auth state so login UI returns even if network fails
+    setSession(null);
+    setUser(null);
+    setAccountRole('agent');
+    if (supabase) {
+      try {
+        await withTimeout(supabase.auth.signOut({ scope: 'local' }), 2500);
+      } catch {
+        /* ignore */
+      }
+      try {
+        await withTimeout(supabase.auth.signOut(), 2500);
+      } catch {
+        /* ignore */
+      }
+    }
   };
 
   return (
