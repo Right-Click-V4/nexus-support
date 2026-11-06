@@ -35,13 +35,14 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
     );
   }
 
-  if (requiresAuth && (!user || authBusy)) {
+  // Always show login when there is no session (agent + customer)
+  if (!user || authBusy) {
     return <LoginPage audience="customer" onOpenAgent={goAgent} />;
   }
 
   return (
     <PostLoginShell
-      ready={!requiresAuth || !!user}
+      ready={!!user}
       label="Opening customer portal…"
       variant="customer"
     >
