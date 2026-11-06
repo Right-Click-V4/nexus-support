@@ -15,7 +15,7 @@ const KEY = 'nexus-desk-presence-v1';
 const BC = 'nexus-desk-presence';
 const CHANNEL = 'desk-agents-v1';
 /** How long a heartbeat counts as online (customer + agent views). */
-const LIVE_MS = 90_000;
+const LIVE_MS = 45_000;
 /** Min gap between Realtime presence.track() calls (Free plan rate limit). */
 const TRACK_MIN_MS = 60_000;
 
