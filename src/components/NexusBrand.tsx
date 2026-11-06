@@ -20,7 +20,7 @@ export function NexusLogoMark({ size = 56, className = '' }: { size?: number; cl
   );
 }
 
-/** Letter-sized star-X used inside the wordmark. */
+/** Letter-sized star-X used inside the wordmark — optically aligned as letter X. */
 function LetterX({ size, color }: { size: number; color: string }) {
   return (
     <svg
@@ -29,7 +29,14 @@ function LetterX({ size, color }: { size: number; color: string }) {
       height={size}
       fill="none"
       aria-hidden
-      style={{ display: 'inline-block', verticalAlign: '-12%', margin: '0 -0.02em' }}
+      style={{
+        display: 'inline-block',
+        // Push down so star center sits on text baseline like a normal capital X
+        verticalAlign: '-0.18em',
+        position: 'relative',
+        top: '0.14em',
+        margin: '0 -0.04em',
+      }}
     >
       <path d="M6 6 L26 26 M26 6 L6 26" stroke={color} strokeWidth="5.5" strokeLinecap="round" />
       <path
@@ -51,7 +58,7 @@ export function NexusWordmark({
   className?: string;
   color?: string;
 }) {
-  const xSize = Math.round(height * 0.78);
+  const xSize = Math.round(height * 0.72);
   return (
     <span
       className={className}
@@ -59,7 +66,7 @@ export function NexusWordmark({
       aria-label="NeXus Ops"
       style={{
         display: 'inline-flex',
-        alignItems: 'baseline',
+        alignItems: 'center',
         color,
         fontFamily: 'Plus Jakarta Sans, system-ui, -apple-system, sans-serif',
         fontWeight: 700,
@@ -69,9 +76,9 @@ export function NexusWordmark({
         whiteSpace: 'nowrap',
       }}
     >
-      <span>Ne</span>
+      <span style={{ lineHeight: 1 }}>Ne</span>
       <LetterX size={xSize} color={color} />
-      <span>
+      <span style={{ lineHeight: 1 }}>
         us
         <span style={{ marginLeft: '0.22em', letterSpacing: '-0.03em' }}>Ops</span>
       </span>
