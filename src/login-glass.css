@@ -25,7 +25,6 @@
 
 .login-pilot-stage { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; overflow: visible !important; clip-path: none !important; pointer-events: none !important; z-index: 2 !important; }
 .login-flybys { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; overflow: visible !important; pointer-events: none !important; z-index: 3 !important; }
-/* pilot base moved to trail block */
 .login-pilot-halo { position: absolute; inset: -22px; border-radius: 50%; background: radial-gradient(circle, rgba(192, 132, 252, 0.38) 0%, rgba(139, 92, 246, 0.08) 42%, transparent 70%); animation: login-core-pulse 2.6s ease-in-out infinite; }
 .login-pilot-orbit { position: absolute; inset: -16px; border-radius: 50%; border: 1px dashed rgba(233, 213, 255, 0.55); animation: login-arc-spin 7s linear infinite; }
 .login-pilot-orbit::before, .login-pilot-orbit::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #f5d0fe; box-shadow: 0 0 10px #e879f9; }
@@ -46,22 +45,22 @@
   z-index: 1;
 }
 .login-trail-ribbon-glow {
-  stroke-width: 14;
+  stroke-width: 10;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.45;
+  opacity: 0.35;
 }
 .login-trail-ribbon {
-  stroke-width: 5.5;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+.login-trail-ribbon-core {
+  stroke-width: 1.4;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0.9;
-}
-.login-trail-ribbon-core {
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.95;
 }
 .login-trail-spark {
   position: absolute;
@@ -84,6 +83,11 @@
     drop-shadow(0 0 10px rgba(232, 121, 249, 0.85))
     drop-shadow(0 0 22px rgba(139, 92, 246, 0.55))
     drop-shadow(0 0 36px rgba(103, 232, 249, 0.25));
+  animation: login-pilot-pulse 2.8s ease-in-out infinite;
+}
+@keyframes login-pilot-pulse {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(232, 121, 249, 0.75)) drop-shadow(0 0 22px rgba(139, 92, 246, 0.45)) drop-shadow(0 0 36px rgba(103, 232, 249, 0.2)); }
+  50% { filter: drop-shadow(0 0 16px rgba(232, 121, 249, 1)) drop-shadow(0 0 30px rgba(139, 92, 246, 0.7)) drop-shadow(0 0 48px rgba(103, 232, 249, 0.4)); }
 }
 
 .login-glass-card { position: relative; z-index: 30 !important; background: linear-gradient(160deg, rgba(30, 15, 60, 0.82) 0%, rgba(20, 10, 45, 0.9) 100%) !important; border: 1px solid rgba(196, 181, 253, 0.32) !important; box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.12), 0 25px 50px -12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important; backdrop-filter: blur(24px) saturate(1.4) !important; -webkit-backdrop-filter: blur(24px) saturate(1.4) !important; animation: login-card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
