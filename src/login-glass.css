@@ -127,7 +127,7 @@
   height: 52px;
   will-change: transform;
   z-index: 3;
-  perspective: 220px;
+  perspective: 320px;
   transform-style: preserve-3d;
   filter:
     drop-shadow(0 0 10px rgba(232, 121, 249, 0.9))
@@ -140,18 +140,81 @@
   50% { filter: drop-shadow(0 0 16px rgba(232, 121, 249, 1)) drop-shadow(0 0 30px rgba(139, 92, 246, 0.7)) drop-shadow(0 0 48px rgba(103, 232, 249, 0.4)); }
 }
 .login-pilot-3d {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  animation: login-pilot-3d-spin 5.5s linear infinite;
+  animation: login-pilot-3d-spin 6.5s linear infinite;
 }
 @keyframes login-pilot-3d-spin {
-  0%   { transform: rotateY(0deg) rotateX(14deg); }
-  50%  { transform: rotateY(180deg) rotateX(14deg); }
-  100% { transform: rotateY(360deg) rotateX(14deg); }
+  0%   { transform: rotateY(0deg) rotateX(18deg) rotateZ(0deg); }
+  25%  { transform: rotateY(90deg) rotateX(18deg) rotateZ(4deg); }
+  50%  { transform: rotateY(180deg) rotateX(18deg) rotateZ(0deg); }
+  75%  { transform: rotateY(270deg) rotateX(18deg) rotateZ(-4deg); }
+  100% { transform: rotateY(360deg) rotateX(18deg) rotateZ(0deg); }
+}
+.login-pilot-body {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 42%),
+    radial-gradient(circle at 50% 55%, #c084fc 0%, #7c3aed 45%, #4c1d95 78%, #1e0b3a 100%);
+  box-shadow:
+    inset 0 0 12px rgba(255, 255, 255, 0.25),
+    inset 0 -8px 16px rgba(30, 10, 60, 0.55),
+    0 0 18px rgba(167, 139, 250, 0.55);
+  transform: translateZ(0px);
+  transform-style: preserve-3d;
+}
+.login-pilot-rim {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 2px solid rgba(233, 213, 255, 0.55);
+  background: transparent;
+  box-shadow:
+    0 0 0 3px rgba(124, 58, 237, 0.35),
+    inset 0 0 10px rgba(192, 132, 252, 0.35);
+  transform: translateZ(2px);
+  transform-style: preserve-3d;
+}
+.login-pilot-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+.login-pilot-face-back {
+  transform: translateZ(-7px) scale(0.92);
+  opacity: 0.45;
+  filter: brightness(0.55) blur(0.3px);
+}
+.login-pilot-face-mid {
+  transform: translateZ(4px) scale(0.96);
+  opacity: 0.7;
+  filter: brightness(0.85);
+}
+.login-pilot-face-front {
+  transform: translateZ(12px);
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.85));
+}
+.login-pilot-cap {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ffffff 0%, #e9d5ff 35%, #a78bfa 70%, transparent 75%);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.9), 0 0 24px rgba(232, 121, 249, 0.7);
+  transform: translateZ(18px);
+  transform-style: preserve-3d;
 }
 
 .login-glass-card { position: relative; z-index: 30 !important; background: linear-gradient(160deg, rgba(30, 15, 60, 0.38) 0%, rgba(20, 10, 45, 0.42) 100%) !important; border: 1px solid rgba(196, 181, 253, 0.28) !important; box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important; backdrop-filter: blur(16px) saturate(1.25) !important; -webkit-backdrop-filter: blur(16px) saturate(1.25) !important; animation: login-card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
