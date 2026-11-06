@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { markJustLoggedIn } from './PostLoginLoader';
 import { CosmicFallBackground, NexusLogoMark } from './LoginScene';
+import { NexusWordmark } from './NexusBrand';
 
 interface Props {
   audience?: 'customer' | 'agent';
@@ -105,15 +106,15 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
       <div className="relative z-10 min-h-screen flex items-center">
         <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-8 lg:gap-12 xl:gap-16 2xl:gap-24 px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-8 lg:py-12 items-center">
           <div className="flex flex-col relative z-10 order-2 lg:order-1 lg:pr-4 xl:pr-8 min-w-0">
-            <div className="flex items-center gap-3">
-              <div className="login-brand-badge">
-                <NexusLogoMark size={20} />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-white tracking-tight">Nexus Ops</div>
-                <div className="text-[11px] text-fuchsia-200/70">
-                  {isAgent ? 'Support operations platform' : 'Customer support portal'}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2.5">
+                <div className="login-brand-badge">
+                  <NexusLogoMark size={22} />
                 </div>
+                <NexusWordmark height={22} className="text-white" color="currentColor" />
+              </div>
+              <div className="text-[11px] text-fuchsia-200/70 pl-[34px]">
+                {isAgent ? 'Support operations platform' : 'Customer support portal'}
               </div>
             </div>
             <div className="mt-8 lg:mt-10 max-w-lg xl:max-w-xl">
@@ -159,7 +160,9 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   <div className="login-card-logo">
                     <NexusLogoMark size={28} />
                   </div>
-                  <div className="mt-3 text-[22px] font-semibold text-white tracking-tight">Nexus Ops</div>
+                  <div className="mt-3 text-white flex justify-center">
+                    <NexusWordmark height={26} color="currentColor" />
+                  </div>
                   <div className="text-[13px] text-violet-200/75 mt-1">{cardSub}</div>
                 </div>
                 <div className="flex gap-2 mb-4 text-sm">
@@ -396,11 +399,11 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   <button
                     type="submit"
                     disabled={loading}
-                    className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-[length:160%_100%] hover:from-violet-500 hover:via-fuchsia-500 hover:to-violet-500 disabled:opacity-60 text-white font-medium text-sm py-2.5 shadow-lg shadow-violet-600/40 mt-1"
+                    className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 hover:from-violet-400 hover:via-fuchsia-400 hover:to-violet-400 disabled:opacity-60 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30"
                   >
                     {loading ? 'Creating account…' : 'Create account'}
                   </button>
-                  <p className="text-center text-xs text-fuchsia-200/70 pt-1">
+                  <p className="text-center text-xs text-violet-200/70 pt-1">
                     Already have an account?{' '}
                     <button
                       type="button"
@@ -408,11 +411,10 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                         setMode('signin');
                         setError('');
                         setInfo('');
-                        setConfirmPassword('');
                       }}
-                      className="text-fuchsia-100 hover:text-white font-semibold underline-offset-2 hover:underline"
+                      className="text-white font-semibold hover:text-fuchsia-100"
                     >
-                      {isAgent ? 'Back to agent sign in' : 'Back to customer sign in'}
+                      Sign in
                     </button>
                   </p>
                 </form>
