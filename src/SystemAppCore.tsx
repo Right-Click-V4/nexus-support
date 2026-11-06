@@ -78,6 +78,13 @@ export function AgentShell() {
   const { enabled: site404On, ready: site404Ready } = useSite404();
   const { isAdmin, adminReady } = useIsAdmin();
   const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllNotifications } = usePlatform();
+  const [forceReady, setForceReady] = useState(false);
+
+  // Never stick on boot loader if auth/maintenance checks hang (Supabase paused/slow)
+  useEffect(() => {
+    const t = window.setTimeout(() => setForceReady(true), 3500);
+    return () => window.clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!presenceAgent?.id) return;
@@ -128,8 +135,10 @@ export function AgentShell() {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  if (authLoading || !maintenanceReady || !site404Ready || !adminReady) {
-    return <BootLoader />;
+  const bootBlocked =
+    !forceReady && (authLoading || !maintenanceReady || !site404Ready || !adminReady);
+  if (bootBlocked) {
+    return <BootLoader label="Loading…" />;
   }
 
   if (maintenanceOn && !isAdmin) {
