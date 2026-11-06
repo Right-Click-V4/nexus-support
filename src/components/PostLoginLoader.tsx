@@ -33,93 +33,17 @@ export function clearJustLoggedIn() {
   }
 }
 
-/** Compact logo for boot only. */
+/** Compact star-X logo for boot. */
 function LogoMark({ spinning }: { spinning: boolean }) {
   return (
-    <div className="w-14 h-14 rounded-2xl bg-white/[0.08] border border-white/20 flex items-center justify-center shadow-[0_0_36px_rgba(167,139,250,0.35)] backdrop-blur-md">
-      <svg viewBox="0 0 48 48" width={32} height={32} fill="none" aria-hidden>
-        <circle cx="24" cy="24" r="5.5" fill="white" />
-        <g style={{ transformOrigin: '24px 24px', animation: spinning ? 'pl-spin-ring 1.15s linear infinite' : 'none' }}>
-          <path d="M24 6a18 18 0 0 1 18 18" stroke="white" strokeWidth="3.2" strokeLinecap="round" />
-          <path d="M24 42a18 18 0 0 1-18-18" stroke="white" strokeWidth="3.2" strokeLinecap="round" opacity="0.55" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-/**
- * Line-art space scene: planet, ring, orbiting probe, stars.
- */
-function SpaceScene() {
-  return (
     <div
-      className="relative w-[200px] h-[176px]"
-      style={{ animation: 'pl-scene-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both' }}
+      className="w-14 h-14 rounded-2xl bg-white/[0.08] border border-white/20 flex items-center justify-center shadow-[0_0_36px_rgba(167,139,250,0.35)] backdrop-blur-md"
+      style={{ animation: spinning ? 'pl-spin-ring 2.2s linear infinite' : 'none' }}
     >
-      <svg viewBox="0 0 200 176" width="200" height="176" fill="none" aria-hidden className="overflow-visible">
-        <defs>
-          <radialGradient id="pl-planet" cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#f5d0fe" />
-            <stop offset="45%" stopColor="#c084fc" />
-            <stop offset="100%" stopColor="#6b21a8" />
-          </radialGradient>
-          <filter id="pl-glow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="3.5" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <g opacity="0.85">
-          <circle cx="28" cy="24" r="1.2" fill="#f5d0fe" style={{ animation: 'pl-twinkle 2.8s ease-in-out infinite' }} />
-          <circle cx="168" cy="30" r="1" fill="#e9d5ff" style={{ animation: 'pl-twinkle 3.2s ease-in-out 0.4s infinite' }} />
-          <circle cx="52" cy="140" r="1.1" fill="#ddd6fe" style={{ animation: 'pl-twinkle 2.4s ease-in-out 0.8s infinite' }} />
-          <circle cx="178" cy="120" r="0.9" fill="#f0abfc" style={{ animation: 'pl-twinkle 3.6s ease-in-out 0.2s infinite' }} />
-          <circle cx="18" cy="88" r="0.8" fill="#c4b5fd" style={{ animation: 'pl-twinkle 2.6s ease-in-out 1s infinite' }} />
-          <circle cx="150" cy="18" r="1.3" fill="#fae8ff" style={{ animation: 'pl-twinkle 3s ease-in-out 0.6s infinite' }} />
-        </g>
-
-        <ellipse
-          cx="100"
-          cy="88"
-          rx="62"
-          ry="22"
-          stroke="#c4b5fd"
-          strokeWidth="1.4"
-          strokeDasharray="4 5"
-          opacity="0.45"
-          style={{ animation: 'pl-orbit-dash 8s linear infinite' }}
-        />
-
-        <g style={{ animation: 'pl-float 4.5s ease-in-out infinite alternate' }}>
-          <circle cx="100" cy="88" r="28" fill="url(#pl-planet)" stroke="#e9d5ff" strokeWidth="2.2" filter="url(#pl-glow)" />
-          <path d="M82 78c8-6 20-8 32-2" stroke="#f5d0fe" strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
-          <path d="M78 92c10 4 22 6 36 2" stroke="#c4b5fd" strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
-          <path d="M88 102c6 3 14 4 22 1" stroke="#ddd6fe" strokeWidth="1.3" strokeLinecap="round" opacity="0.45" />
-          <circle cx="90" cy="78" r="5" fill="#faf5ff" opacity="0.35" />
-        </g>
-
-        <g style={{ transformOrigin: '100px 88px', animation: 'pl-ring-tilt 6s ease-in-out infinite alternate' }}>
-          <ellipse cx="100" cy="88" rx="44" ry="10" stroke="#d8b4fe" strokeWidth="2" fill="none" opacity="0.75" />
-          <ellipse cx="100" cy="88" rx="44" ry="10" stroke="#a78bfa" strokeWidth="1" fill="none" opacity="0.35" strokeDasharray="2 6" />
-        </g>
-
-        <g style={{ transformOrigin: '100px 88px', animation: 'pl-probe-orbit 5.5s linear infinite' }}>
-          <g transform="translate(162, 88)">
-            <rect x="-6" y="-3.5" width="12" height="7" rx="1.5" stroke="#f0abfc" strokeWidth="1.6" fill="#2e1065" fillOpacity="0.5" />
-            <line x1="-10" y1="0" x2="-6" y2="0" stroke="#c4b5fd" strokeWidth="1.4" strokeLinecap="round" />
-            <line x1="6" y1="0" x2="10" y2="0" stroke="#c4b5fd" strokeWidth="1.4" strokeLinecap="round" />
-            <circle cx="0" cy="0" r="1.6" fill="#f5d0fe" />
-          </g>
-        </g>
-
-        <g style={{ animation: 'pl-comet 7s linear infinite' }} opacity="0.8">
-          <line x1="20" y1="50" x2="38" y2="58" stroke="#e9d5ff" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
-          <circle cx="38" cy="58" r="1.8" fill="#f5d0fe" />
-        </g>
+      <svg viewBox="0 0 48 48" width={30} height={30} fill="none" aria-hidden>
+        <path d="M10 10 L38 38 M38 10 L10 38" stroke="#ffffff" strokeWidth="7" strokeLinecap="round" />
+        <path d="M24 6 L27.2 20.8 L42 24 L27.2 27.2 L24 42 L20.8 27.2 L6 24 L20.8 20.8 Z" fill="#ffffff" />
+        <circle cx="24" cy="24" r="3" fill="#ffffff" />
       </svg>
     </div>
   );
@@ -204,7 +128,7 @@ export function BootLoader({ label = 'Loading…' }: { label?: string }) {
 
         <div className="text-center space-y-2 max-w-xs">
           <p className="text-[15px] font-medium tracking-wide text-fuchsia-50/95">{label}</p>
-          <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300/55">Nexus Ops</p>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300/55">NeXus Ops</p>
         </div>
 
         <div className="w-44 h-[3px] rounded-full bg-white/10 overflow-hidden">
@@ -233,41 +157,6 @@ export function BootLoader({ label = 'Loading…' }: { label?: string }) {
           100% { transform: translateX(320%); }
         }
       `}</style>
-    </div>
-  );
-}
-function FloatingParticles() {
-  const dots = useMemo(
-    () =>
-      Array.from({ length: 24 }, (_, i) => ({
-        id: i,
-        left: `${(i * 37 + 11) % 100}%`,
-        size: i % 5 === 0 ? 3 : i % 3 === 0 ? 2 : 1.5,
-        delay: `${(i * 0.37) % 6}s`,
-        duration: `${10 + (i % 7) * 1.4}s`,
-        opacity: 0.2 + (i % 5) * 0.08,
-      })),
-    [],
-  );
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {dots.map((d) => (
-        <span
-          key={d.id}
-          className="absolute rounded-full bg-fuchsia-200"
-          style={{
-            left: d.left,
-            bottom: '-4%',
-            width: d.size,
-            height: d.size,
-            opacity: d.opacity,
-            boxShadow: d.size > 2 ? '0 0 6px rgba(232,121,249,0.5)' : undefined,
-            animation: `pl-particle-rise ${d.duration} linear infinite`,
-            animationDelay: d.delay,
-          }}
-        />
-      ))}
     </div>
   );
 }
@@ -324,62 +213,20 @@ export default function PostLoginLoader({
         }}
       />
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute w-80 h-80 rounded-full opacity-25 blur-3xl"
-          style={{
-            left: '12%',
-            top: '18%',
-            background: 'radial-gradient(circle, rgba(192,38,211,0.5), transparent 70%)',
-            animation: 'pl-drift 11s ease-in-out infinite alternate',
-          }}
-        />
-        <div
-          className="absolute w-[28rem] h-[28rem] rounded-full opacity-20 blur-3xl"
-          style={{
-            right: '8%',
-            bottom: '12%',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.45), transparent 70%)',
-            animation: 'pl-drift 13s ease-in-out infinite alternate-reverse',
-          }}
-        />
-      </div>
-
-      <FloatingParticles />
-
       <div className="relative z-10 flex flex-col items-center gap-7 px-6">
-        <SpaceScene />
-
+        <LogoMark spinning />
         <div className="text-center space-y-2 max-w-sm">
           <p className="text-base font-medium tracking-wide text-fuchsia-50/95">{line}</p>
           <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300/55">
-            {isReady ? 'Almost there' : 'Nexus Ops'}
+            {isReady ? 'Almost there' : 'NeXus Ops'}
           </p>
         </div>
-
         <div className="relative w-52 h-[3px] rounded-full bg-white/10 overflow-hidden">
           <div
             className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
             style={{
               width: `${progress}%`,
               background: 'linear-gradient(90deg, #a78bfa, #e879f9, #f0abfc)',
-              boxShadow: '0 0 12px rgba(217, 70, 239, 0.55), 0 0 24px rgba(124, 58, 237, 0.25)',
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{
-                background:
-                  'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)',
-                animation: 'pl-shimmer 1.4s ease-in-out infinite',
-              }}
-            />
-          </div>
-          <div
-            className="absolute -bottom-2 left-0 h-3 rounded-full blur-md pointer-events-none transition-all duration-700"
-            style={{
-              width: `${progress}%`,
-              background: 'rgba(217, 70, 239, 0.35)',
             }}
           />
         </div>
@@ -387,61 +234,19 @@ export default function PostLoginLoader({
 
       <style>{`
         @keyframes pl-spin-ring { to { transform: rotate(360deg); } }
-        @keyframes pl-drift {
-          from { transform: translate3d(0,0,0); }
-          to { transform: translate3d(3%, 2%, 0); }
-        }
-        @keyframes pl-particle-rise {
-          from { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
-          12% { opacity: 0.85; }
-          70% { opacity: 0.45; }
-          to { transform: translate3d(8px, -110vh, 0) scale(1); opacity: 0; }
-        }
-        @keyframes pl-shimmer {
-          0% { transform: translateX(-120%); }
-          100% { transform: translateX(120%); }
-        }
-        @keyframes pl-scene-in {
-          from { opacity: 0; transform: translateY(12px) scale(0.94); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes pl-float {
-          from { transform: translateY(0); }
-          to { transform: translateY(-4px); }
-        }
-        @keyframes pl-ring-tilt {
-          from { transform: rotate(-6deg); }
-          to { transform: rotate(6deg); }
-        }
-        @keyframes pl-probe-orbit {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes pl-orbit-dash {
-          to { stroke-dashoffset: -36; }
-        }
-        @keyframes pl-twinkle {
-          0%, 100% { opacity: 0.35; }
-          50% { opacity: 1; }
-        }
-        @keyframes pl-comet {
-          0% { transform: translate(-20px, -10px); opacity: 0; }
-          15% { opacity: 0.85; }
-          85% { opacity: 0.5; }
-          100% { transform: translate(160px, 40px); opacity: 0; }
-        }
       `}</style>
     </div>
   );
 }
 
 export function PostLoginShell({
-  ready,
-  label,
+  ready = true,
+  label = 'Loading…',
   variant = 'agent',
   children,
 }: {
-  ready: boolean;
-  label: string;
+  ready?: boolean;
+  label?: string;
   subtitle?: string;
   variant?: 'agent' | 'customer';
   children: ReactNode;
@@ -490,7 +295,16 @@ export function PostLoginShell({
     return () => window.clearTimeout(t);
   }, [ready, mode]);
 
-  // Fresh login → boot ceremony only (never plain loader). Refresh → plain BootLoader.
+  // Safety: never stay on wait longer than 2s when ready is true
+  useEffect(() => {
+    if (!ready) return;
+    const t = window.setTimeout(() => {
+      setMode((m) => (m === 'wait' || m === 'ceremony' || m === 'fading' ? 'done' : m));
+      clearJustLoggedIn();
+    }, 2000);
+    return () => window.clearTimeout(t);
+  }, [ready]);
+
   if (!ready || mode === 'wait') {
     if (hasJustLoggedIn() || wantCeremony.current) {
       return <PostLoginLoader label={label} fading={false} variant={variant} />;
@@ -519,10 +333,10 @@ export function PostLoginShell({
           className="fixed inset-0 z-50 pointer-events-none"
           style={{
             opacity: overlayFading ? 0 : 1,
-            transition: `opacity ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+            transition: `opacity ${FADE_MS}ms ease`,
           }}
         >
-          <PostLoginLoader label={label} fading={false} variant={variant} />
+          <PostLoginLoader label={label} fading={overlayFading} variant={variant} />
         </div>
       )}
     </div>
