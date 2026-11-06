@@ -152,6 +152,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
+      try {
+        if (localStorage.getItem('nexus-demo-session') === '1') {
+          const demoUser = {
+            id: 'demo-agent',
+            email: 'demo@nexus.local',
+            user_metadata: { role: 'agent', full_name: 'Demo Agent' },
+            app_metadata: {},
+            aud: 'authenticated',
+            created_at: '',
+          } as unknown as User;
+          setUser(demoUser);
+          setSession(null);
+          setAccountRole('agent');
+        }
+      } catch {
+        /* ignore */
+      }
       setLoading(false);
       return;
     }
@@ -378,6 +395,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('nexus-last-tab-close-v1');
       localStorage.removeItem('nexus-auth-closed-v1');
       localStorage.removeItem('nexus-auth-last-beat-v1');
+      localStorage.removeItem('nexus-demo-session');
       sessionStorage.removeItem('nexus-auth-live-v2');
       sessionStorage.removeItem('nexus-auth-live-v3');
     } catch {
