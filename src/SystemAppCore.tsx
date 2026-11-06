@@ -82,7 +82,7 @@ export function AgentShell() {
 
   // Never stick on boot loader if auth/maintenance checks hang (Supabase paused/slow)
   useEffect(() => {
-    const t = window.setTimeout(() => setForceReady(true), 3500);
+    const t = window.setTimeout(() => setForceReady(true), 2500);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -135,17 +135,11 @@ export function AgentShell() {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const bootBlocked =
-    !forceReady && (authLoading || !maintenanceReady || !site404Ready || !adminReady);
-  if (bootBlocked) {
+  // Show login as soon as auth is known (or force timeout). Never block login on
+  // maintenance/admin checks — those only matter for the authenticated desk.
+  const authKnown = forceReady || !authLoading;
+  if (!authKnown) {
     return <BootLoader label="Loading…" />;
-  }
-
-  if (maintenanceOn && !isAdmin) {
-    return <MaintenanceScreen />;
-  }
-  if (site404On && !isAdmin) {
-    return <NotFoundScreen />;
   }
 
   if (!user) {
@@ -155,6 +149,20 @@ export function AgentShell() {
         onOpenPortal={() => { window.location.hash = 'portal'; }}
       />
     );
+  }
+
+  // Authenticated desk: soft-wait for maintenance flags, then force through
+  const deskBlocked =
+    !forceReady && (!maintenanceReady || !site404Ready || !adminReady);
+  if (deskBlocked) {
+    return <BootLoader label="Opening desk…" />;
+  }
+
+  if (maintenanceOn && !isAdmin) {
+    return <MaintenanceScreen />;
+  }
+  if (site404On && !isAdmin) {
+    return <NotFoundScreen />;
   }
 
   const displayName = currentAgent?.name || user.email || 'Agent';
@@ -190,7 +198,7 @@ export function AgentShell() {
   };
 
   return (
-    <PostLoginShell>
+    <PostLoginShell ready={true} label="Loading…">
       <div className="app-cosmos flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
         <Sidebar
           active={activeNav}
