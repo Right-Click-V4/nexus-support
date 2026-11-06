@@ -25,9 +25,9 @@ type TrailPoint = { x: number; y: number; t: number };
 const TRAIL_MAX_DIST = 280;
 const SAMPLE_MS = 14;
 const BASE_SPEED = 0.24;
-const TURN_RATE = 0.004;
+const TURN_RATE = 0.0045;
 
-type PilotMode = 'cruise' | 'pause' | 'lag' | 'dash' | 'bob';
+type PilotMode = 'cruise' | 'pause' | 'lag' | 'dash' | 'bob_v' | 'bob_h';
 
 function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -104,46 +104,65 @@ function LogoPilotStage() {
     let turnBoost = 1;
     let mode: PilotMode = 'cruise';
     let modeUntil = 0;
+    let modeSpeed = 1;
     let bobPhase = 0;
-    let bobAmp = 18;
+    let bobAmp = 16;
 
     const pickMode = (now: number) => {
       const r = Math.random();
-      if (r < 0.18) {
+      modeSpeed = randomIn(0.65, 1.55);
+      if (r < 0.14) {
         mode = 'pause';
-        modeUntil = now + randomIn(400, 1100);
-      } else if (r < 0.34) {
+        modeUntil = now + randomIn(350, 900);
+      } else if (r < 0.28) {
         mode = 'lag';
-        modeUntil = now + randomIn(900, 2200);
-      } else if (r < 0.52) {
+        modeSpeed = randomIn(0.2, 0.4);
+        modeUntil = now + randomIn(700, 1600);
+      } else if (r < 0.44) {
         mode = 'dash';
-        modeUntil = now + randomIn(500, 1400);
-      } else if (r < 0.7) {
-        mode = 'bob';
-        bobAmp = randomIn(14, 32);
-        bobPhase = Math.random() * Math.PI * 2;
-        modeUntil = now + randomIn(1200, 2800);
+        modeSpeed = randomIn(1.8, 2.8);
+        modeUntil = now + randomIn(400, 1100);
+      } else if (r < 0.58) {
+        mode = 'bob_v';
+        bobAmp = randomIn(12, 22);
+        bobPhase = 0;
+        modeSpeed = randomIn(0.45, 0.75);
+        modeUntil = now + randomIn(520, 780);
+      } else if (r < 0.72) {
+        mode = 'bob_h';
+        bobAmp = randomIn(14, 26);
+        bobPhase = 0;
+        modeSpeed = randomIn(0.45, 0.75);
+        modeUntil = now + randomIn(520, 800);
       } else {
         mode = 'cruise';
-        modeUntil = now + randomIn(1400, 3200);
+        modeUntil = now + randomIn(1000, 2600);
       }
     };
 
-    const pickTarget = (w: number, h: number) => {
+    const pickTarget = (w: number, h: number, preferAwayFromEdge = false) => {
       const marginX = w * 0.12;
       const marginY = h * 0.1;
       const allowSharp = Math.random() < 0.35;
-      const verticalBias = Math.random() < 0.28;
+      const verticalBias = Math.random() < 0.22;
+      const horizontalBias = Math.random() < 0.22;
       let bestX = randomIn(marginX, w - marginX);
       let bestY = randomIn(marginY, h - marginY);
       let bestScore = -Infinity;
-      for (let tries = 0; tries < 10; tries++) {
+      for (let tries = 0; tries < 12; tries++) {
         let nx = randomIn(marginX, w - marginX);
         let ny = randomIn(marginY, h - marginY);
-        if (verticalBias) {
-          nx = x + randomIn(-40, 40);
+        if (preferAwayFromEdge) {
+          nx = randomIn(w * 0.25, w * 0.75);
+          ny = randomIn(h * 0.25, h * 0.75);
+        } else if (verticalBias) {
+          nx = x + randomIn(-36, 36);
           nx = Math.max(marginX, Math.min(w - marginX, nx));
           ny = randomIn(marginY, h - marginY);
+        } else if (horizontalBias) {
+          ny = y + randomIn(-36, 36);
+          ny = Math.max(marginY, Math.min(h - marginY, ny));
+          nx = randomIn(marginX, w - marginX);
         }
         const desired = Math.atan2(ny - y, nx - x);
         let delta = desired - angle;
@@ -153,7 +172,7 @@ function LogoPilotStage() {
         const score = allowSharp
           ? dist * 0.3 + Math.abs(delta) * 55
           : dist * 0.45 - Math.abs(delta) * 90;
-        if (score > bestScore && dist > 80) {
+        if (score > bestScore && dist > 70) {
           bestScore = score;
           bestX = nx;
           bestY = ny;
@@ -162,7 +181,7 @@ function LogoPilotStage() {
       targetX = bestX;
       targetY = bestY;
       scaleGoal = randomIn(0.94, 1.08);
-      turnBoost = allowSharp ? 2.8 : 1;
+      turnBoost = allowSharp ? 2.6 : 1;
     };
 
     const publishTrail = (list: TrailPoint[]) => {
@@ -212,19 +231,15 @@ function LogoPilotStage() {
 
       if (now >= modeUntil) pickMode(now);
 
-      let speedMul = 1;
+      let speedMul = modeSpeed;
       if (mode === 'pause') speedMul = 0;
-      else if (mode === 'lag') speedMul = 0.28;
-      else if (mode === 'dash') speedMul = 2.35;
-      else if (mode === 'bob') speedMul = 0.55;
-      else speedMul = 1;
 
       if (mode !== 'pause') {
         const targetAngle = Math.atan2(targetY - y, targetX - x);
         let delta = targetAngle - angle;
         while (delta > Math.PI) delta -= Math.PI * 2;
         while (delta < -Math.PI) delta += Math.PI * 2;
-        const maxTurn = TURN_RATE * turnBoost * (mode === 'dash' ? 1.4 : 1) * dt;
+        const maxTurn = TURN_RATE * turnBoost * (mode === 'dash' ? 1.5 : 1) * dt;
         if (delta > maxTurn) delta = maxTurn;
         if (delta < -maxTurn) delta = -maxTurn;
         angle += delta;
@@ -233,29 +248,46 @@ function LogoPilotStage() {
         x += Math.cos(angle) * step;
         y += Math.sin(angle) * step;
 
-        if (mode === 'bob') {
-          bobPhase += dt * 0.0065;
-          y += Math.sin(bobPhase) * bobAmp * (dt / 16) * 0.35;
+        if (mode === 'bob_v' || mode === 'bob_h') {
+          bobPhase += dt * 0.012;
+          const wiggle = Math.sin(bobPhase) * bobAmp * (dt / 16) * 0.55;
+          if (mode === 'bob_v') y += wiggle;
+          else x += wiggle;
         }
       }
 
       scale += (scaleGoal - scale) * Math.min(1, dt * 0.002);
 
-      const mX = sr.width * 0.08;
-      const mY = sr.height * 0.08;
+      const mX = sr.width * 0.06;
+      const mY = sr.height * 0.06;
+      let bounced = false;
       if (x < mX) {
         x = mX;
         angle = Math.PI - angle;
+        bounced = true;
       } else if (x > sr.width - mX) {
         x = sr.width - mX;
         angle = Math.PI - angle;
+        bounced = true;
       }
       if (y < mY) {
         y = mY;
         angle = -angle;
+        bounced = true;
       } else if (y > sr.height - mY) {
         y = sr.height - mY;
         angle = -angle;
+        bounced = true;
+      }
+      if (bounced) {
+        while (angle > Math.PI) angle -= Math.PI * 2;
+        while (angle < -Math.PI) angle += Math.PI * 2;
+        pickTarget(sr.width, sr.height, true);
+        if (mode === 'pause') {
+          mode = 'cruise';
+          modeSpeed = randomIn(1.0, 1.6);
+          modeUntil = now + randomIn(600, 1400);
+        }
       }
 
       pilot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${scale})`;
