@@ -20,6 +20,35 @@ export function NexusLogoMark({ size = 56, className = '' }: { size?: number; cl
   );
 }
 
+/** Inline star used as the letter X inside "NeXus". */
+function StarXLetter({ size, color }: { size: number; color: string }) {
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      width={size}
+      height={size}
+      fill="none"
+      aria-hidden
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <path
+        d="M8 8 L32 32 M32 8 L8 32"
+        stroke={color}
+        strokeWidth="6.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M20 4 L22.6 16.6 L35.5 19.2 L22.6 21.8 L20 34.5 L17.4 21.8 L4.5 19.2 L17.4 16.6 Z"
+        fill={color}
+      />
+      <circle cx="20" cy="19.2" r="2.2" fill={color} />
+    </svg>
+  );
+}
+
+/**
+ * Compact wordmark: Ne + star-X + us Ops as one tight unit.
+ */
 export function NexusWordmark({
   height = 28,
   className = '',
@@ -29,52 +58,31 @@ export function NexusWordmark({
   className?: string;
   color?: string;
 }) {
-  const width = Math.round(height * 5.6);
+  const xSize = Math.round(height * 0.92);
   return (
-    <svg
-      viewBox="0 0 280 50"
-      width={width}
-      height={height}
+    <span
       className={className}
-      fill={color}
       role="img"
       aria-label="NeXus Ops"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 1,
+        color,
+        fontFamily: 'Plus Jakarta Sans, system-ui, -apple-system, sans-serif',
+        fontWeight: 700,
+        fontSize: height,
+        lineHeight: 1,
+        letterSpacing: '-0.04em',
+        whiteSpace: 'nowrap',
+      }}
     >
-      <text
-        x="0"
-        y="36"
-        fontFamily="Plus Jakarta Sans, system-ui, -apple-system, sans-serif"
-        fontSize="34"
-        fontWeight="700"
-        letterSpacing="-0.5"
-      >
-        Ne
-      </text>
-      <g transform="translate(52, 4)">
-        <path
-          d="M6 6 L36 36 M36 6 L6 36"
-          stroke={color}
-          strokeWidth="7"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d="M21 0 L24.1 15.2 L39.5 18.5 L24.1 21.8 L21 37 L17.9 21.8 L2.5 18.5 L17.9 15.2 Z"
-          fill={color}
-        />
-        <circle cx="21" cy="18.5" r="2.6" fill={color} />
-      </g>
-      <text
-        x="98"
-        y="36"
-        fontFamily="Plus Jakarta Sans, system-ui, -apple-system, sans-serif"
-        fontSize="34"
-        fontWeight="700"
-        letterSpacing="-0.5"
-      >
-        us Ops
-      </text>
-    </svg>
+      <span style={{ letterSpacing: '-0.06em' }}>Ne</span>
+      <StarXLetter size={xSize} color={color} />
+      <span style={{ letterSpacing: '-0.04em' }}>
+        us<span style={{ marginLeft: '0.28em', letterSpacing: '-0.02em' }}>Ops</span>
+      </span>
+    </span>
   );
 }
 

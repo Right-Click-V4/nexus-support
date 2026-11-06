@@ -9,7 +9,6 @@ function isValidSupabaseUrl(url: string | undefined): boolean {
   if (url.includes('YOUR_') || url.includes('YOUR_PROJECT')) return false;
   try {
     const u = new URL(url);
-    // Must be https and a *.supabase.co host (or local supabase)
     if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
     const host = u.hostname.toLowerCase();
     if (host === 'localhost' || host === '127.0.0.1') return true;
@@ -22,7 +21,6 @@ function isValidSupabaseUrl(url: string | undefined): boolean {
 function isValidAnonKey(key: string | undefined): boolean {
   if (!key) return false;
   if (key.includes('YOUR_') || key === 'YOUR_ANON_KEY') return false;
-  // JWT-shaped anon keys start with eyJ
   return key.length > 20;
 }
 
@@ -32,7 +30,15 @@ export const isSupabaseConfigured =
 /** Human-readable reason when env is present but invalid (for debugging UI). */
 export function getSupabaseConfigError(): string | null {
   if (isSupabaseConfigured) return null;
-  if (!rawUrl && !rawKey) return null; // intentional local mode
+  if (!rawUrl && !rawKey) {
+    if (import.meta.env.PROD) {
+      return (
+        'Supabase is not configured. In GitHub → Settings → Secrets and variables → Actions, ' +
+        'add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then re-run Deploy to GitHub Pages.'
+      );
+    }
+    return null;
+  }
   if (!rawUrl || !isValidSupabaseUrl(rawUrl)) {
     return (
       'Invalid VITE_SUPABASE_URL. Use the full Project URL from Supabase → Project Settings → API ' +
