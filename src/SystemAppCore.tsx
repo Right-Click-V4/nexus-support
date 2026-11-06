@@ -62,6 +62,9 @@ const TITLES: Record<string, string> = {
   settings: 'Settings',
   profile: 'Profile',
   admin: 'Admin Features',
+  'admin-features': 'Admin Features',
+  dashboard: 'Overview',
+  customers: 'Branches',
 };
 
 export function AgentShell() {
@@ -70,11 +73,10 @@ export function AgentShell() {
   const notifRef = useRef<HTMLDivElement | null>(null);
   const { currentAgent, touchPresence, setPresenceStatus } = useTickets();
   const presenceAgent = currentAgent;
-  const { user, loading: authLoading, needsAuth, signOut, accountRole } = useAuth();
+  const { user, loading: authLoading, requiresAuth, signOut, accountRole } = useAuth();
   const { enabled: maintenanceOn, ready: maintenanceReady } = useMaintenance();
   const { enabled: site404On, ready: site404Ready } = useSite404();
   const { isAdmin, adminReady } = useIsAdmin();
-  const [adminLogin, setAdminLogin] = useState(false);
   const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllNotifications } = usePlatform();
 
   useEffect(() => {
@@ -121,7 +123,7 @@ export function AgentShell() {
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (notifRef. current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
@@ -138,17 +140,26 @@ export function AgentShell() {
     return <NotFoundScreen />;
   }
 
-  if (needsAuth || !user) {
-    return <LoginPage mode="agent" onAdminBypass={() => setAdminLogin(true)} />;
+  if (!user) {
+    return (
+      <LoginPage
+        audience="agent"
+        onOpenPortal={() => { window.location.hash = 'portal'; }}
+      />
+    );
   }
 
   const displayName = currentAgent?.name || user.email || 'Agent';
 
   const renderPage = () => {
     switch (activeNav) {
-      case 'overview': return <Dashboard />;
+      case 'overview':
+      case 'dashboard':
+        return <Dashboard />;
       case 'tickets': return <TicketsPage />;
-      case 'branches': return <CustomersPage />;
+      case 'branches':
+      case 'customers':
+        return <CustomersPage />;
       case 'knowledge': return <KnowledgePage />;
       case 'chat': return <LiveChatPage />;
       case 'analytics': return <AnalyticsPage />;
@@ -163,7 +174,9 @@ export function AgentShell() {
       case 'users': return <UsersAdminPage />;
       case 'settings': return <SettingsPage />;
       case 'profile': return <ProfilePage />;
-      case 'admin': return <AdminFeaturesPage />;
+      case 'admin':
+      case 'admin-features':
+        return <AdminFeaturesPage />;
       default: return <Dashboard />;
     }
   };
@@ -171,7 +184,17 @@ export function AgentShell() {
   return (
     <PostLoginShell>
       <div className="app-cosmos flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Sidebar active={activeNav} onNavigate={setActiveNav} />
+        <Sidebar
+          active={activeNav}
+          onNavigate={setActiveNav}
+          onSignOut={() => void signOut()}
+          onProfile={() => setActiveNav('profile')}
+          userName={displayName}
+          userEmail={user?.email || ''}
+          avatarUrl={currentAgent?.avatar_url}
+          agentStatus={currentAgent?.status || 'online'}
+          isAdmin={isAdmin}
+        />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 shrink-0 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between px-4 gap-3">
             <div className="min-w-0">
