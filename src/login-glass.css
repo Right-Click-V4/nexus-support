@@ -26,10 +26,34 @@
 .login-pilot-stage { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; overflow: visible !important; clip-path: none !important; pointer-events: none !important; z-index: 2 !important; }
 .login-flybys { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; overflow: visible !important; pointer-events: none !important; z-index: 3 !important; }
 .login-pilot-halo { position: absolute; inset: -22px; border-radius: 50%; background: radial-gradient(circle, rgba(192, 132, 252, 0.38) 0%, rgba(139, 92, 246, 0.08) 42%, transparent 70%); animation: login-core-pulse 2.6s ease-in-out infinite; }
-.login-pilot-orbit { position: absolute; inset: -16px; border-radius: 50%; border: 1px dashed rgba(233, 213, 255, 0.55); animation: login-arc-spin 7s linear infinite; }
-.login-pilot-orbit::before, .login-pilot-orbit::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #f5d0fe; box-shadow: 0 0 10px #e879f9; }
-.login-pilot-orbit::before { top: -3px; left: 50%; margin-left: -3px; }
-.login-pilot-orbit::after { bottom: -3px; left: 18%; background: #67e8f9; box-shadow: 0 0 10px #22d3ee; }
+.login-pilot-orbit {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 1px dashed rgba(233, 213, 255, 0.55);
+  animation: login-arc-spin 7s linear infinite;
+}
+.login-pilot-orbit::before,
+.login-pilot-orbit::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  left: 50%;
+  margin-left: -3.5px;
+}
+.login-pilot-orbit::before {
+  top: -3.5px;
+  background: #f5d0fe;
+  box-shadow: 0 0 10px #e879f9, 0 0 18px rgba(232, 121, 249, 0.55);
+}
+.login-pilot-orbit::after {
+  bottom: -3.5px;
+  top: auto;
+  background: #67e8f9;
+  box-shadow: 0 0 10px #22d3ee, 0 0 18px rgba(34, 211, 238, 0.55);
+}
 .login-pilot .login-logo-arcs { transform-origin: center; transform-box: fill-box; animation: login-arc-spin 9s linear infinite; }
 .login-pilot .login-logo-arcs-rev { transform-origin: center; transform-box: fill-box; animation: login-arc-spin 14s linear infinite reverse; }
 .login-pilot .login-logo-core { transform-origin: center; transform-box: fill-box; animation: login-core-pulse 2.4s ease-in-out infinite; }
