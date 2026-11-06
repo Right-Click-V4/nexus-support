@@ -20,35 +20,28 @@ export function NexusLogoMark({ size = 56, className = '' }: { size?: number; cl
   );
 }
 
-/** Inline star used as the letter X inside "NeXus". */
-function StarXLetter({ size, color }: { size: number; color: string }) {
+/** Letter-sized star-X used inside the wordmark. */
+function LetterX({ size, color }: { size: number; color: string }) {
   return (
     <svg
-      viewBox="0 0 40 40"
+      viewBox="0 0 32 32"
       width={size}
       height={size}
       fill="none"
       aria-hidden
-      style={{ display: 'block', flexShrink: 0 }}
+      style={{ display: 'inline-block', verticalAlign: '-12%', margin: '0 -0.02em' }}
     >
+      <path d="M6 6 L26 26 M26 6 L6 26" stroke={color} strokeWidth="5.5" strokeLinecap="round" />
       <path
-        d="M8 8 L32 32 M32 8 L8 32"
-        stroke={color}
-        strokeWidth="6.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M20 4 L22.6 16.6 L35.5 19.2 L22.6 21.8 L20 34.5 L17.4 21.8 L4.5 19.2 L17.4 16.6 Z"
+        d="M16 3 L18 13.5 L28.5 15.5 L18 17.5 L16 28 L14 17.5 L3.5 15.5 L14 13.5 Z"
         fill={color}
       />
-      <circle cx="20" cy="19.2" r="2.2" fill={color} />
+      <circle cx="16" cy="15.5" r="1.8" fill={color} />
     </svg>
   );
 }
 
-/**
- * Compact wordmark: Ne + star-X + us Ops as one tight unit.
- */
+/** Clean wordmark: NeXus Ops with star-X as the letter X (tight, one word). */
 export function NexusWordmark({
   height = 28,
   className = '',
@@ -58,7 +51,7 @@ export function NexusWordmark({
   className?: string;
   color?: string;
 }) {
-  const xSize = Math.round(height * 0.92);
+  const xSize = Math.round(height * 0.78);
   return (
     <span
       className={className}
@@ -66,27 +59,27 @@ export function NexusWordmark({
       aria-label="NeXus Ops"
       style={{
         display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
+        alignItems: 'baseline',
         color,
         fontFamily: 'Plus Jakarta Sans, system-ui, -apple-system, sans-serif',
         fontWeight: 700,
         fontSize: height,
         lineHeight: 1,
-        letterSpacing: '-0.04em',
+        letterSpacing: '-0.045em',
         whiteSpace: 'nowrap',
       }}
     >
-      <span style={{ letterSpacing: '-0.06em' }}>Ne</span>
-      <StarXLetter size={xSize} color={color} />
-      <span style={{ letterSpacing: '-0.04em' }}>
-        us<span style={{ marginLeft: '0.28em', letterSpacing: '-0.02em' }}>Ops</span>
+      <span>Ne</span>
+      <LetterX size={xSize} color={color} />
+      <span>
+        us
+        <span style={{ marginLeft: '0.22em', letterSpacing: '-0.03em' }}>Ops</span>
       </span>
     </span>
   );
 }
 
-/** Compact star-X for sidebar / boot (inherits white on brand gradient). */
+/** Compact star-X for sidebar / boot. */
 export function NexusBrandIcon({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>

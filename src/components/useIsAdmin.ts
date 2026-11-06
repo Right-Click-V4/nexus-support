@@ -63,5 +63,5 @@ export function useIsAdmin() {
     };
   }, [user, loading]);
 
-  return { isAdmin, adminReady: ready && !loading };
+  return { isAdmin, adminReady: ready };
 }
