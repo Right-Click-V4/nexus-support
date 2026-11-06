@@ -221,11 +221,16 @@ export default function Sidebar({
           </div>
           <User size={14} className="text-zinc-500 shrink-0" />
         </button>
-        {onSignOut && (
-          <button type="button" onClick={() => onSignOut()} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:bg-white/5 hover:text-zinc-200">
-            <LogOut size={16} /> Sign out
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            if (onSignOut) onSignOut();
+            else window.location.hash = '';
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-rose-300/90 hover:bg-rose-500/10 hover:text-rose-200 border border-transparent hover:border-rose-500/20"
+        >
+          <LogOut size={16} /> Sign out
+        </button>
       </div>
     </aside>
   );
