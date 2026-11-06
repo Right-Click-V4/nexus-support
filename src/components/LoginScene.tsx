@@ -19,22 +19,8 @@ function useFallingStars(count: number) {
   );
 }
 
-export function NexusLogoMark({ size = 56 }: { size?: number }) {
-  return (
-    <div className="login-logo-mark" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 48 48" width={size} height={size} fill="none" aria-hidden>
-        <circle cx="24" cy="24" r="5.2" fill="#e9d5ff" className="login-logo-core" />
-        <g className="login-logo-arcs">
-          <path d="M24 7a17 17 0 0 1 17 17" stroke="#c4b5fd" strokeWidth="3" strokeLinecap="round" />
-          <path d="M24 41a17 17 0 0 1-17-17" stroke="#a78bfa" strokeWidth="3" strokeLinecap="round" opacity="0.7" />
-        </g>
-        <g className="login-logo-arcs-rev">
-          <path d="M10 30a16 16 0 0 1 4-14" stroke="#f0abfc" strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+import { NexusLogoMark, NexusWordmark } from './NexusBrand';
+export { NexusLogoMark, NexusWordmark };
 
 type TrailPoint = { x: number; y: number };
 const TRAIL_LEN = 32;
