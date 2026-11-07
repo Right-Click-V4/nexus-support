@@ -18,19 +18,17 @@ import FormsPage from './components/FormsPage';
 import ReleasesPage from './components/ReleasesPage';
 import SettingsPage from './components/SettingsPage';
 import ProfilePage from './components/ProfilePage';
-import LoginPage from './components/LoginPage';
-import CustomerPortal from './components/CustomerPortal';
-import PortalAuthGate from './components/PortalAuthGate';
-import PostLoginLoader, { PostLoginShell, BootLoader, hasJustLoggedIn } from './components/PostLoginLoader';
 import AdminFeaturesPage from './components/AdminFeaturesPage';
-import MaintenanceScreen from './components/MaintenanceScreen';
+import CustomerPortal from './components/CustomerPortal';
 import NotFoundScreen from './components/NotFoundScreen';
+import { BootLoader } from './components/PostLoginLoader';
+import LoginPage from './components/LoginPage';
 import { TicketProvider, useTickets } from './context/TicketContext';
-import { publishDeskPresence, clearDeskPresence } from './lib/deskPresence';
 import { PlatformProvider, usePlatform } from './context/PlatformContext';
 import { useAuth } from './context/AuthContext';
 import { useMaintenance } from './context/MaintenanceContext';
 import { useSite404 } from './context/Site404Context';
+import { publishDeskPresence, clearDeskPresence } from './lib/deskPresence';
 import { useIsAdmin } from './components/useIsAdmin';
 import { Bell, Settings, ExternalLink } from 'lucide-react';
 import AgentAvatar from './components/AgentAvatar';
@@ -116,7 +114,7 @@ export function AgentShell() {
     const id = window.setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       tick();
-    }, 90_000);
+    }, 30_000);
     const onVis = () => { if (!document.hidden) tick(); };
     document.addEventListener('visibilitychange', onVis);
     return () => {
@@ -136,144 +134,87 @@ export function AgentShell() {
 
   const authKnown = forceReady || !authLoading;
   if (!authKnown) {
-    return <BootLoader label="Loading…" />;
+    return <BootLoader label="Loading\u2026" />;
   }
 
   if (!user) {
-    return (
-      <LoginPage
-        audience="agent"
-        onOpenPortal={() => { window.location.hash = 'portal'; }}
-      />
-    );
+    return <LoginPage />;
   }
 
-  const deskBlocked =
-    !forceReady && (!maintenanceReady || !site404Ready || !adminReady);
-  if (deskBlocked) {
-    return <BootLoader label="Opening desk…" />;
+  if (maintenanceReady && maintenanceOn && !isAdmin) {
+    return <BootLoader label="Maintenance" />;
   }
 
-  if (maintenanceOn && !isAdmin) {
-    return <MaintenanceScreen />;
-  }
-  if (site404On && !isAdmin) {
-    return <NotFoundScreen />;
-  }
+  const title = TITLES[activeNav] || 'Overview';
 
-  const displayName = currentAgent?.name || user.email || 'Agent';
-
-  const renderPage = () => {
-    switch (activeNav) {
-      case 'overview':
-      case 'dashboard':
-        return <Dashboard />;
-      case 'tickets': return <TicketsPage />;
-      case 'branches':
-      case 'customers':
-        return <CustomersPage />;
-      case 'knowledge': return <KnowledgePage />;
-      case 'chat': return <LiveChatPage />;
-      case 'analytics': return <AnalyticsPage />;
-      case 'team': return <TeamPage />;
-      case 'automations': return <AutomationsPage />;
-      case 'macros': return <MacrosPage />;
-      case 'surveys': return <SurveysPage />;
-      case 'quality': return <QualityPage />;
-      case 'announcements': return <AnnouncementsPage />;
-      case 'forms': return <FormsPage />;
-      case 'releases': return <ReleasesPage />;
-      case 'users': return <UsersAdminPage />;
-      case 'settings': return <SettingsPage />;
-      case 'profile': return <ProfilePage />;
-      case 'admin':
-      case 'admin-features':
-        return <AdminFeaturesPage />;
-      default: return <Dashboard />;
-    }
-  };
+  let body: React.ReactNode = <Dashboard />;
+  switch (activeNav) {
+    case 'tickets': body = <TicketsPage />; break;
+    case 'customers':
+    case 'branches': body = <CustomersPage />; break;
+    case 'team': body = <TeamPage />; break;
+    case 'analytics': body = <AnalyticsPage />; break;
+    case 'knowledge': body = <KnowledgePage />; break;
+    case 'chat': body = <LiveChatPage />; break;
+    case 'automations': body = <AutomationsPage />; break;
+    case 'macros': body = <MacrosPage />; break;
+    case 'surveys': body = <SurveysPage />; break;
+    case 'quality': body = <QualityPage />; break;
+    case 'announcements': body = <AnnouncementsPage />; break;
+    case 'forms': body = <FormsPage />; break;
+    case 'releases': body = <ReleasesPage />; break;
+    case 'users': body = <UsersAdminPage />; break;
+    case 'settings': body = <SettingsPage />; break;
+    case 'profile': body = <ProfilePage />; break;
+    case 'admin':
+    case 'admin-features': body = <AdminFeaturesPage />; break;
+    default: body = <Dashboard />; break;
+  }
 
   return (
-    <PostLoginShell ready={true} label="Loading…">
-      <div className="app-cosmos flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Sidebar
-          active={activeNav}
-          onNavigate={setActiveNav}
-          onSignOut={() => void signOut()}
-          onProfile={() => setActiveNav('profile')}
-          userName={displayName}
-          userEmail={user?.email || ''}
-          avatarUrl={currentAgent?.avatar_url}
-          agentStatus={currentAgent?.status || 'online'}
-          isAdmin={isAdmin}
-        />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="relative z-50 h-14 shrink-0 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between px-4 gap-3 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-sm">
-            <div className="min-w-0">
-              <div className="text-sm font-semibold truncate">{TITLES[activeNav] || 'Nexus Ops'}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <div className="relative" ref={notifRef}>
-                <button type="button" onClick={() => setNotifOpen((v) => !v)} className="relative p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10">
-                  <Bell size={18} />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-violet-600 text-[10px] text-white flex items-center justify-center">{unreadCount}</span>
-                  )}
-                </button>
-                {notifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl z-[100] p-2">
-                    <div className="flex items-center justify-between px-2 py-1 mb-1">
-                      <span className="text-xs font-semibold">Notifications</span>
-                      <button type="button" className="text-[11px] text-violet-600" onClick={() => void markAllNotificationsRead()}>Mark all read</button>
-                    </div>
-                    {notifications.length === 0 && <p className="text-xs text-zinc-500 p-2">No notifications</p>}
-                    {notifications.slice(0, 30).map((n) => (
-                      <div key={n.id} className={`px-2 py-2 rounded-lg text-xs mb-1 ${n.read ? 'opacity-60' : 'bg-violet-500/10'}`}>
-                        <div className="font-medium">{n.title}</div>
-                        <div className="text-zinc-500 mt-0.5">{n.body}</div>
-                        <div className="flex gap-2 mt-1">
-                          {!n.read && <button type="button" onClick={() => void markNotificationRead(n.id)}>Read</button>}
-                          <button type="button" onClick={() => void deleteNotification(n.id)}>Delete</button>
-                        </div>
-                      </div>
-                    ))}
-                    {notifications.length > 0 && (
-                      <button type="button" className="w-full text-[11px] py-1 text-rose-500" onClick={() => void deleteAllNotifications()}>Delete all</button>
-                    )}
-                  </div>
+    <div className="flex h-screen max-h-screen overflow-hidden app-cosmos">
+      <Sidebar
+        active={activeNav}
+        onNavigate={setActiveNav}
+        onSignOut={() => void signOut()}
+        userName={currentAgent?.name || user?.email || 'Agent'}
+        userEmail={user?.email || ''}
+        avatarUrl={currentAgent?.avatar_url}
+        agentStatus={currentAgent?.status || 'online'}
+      />
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="nexus-topbar h-14 shrink-0 flex items-center justify-between px-4 gap-3">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-zinc-100 truncate">{title}</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button type="button" onClick={() => { window.location.hash = 'portal'; }} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10" title="Customer portal">
+              <ExternalLink size={16} />
+            </button>
+            <div className="relative" ref={notifRef}>
+              <button type="button" onClick={() => setNotifOpen((v) => !v)} className="relative p-2 rounded-lg hover:bg-white/10">
+                <Bell size={16} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center">{unreadCount > 9 ? '9+' : unreadCount}</span>
                 )}
-              </div>
-              <button type="button" onClick={() => setActiveNav('settings')} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10">
-                <Settings size={18} />
               </button>
-              <button type="button" onClick={() => { window.location.hash = 'portal'; }} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10" title="Customer portal">
-                <ExternalLink size={18} />
-              </button>
-              <button type="button" onClick={() => setActiveNav('profile')} className="flex items-center gap-2 pl-1">
-                <AgentAvatar agent={currentAgent} size="sm" />
-                <span className="text-xs font-medium hidden sm:inline truncate max-w-[8rem]">{displayName}</span>
-              </button>
-              <button type="button" onClick={() => void signOut()} className="text-xs px-2 py-1 rounded-lg border border-zinc-200 dark:border-white/10">Sign out</button>
             </div>
-          </header>
-          <main className="flex-1 overflow-auto p-4 relative z-0">{renderPage()}</main>
-        </div>
+            {currentAgent && <AgentAvatar agent={currentAgent} size={32} />}
+          </div>
+        </header>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{body}</main>
       </div>
-    </PostLoginShell>
+    </div>
   );
 }
 
-export function PortalShell() {
-  return (
-    <PortalAuthGate>
-      <CustomerPortal />
-    </PortalAuthGate>
-  );
+function PortalShell() {
+  return <CustomerPortal />;
 }
 
 export function Root() {
-  const [mode, setMode] = useState(getModeFromHash);
+  const [mode, setMode] = useState(() => getModeFromHash());
   useEffect(() => {
     const onHash = () => setMode(getModeFromHash());
     window.addEventListener('hashchange', onHash);
@@ -287,8 +228,4 @@ export function Root() {
       </PlatformProvider>
     </TicketProvider>
   );
-}
-
-export default function SystemAppCore() {
-  return <Root />;
 }
