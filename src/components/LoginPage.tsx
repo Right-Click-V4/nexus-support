@@ -1,4 +1,4 @@
-/* login-customer-first-v1 */
+/* login-customer-first-v1 + screen-fit */
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { markJustLoggedIn } from './PostLoginLoader';
@@ -34,7 +34,6 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const isAgent = audienceTab === 'agent';
 
@@ -101,10 +100,10 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
     : 'NexusOps Customer Portal · © 2026 Lizer & Kirzhian';
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative login-screen-fit overflow-hidden">
       <CosmicFallBackground />
-      <div className="relative z-10 min-h-screen flex items-center">
-        <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-8 lg:gap-12 xl:gap-16 2xl:gap-24 px-5 sm:px-8 lg:px-12 xl:px-16 2xl:px-24 py-8 lg:py-12 items-center">
+      <div className="relative z-10 h-full max-h-full flex items-center overflow-hidden">
+        <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-6 lg:gap-10 xl:gap-14 px-5 sm:px-8 lg:px-12 xl:px-16 py-5 lg:py-6 items-center max-h-full">
           <div className="flex flex-col relative z-10 order-2 lg:order-1 lg:pr-4 xl:pr-8 min-w-0">
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2.5">
@@ -117,7 +116,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                 {isAgent ? 'Support operations platform' : 'Customer support portal'}
               </div>
             </div>
-            <div className="mt-8 lg:mt-10 max-w-lg xl:max-w-xl relative">
+            <div className="mt-5 lg:mt-6 max-w-lg xl:max-w-xl relative">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -left-16 -top-10 w-64 h-64 rounded-full opacity-40 blur-3xl"
@@ -175,7 +174,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                 ))}
               </ul>
             </div>
-            <div className="mt-10 lg:mt-14 text-[11px] text-fuchsia-200/35 hidden lg:block tracking-wide">
+            <div className="mt-6 lg:mt-8 text-[11px] text-fuchsia-200/35 hidden lg:block tracking-wide">
               {footerCredit}
             </div>
           </div>
@@ -193,154 +192,44 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   <div className="text-[13px] text-violet-200/75 mt-1">{cardSub}</div>
                 </div>
                 <div className="flex gap-2 mb-4 text-sm">
-                  <button
-                    type="button"
-                    onClick={() => setAudienceTab('customer')}
-                    className={`login-tab ${audienceTab === 'customer' ? 'login-tab-on' : ''}`}
-                  >
-                    Customer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAudienceTab('agent')}
-                    className={`login-tab ${audienceTab === 'agent' ? 'login-tab-on' : ''}`}
-                  >
-                    Agent
-                  </button>
+                  <button type="button" onClick={() => setAudienceTab('customer')} className={`login-tab ${audienceTab === 'customer' ? 'login-tab-on' : ''}`}>Customer</button>
+                  <button type="button" onClick={() => setAudienceTab('agent')} className={`login-tab ${audienceTab === 'agent' ? 'login-tab-on' : ''}`}>Agent</button>
                 </div>
-                {configError && (
-                  <div className="mb-3 text-sm text-amber-200 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">
-                    {configError}
-                  </div>
-                )}
-                {error && (
-                  <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">
-                    {error}
-                  </div>
-                )}
-                {info && (
-                  <div className="mb-3 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2">
-                    {info}
-                  </div>
-                )}
+                {configError && <div className="mb-3 text-sm text-amber-200 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">{configError}</div>}
+                {error && <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">{error}</div>}
+                {info && <div className="mb-3 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2">{info}</div>}
                 <form onSubmit={submit} className="space-y-3.5">
                   <div>
                     <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
-                    <input
-                      type="email"
-                      required
-                      className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@company.com"
-                      autoComplete="off"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      name="nexus_email_manual"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                      data-bwignore="true"
-                      data-form-type="other"
-                    />
+                    <input type="email" required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" autoComplete="off" name="nexus_email_manual" data-lpignore="true" data-1p-ignore="true" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label>
                     <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        minLength={6}
-                        className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        autoComplete="new-password"
-                        name="nexus_password_manual"
-                        data-lpignore="true"
-                        data-1p-ignore="true"
-                        data-bwignore="true"
-                        data-form-type="other"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition"
-                        onClick={() => setShowPassword((v) => !v)}
-                      >
-                        {showPassword ? 'Hide' : 'Show'}
-                      </button>
+                      <input type={showPassword ? 'text' : 'password'} required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-12" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="new-password" name="nexus_password_manual" data-lpignore="true" data-1p-ignore="true" />
+                      <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-fuchsia-100/90 hover:text-white px-2 py-1 rounded-md hover:bg-white/10 transition" onClick={() => setShowPassword((v) => !v)}>{showPassword ? 'Hide' : 'Show'}</button>
                     </div>
                   </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 hover:from-violet-400 hover:via-fuchsia-400 hover:to-violet-400 disabled:opacity-60 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30"
-                  >
-                    {loading ? 'Signing in…' : 'Sign in'}
-                  </button>
-                  <p className="text-center text-xs text-violet-200/70 pt-1">
-                    New here?{' '}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMode('signup');
-                        setError('');
-                        setInfo('');
-                      }}
-                      className="text-white font-semibold hover:text-fuchsia-100"
-                    >
-                      {isAgent ? 'Create an agent account' : 'Create a customer account'}
-                    </button>
-                  </p>
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => void handleForgotPassword()}
-                      className="text-xs font-medium text-violet-100/80 hover:text-white"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
+                  <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30">{loading ? 'Signing in…' : 'Sign in'}</button>
+                  <p className="text-center text-xs text-violet-200/70 pt-1">New here?{' '}<button type="button" onClick={() => { setMode('signup'); setError(''); setInfo(''); }} className="text-white font-semibold hover:text-fuchsia-100">{isAgent ? 'Create an agent account' : 'Create a customer account'}</button></p>
+                  <div className="text-center"><button type="button" onClick={() => void handleForgotPassword()} className="text-xs font-medium text-violet-100/80 hover:text-white">Forgot Password?</button></div>
                 </form>
               </div>
             ) : (
               <div className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] lg:max-w-none rounded-[22px] px-6 py-7 sm:px-7">
                 <div className="flex flex-col items-center text-center mb-4">
-                  <div className="login-card-logo">
-                    <NexusLogoMark size={28} />
-                  </div>
+                  <div className="login-card-logo"><NexusLogoMark size={28} /></div>
                   <div className="mt-3 text-[22px] font-semibold text-white tracking-tight">Create your account</div>
-                  <div className="text-[13px] text-violet-200/75 mt-1">
-                    {isAgent ? 'Register for Agent Workspace' : 'Register for Customer Portal'}
-                  </div>
+                  <div className="text-[13px] text-violet-200/75 mt-1">{isAgent ? 'Register for Agent Workspace' : 'Register for Customer Portal'}</div>
                 </div>
-                {error && (
-                  <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">{error}</div>
-                )}
+                {error && <div className="mb-3 text-sm text-rose-200 bg-rose-500/10 border border-rose-400/30 rounded-lg px-3 py-2">{error}</div>}
                 <form onSubmit={submit} className="space-y-3.5">
-                  <div>
-                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Full name</label>
-                    <input required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
-                    <input type="email" required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label>
-                    <input type="password" required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Confirm password</label>
-                    <input type="password" required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
-                  </div>
-                  <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 text-white font-semibold text-sm py-2.5">
-                    {loading ? 'Creating account…' : 'Create account'}
-                  </button>
-                  <p className="text-center text-xs text-violet-200/70 pt-1">
-                    Already have an account?{' '}
-                    <button type="button" onClick={() => setMode('signin')} className="text-white font-semibold">Sign in</button>
-                  </p>
+                  <div><label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Full name</label><input required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" /></div>
+                  <div><label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label><input type="email" required className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" /></div>
+                  <div><label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Password</label><input type="password" required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" /></div>
+                  <div><label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Confirm password</label><input type="password" required minLength={6} className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" /></div>
+                  <button type="submit" disabled={loading} className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 text-white font-semibold text-sm py-2.5">{loading ? 'Creating account…' : 'Create account'}</button>
+                  <p className="text-center text-xs text-violet-200/70 pt-1">Already have an account?{' '}<button type="button" onClick={() => setMode('signin')} className="text-white font-semibold">Sign in</button></p>
                 </form>
               </div>
             )}
