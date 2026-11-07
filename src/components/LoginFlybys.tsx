@@ -50,7 +50,6 @@ function Flame({ eid, tone }: { eid: string; tone: 'fire' | 'violet' | 'cyan' | 
   );
 }
 
-/** Classic red nose, white body, orange fins, fire from the bell. */
 function RocketClassic({ eid }: { eid: string }) {
   return (
     <svg className="login-ship-svg" width="86" height="40" viewBox="0 0 96 40" fill="none" aria-hidden>
@@ -71,7 +70,6 @@ function RocketClassic({ eid }: { eid: string }) {
   );
 }
 
-/** Chubby violet capsule, pink fins, matching purple exhaust. */
 function RocketViolet({ eid }: { eid: string }) {
   return (
     <svg className="login-ship-svg" width="82" height="40" viewBox="0 0 96 40" fill="none" aria-hidden>
@@ -88,7 +86,6 @@ function RocketViolet({ eid }: { eid: string }) {
   );
 }
 
-/** Round orange shuttle with side pods and a gold-white flame. */
 function RocketOrange({ eid }: { eid: string }) {
   return (
     <svg className="login-ship-svg" width="80" height="42" viewBox="0 0 96 42" fill="none" aria-hidden>
@@ -107,106 +104,59 @@ function RocketOrange({ eid }: { eid: string }) {
   );
 }
 
-/** Teal dart with cyan exhaust. */
 function RocketTeal({ eid }: { eid: string }) {
   return (
     <svg className="login-ship-svg" width="86" height="36" viewBox="0 0 96 36" fill="none" aria-hidden>
       <g transform="translate(0 -2)">
         <Flame eid={eid} tone="cyan" />
-        <path d="M36 14 L42 20 L36 26 Z" fill="#5b21b6" />
-        <path d="M42 13 C62 11 74 12 76 20 C74 28 62 29 42 27 Z" fill="#e9d5ff" />
-        <path d="M48 15 C62 13.6 70 14.4 72 18" stroke="#ede9fe" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M76 13 C92 16 96 20 92 20 C96 20 92 24 76 27 Z" fill="#7c3aed" />
-        <circle cx="60" cy="20" r="3.6" fill="#0284c7" stroke="#0c4a6e" strokeWidth="1" />
-        <ellipse cx="58.8" cy="18.8" rx="1" ry="0.7" fill="#e0f2fe" />
-        <path d="M48 13 L53 6 L58 13.4 Z" fill="#4c1d95" />
-        <path d="M48 27 L53 34 L58 26.6 Z" fill="#4c1d95" />
+        <path d="M36 14 L42 18 L36 22 Z" fill="#0e7490" />
+        <path d="M42 12 C62 9 76 11 80 18 C76 25 62 27 42 24 Z" fill="#a5f3fc" stroke="#67e8f9" strokeWidth="0.5" />
+        <path d="M78 13 C92 15 96 18 92 18 C96 18 92 21 78 23 Z" fill="#0891b2" />
+        <circle cx="60" cy="18" r="3.6" fill="#22d3ee" stroke="#0e7490" strokeWidth="1" />
+        <ellipse cx="58.8" cy="16.8" rx="1" ry="0.7" fill="#fff" />
       </g>
     </svg>
   );
 }
 
-/** White bullet with blue stripe and a tight orange flame. */
 function RocketBullet({ eid }: { eid: string }) {
   return (
-    <svg className="login-ship-svg" width="84" height="34" viewBox="0 0 96 36" fill="none" aria-hidden>
+    <svg className="login-ship-svg" width="78" height="34" viewBox="0 0 96 34" fill="none" aria-hidden>
       <g transform="translate(0 -2)">
         <Flame eid={eid} tone="fire" />
-        <path d="M34 16 L40 20 L34 24 Z" fill="#6d28d9" />
-        <path d="M40 14.5 C64 13 78 14 80 20 C78 26 64 27 40 25.5 Z" fill="#f5f3ff" />
-        <path d="M44 18.2 H72" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" />
-        <path d="M78 15 C92 17 96 20 92 20 C96 20 92 23 78 25 Z" fill="#6d28d9" />
-        <circle cx="58" cy="20" r="3.2" fill="#0ea5e9" />
-        <ellipse cx="57" cy="19" rx="1" ry="0.7" fill="#fff" />
+        <path d="M38 12 C58 9 74 11 78 17 C74 23 58 25 38 22 Z" fill="#e9d5ff" />
+        <path d="M76 12.5 C90 15 94 17 90 17 C94 17 90 19 76 21.5 Z" fill="#7c3aed" />
+        <circle cx="58" cy="17" r="3.4" fill="#38bdf8" stroke="#0369a1" strokeWidth="0.9" />
       </g>
     </svg>
   );
 }
 
-/** Saucer + dome + alien. Beam hangs under the hull — not a rocket plume. */
 function UfoClassic({ uid }: { uid: string }) {
   return (
     <svg className="login-ship-svg login-flyby-ufo" width="78" height="58" viewBox="0 0 90 68" fill="none" aria-hidden>
-      <defs>
-        <linearGradient id={`${uid}-beam`} x1="45" y1="34" x2="45" y2="66" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#c4b5fd" stopOpacity="0.85" />
-          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id={`${uid}-dome`} x1="45" y1="6" x2="45" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#e0f2fe" />
-          <stop offset="55%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#0284c7" />
-        </linearGradient>
-        <linearGradient id={`${uid}-hull`} x1="45" y1="24" x2="45" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ddd6fe" />
-          <stop offset="45%" stopColor="#6d28d9" />
-          <stop offset="100%" stopColor="#2e1065" />
-        </linearGradient>
-      </defs>
-      <path className="login-ufo-beam" d="M36 34 L28 64 H62 L54 34 Z" fill={`url(#${uid}-beam)`} />
-      <ellipse cx="45" cy="36" rx="40" ry="9" fill="#1e1033" />
-      <ellipse cx="45" cy="33" rx="38" ry="8" fill={`url(#${uid}-hull)`} />
-      <ellipse cx="45" cy="30" rx="28" ry="4.2" fill="#e9d5ff" opacity="0.35" />
-      <path d="M24 28 C28 12 62 12 66 28 Z" fill={`url(#${uid}-dome)`} />
-      <path d="M32 22 C36 16 48 15 52 20" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
-      <ellipse cx="45" cy="22" rx="7" ry="7.2" fill="#d8b4fe" />
-      <ellipse cx="42.2" cy="21" rx="1.7" ry="2.1" fill="#3b0764" />
-      <ellipse cx="47.8" cy="21" rx="1.7" ry="2.1" fill="#3b0764" />
-      <circle cx="41.7" cy="20.4" r="0.45" fill="#fff" />
-      <circle cx="47.3" cy="20.4" r="0.45" fill="#fff" />
-      <path d="M42.4 24.4 Q45 26.2 47.6 24.4" stroke="#3b0764" strokeWidth="0.8" fill="none" strokeLinecap="round" />
-      <circle className="login-ufo-light" cx="16" cy="33" r="2.1" fill="#e9d5ff" />
-      <circle className="login-ufo-light login-ufo-light-b" cx="30" cy="36" r="2.1" fill="#f472b6" />
-      <circle className="login-ufo-light login-ufo-light-c" cx="60" cy="36" r="2.1" fill="#34d399" />
-      <circle className="login-ufo-light" cx="74" cy="33" r="2.1" fill="#60a5fa" />
+      <ellipse cx="45" cy="38" rx="28" ry="8" fill="#6d28d9" opacity="0.35" />
+      <ellipse cx="45" cy="32" rx="32" ry="10" fill="#a78bfa" stroke="#c4b5fd" strokeWidth="1" />
+      <ellipse cx="45" cy="30" rx="18" ry="12" fill="#c4b5fd" />
+      <ellipse cx="45" cy="28" rx="12" ry="9" fill="#67e8f9" opacity="0.85" />
+      <circle cx="45" cy="26" r="4" fill="#0ea5e9" />
+      <ellipse cx="42" cy="24" rx="2" ry="1.2" fill="#fff" opacity="0.9" />
+      <path d="M30 40 L28 52 L32 48 Z" fill="#22d3ee" opacity="0.5" />
+      <path d="M45 40 L45 56 L48 50 Z" fill="#a5f3fc" opacity="0.45" />
+      <path d="M60 40 L62 52 L58 48 Z" fill="#22d3ee" opacity="0.5" />
     </svg>
   );
 }
 
-/** Teal saucer with two downward ion jets (reference-style), no rear rocket flame. */
 function UfoIon({ uid }: { uid: string }) {
   return (
     <svg className="login-ship-svg login-flyby-ufo" width="76" height="54" viewBox="0 0 90 64" fill="none" aria-hidden>
-      <defs>
-        <linearGradient id={`${uid}-jet`} x1="0" y1="36" x2="0" y2="62" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#c4b5fd" />
-          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id={`${uid}-hull`} x1="45" y1="22" x2="45" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ddd6fe" />
-          <stop offset="50%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#4c1d95" />
-        </linearGradient>
-      </defs>
-      <path className="login-ufo-beam" d="M24 36 L18 60 H32 L30 36 Z" fill={`url(#${uid}-jet)`} />
-      <path className="login-ufo-beam login-ufo-light-b" d="M60 36 L58 60 H72 L66 36 Z" fill={`url(#${uid}-jet)`} />
-      <ellipse cx="45" cy="36" rx="36" ry="8" fill="#2e1065" />
-      <ellipse cx="45" cy="33" rx="34" ry="7" fill={`url(#${uid}-hull)`} />
-      <path d="M30 30 C34 16 56 16 60 30 Z" fill="#c4b5fd" />
-      <path d="M36 24 C40 19 50 19 54 25" stroke="#ecfeff" strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
-      <circle cx="45" cy="24" r="2.2" fill="#5b21b6" />
-      <circle className="login-ufo-light" cx="18" cy="33" r="1.8" fill="#e9d5ff" />
-      <circle className="login-ufo-light login-ufo-light-c" cx="72" cy="33" r="1.8" fill="#e9d5ff" />
+      <ellipse cx="45" cy="30" rx="30" ry="9" fill="#0e7490" />
+      <ellipse cx="45" cy="28" rx="20" ry="11" fill="#67e8f9" />
+      <ellipse cx="45" cy="26" rx="10" ry="7" fill="#a5f3fc" />
+      <circle cx="45" cy="25" r="3" fill="#0369a1" />
+      <path d="M32 38 L30 52 L34 48" stroke="#22d3ee" strokeWidth="2" opacity="0.7" />
+      <path d="M58 38 L60 52 L56 48" stroke="#22d3ee" strokeWidth="2" opacity="0.7" />
     </svg>
   );
 }
@@ -237,11 +187,11 @@ export function SpaceFlybys() {
         setFlybys((prev) => prev.filter((f) => f.id !== id));
       }, duration * 1000 + 200);
 
-      const gaps = [16, 20, 24, 28, 34, 42];
+      const gaps = [10, 14, 18, 22, 28, 34];
       timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);
     };
 
-    timer = setTimeout(schedule, 5000 + Math.random() * 3000);
+    timer = setTimeout(schedule, 1200 + Math.random() * 1800);
     return () => {
       cancelled = true;
       clearTimeout(timer);
