@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SpaceFlybys } from './LoginFlybys';
+import { subscribeSkyCraft, type SkyCraft } from '../lib/skyTraffic';
 import { NexusLogoMark, NexusWordmark } from './NexusBrand';
 export { NexusLogoMark, NexusWordmark };
 
@@ -27,7 +28,7 @@ const SAMPLE_MS = 14;
 const BASE_SPEED = 0.24;
 const TURN_RATE = 0.0045;
 
-type PilotMode = 'cruise' | 'pause' | 'dash' | 'bob_v' | 'bob_h' | 'portal';
+type PilotMode = 'cruise' | 'pause' | 'dash' | 'bob_v' | 'bob_h' | 'portal' | 'curious';
 
 function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -78,6 +79,19 @@ function trimTrail(list: TrailPoint[], maxDist: number): TrailPoint[] {
   return kept;
 }
 
+const HERO_CHATS = [
+  'ooh a friend!',
+  'wait for meee',
+  'cool ship!',
+  'hi ufo ✨',
+  'zoom zoom!',
+  'be right there',
+  "tag — you're it!",
+  'bye bye!',
+  'whoa!',
+  'nice thrusters',
+];
+
 function LogoPilotStage() {
   const pilotRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -85,9 +99,11 @@ function LogoPilotStage() {
   const exitPortalRef = useRef<HTMLDivElement>(null);
   const history = useRef<TrailPoint[]>([]);
   const stageSizeRef = useRef({ w: 1, h: 1 });
+  const craftRef = useRef<SkyCraft | null>(null);
   const [trail, setTrail] = useState<TrailPoint[]>([]);
   const [paths, setPaths] = useState({ core: '', waveA: '', waveB: '' });
   const [grad, setGrad] = useState({ x1: 0, y1: 0, x2: 1, y2: 0 });
+  const [heroChat, setHeroChat] = useState<string | null>(null);
 
   useEffect(() => {
     let raf = 0;
@@ -117,6 +133,14 @@ function LogoPilotStage() {
     let portalExitX = 0;
     let portalExitY = 0;
     const PORTAL_EVERY_MS = 20_000;
+    let lastCuriousAt = 0;
+    let curiousUntil = 0;
+    let chatUntil = 0;
+    let lastChatCraftId = -1;
+
+    const unsubCraft = subscribeSkyCraft((c) => {
+      craftRef.current = c;
+    });
 
     const hidePortals = () => {
       const a = enterPortalRef.current;
@@ -141,7 +165,7 @@ function LogoPilotStage() {
     };
 
     const pickMode = (now: number) => {
-      if (mode === 'portal') return;
+      if (mode === 'portal' || mode === 'curious') return;
       const weaveReady = now - lastWeaveAt >= 30000;
       const r = Math.random();
       modeSpeed = randomIn(0.75, 1.45);
@@ -177,8 +201,6 @@ function LogoPilotStage() {
       const marginX = w * 0.12;
       const marginY = h * 0.1;
       const allowSharp = Math.random() < 0.35;
-      const verticalBias = Math.random() < 0.22;
-      const horizontalBias = Math.random() < 0.22;
       let bestX = randomIn(marginX, w - marginX);
       let bestY = randomIn(marginY, h - marginY);
       let bestScore = -Infinity;
@@ -188,14 +210,6 @@ function LogoPilotStage() {
         if (preferAwayFromEdge) {
           nx = randomIn(w * 0.25, w * 0.75);
           ny = randomIn(h * 0.25, h * 0.75);
-        } else if (verticalBias) {
-          nx = x + randomIn(-36, 36);
-          nx = Math.max(marginX, Math.min(w - marginX, nx));
-          ny = randomIn(marginY, h - marginY);
-        } else if (horizontalBias) {
-          ny = y + randomIn(-36, 36);
-          ny = Math.max(marginY, Math.min(h - marginY, ny));
-          nx = randomIn(marginX, w - marginX);
         }
         const desired = Math.atan2(ny - y, nx - x);
         let delta = desired - angle;
@@ -293,6 +307,44 @@ function LogoPilotStage() {
       const dt = Math.min(32, Math.max(0, now - lastTick));
       lastTick = now;
 
+      const craft = craftRef.current;
+      if (
+        mode !== 'portal' &&
+        mode !== 'curious' &&
+        craft &&
+        now - lastCuriousAt > 9000 &&
+        Math.random() < 0.014
+      ) {
+        mode = 'curious';
+        curiousUntil = now + randomIn(2200, 4200);
+        lastCuriousAt = now;
+        modeSpeed = randomIn(1.4, 2.1);
+        targetX = craft.x;
+        targetY = craft.y;
+        scaleGoal = randomIn(0.55, 0.72);
+        if (craft.id !== lastChatCraftId && Math.random() < 0.75) {
+          lastChatCraftId = craft.id;
+          setHeroChat(HERO_CHATS[Math.floor(Math.random() * HERO_CHATS.length)]);
+          chatUntil = now + 2200;
+        }
+      }
+      if (mode === 'curious') {
+        if (craft) {
+          targetX = craft.x + (craft.dir === 'ltr' ? 28 : -28);
+          targetY = craft.y + Math.sin(now * 0.004) * 10;
+        }
+        if (now >= curiousUntil || !craft) {
+          mode = 'cruise';
+          modeUntil = now + randomIn(1200, 2400);
+          modeSpeed = randomIn(0.9, 1.3);
+          pickTarget(sr.width, sr.height);
+        }
+      }
+      if (chatUntil && now >= chatUntil) {
+        chatUntil = 0;
+        setHeroChat(null);
+      }
+
       if (mode !== 'portal' && now - lastPortalAt >= PORTAL_EVERY_MS) {
         startPortal(now, sr.width, sr.height);
       }
@@ -344,7 +396,7 @@ function LogoPilotStage() {
           }
         }
       } else {
-        if (now >= modeUntil) pickMode(now);
+        if (mode !== 'curious' && now >= modeUntil) pickMode(now);
         let speedMul = modeSpeed;
         if (mode === 'pause') speedMul = 0;
         if (mode !== 'pause') {
@@ -352,7 +404,7 @@ function LogoPilotStage() {
           let delta = targetAngle - angle;
           while (delta > Math.PI) delta -= Math.PI * 2;
           while (delta < -Math.PI) delta += Math.PI * 2;
-          const maxTurn = TURN_RATE * turnBoost * (mode === 'dash' ? 1.5 : 1) * dt;
+          const maxTurn = TURN_RATE * turnBoost * (mode === 'dash' || mode === 'curious' ? 1.8 : 1) * dt;
           if (delta > maxTurn) delta = maxTurn;
           if (delta < -maxTurn) delta = -maxTurn;
           angle += delta;
@@ -392,14 +444,14 @@ function LogoPilotStage() {
         if (bounced) {
           while (angle > Math.PI) angle -= Math.PI * 2;
           while (angle < -Math.PI) angle += Math.PI * 2;
-          pickTarget(sr.width, sr.height, true);
+          if (mode !== 'curious') pickTarget(sr.width, sr.height, true);
           if (mode === 'pause') {
             mode = 'cruise';
             modeSpeed = randomIn(1.0, 1.6);
             modeUntil = now + randomIn(600, 1400);
           }
         }
-        if (mode !== 'pause' && Math.hypot(targetX - x, targetY - y) < 56) {
+        if (mode !== 'pause' && mode !== 'curious' && Math.hypot(targetX - x, targetY - y) < 56) {
           pickTarget(sr.width, sr.height);
         }
       }
@@ -429,6 +481,8 @@ function LogoPilotStage() {
     return () => {
       cancelAnimationFrame(raf);
       hidePortals();
+      unsubCraft();
+      setHeroChat(null);
     };
   }, []);
 
@@ -512,6 +566,7 @@ function LogoPilotStage() {
         <span className="login-space-portal-core" />
       </div>
       <div ref={pilotRef} className="login-pilot login-pilot-js" style={{ left: 0, top: 0, transform: 'translate(-50%, -50%) scale(0.62)' }}>
+        {heroChat ? <span className="login-pilot-chat">{heroChat}</span> : null}
         <span className="login-pilot-halo" />
         <span className="login-pilot-orbit" />
         <span className="login-pilot-spin">
