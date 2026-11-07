@@ -15,9 +15,9 @@ const KEY = 'nexus-desk-presence-v1';
 const BC = 'nexus-desk-presence';
 const CHANNEL = 'desk-agents-v1';
 /** How long a heartbeat counts as online (customer + agent views). */
-const LIVE_MS = 45_000;
+const LIVE_MS = 90_000;
 /** Min gap between Realtime presence.track() calls (Free plan rate limit). */
-const TRACK_MIN_MS = 60_000;
+const TRACK_MIN_MS = 25_000;
 
 type PresenceChannel = ReturnType<NonNullable<typeof supabase>['channel']>;
 
@@ -87,85 +87,69 @@ function ensureChannel(agentId?: string): PresenceChannel | null {
     });
     sharedReady = new Promise((resolve) => {
       sharedCh!.subscribe((status) => {
-        if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          resolve();
-        }
+        if (status === 'SUBSCRIBED') resolve();
       });
-      window.setTimeout(() => resolve(), 4000);
     });
     return sharedCh;
   } catch {
     sharedCh = null;
     sharedReady = null;
-    channelPresenceKey = null;
     return null;
   }
 }
 
 export async function publishDeskPresence(agent: {
   id: string;
-  name: string;
+  name?: string;
   status?: string;
   avatar_url?: string | null;
   initials?: string;
   color?: string;
-} | null) {
+}) {
   if (!agent?.id) return;
-  const statusRaw = (agent.status || 'online').toLowerCase();
-  if (statusRaw === 'offline') {
-    await clearDeskPresence(agent.id);
-    return;
-  }
-  const status = statusRaw || 'online';
-  const row: DeskAgent = {
+  const payload: DeskAgent = {
     id: agent.id,
     name: agent.name || 'Agent',
-    status,
-    avatar_url: agent.avatar_url || null,
+    status: (agent.status || 'online').toLowerCase() === 'offline' ? 'offline' : (agent.status || 'online'),
+    avatar_url: agent.avatar_url ?? null,
     initials: agent.initials,
     color: agent.color,
     at: Date.now(),
   };
 
-  // Always update local/broadcast (cheap)
-  const others = readLocal().filter((a) => a.id !== row.id);
-  writeLocal([...others, row]);
+  const local = readLocal().filter((a) => a.id !== payload.id);
+  if (payload.status !== 'offline') local.push(payload);
+  writeLocal(local);
 
-  const ch = ensureChannel(agent.id);
-  if (!ch) return;
+  if (payload.status === 'offline') {
+    await clearDeskPresence(payload.id);
+    return;
+  }
 
-  // Throttle Realtime presence.track — prevents ClientPresenceRateLimitReached
-  const payloadKey = `${row.id}|${row.status}|${row.name}`;
+  const ch = ensureChannel(payload.id);
+  if (!ch || !sharedReady) return;
+
   const now = Date.now();
-  if (now - lastTrackAt < TRACK_MIN_MS && lastTrackedPayload === payloadKey) return;
-  if (now - lastTrackAt < 15_000) return;
+  const serialized = JSON.stringify({ id: payload.id, status: payload.status, name: payload.name });
+  if (trackedId === payload.id && now - lastTrackAt < TRACK_MIN_MS && lastTrackedPayload === serialized) {
+    return;
+  }
 
   try {
     await sharedReady;
-    trackedId = agent.id;
-    lastTrackAt = Date.now();
-    lastTrackedPayload = payloadKey;
-    await ch.track({
-      id: row.id,
-      name: row.name,
-      status: row.status,
-      avatar_url: row.avatar_url,
-      initials: row.initials,
-      color: row.color,
-      at: row.at,
-    });
+    await ch.track(payload);
+    trackedId = payload.id;
+    lastTrackAt = now;
+    lastTrackedPayload = serialized;
   } catch {
-    /* rate limit is expected if still hot */
+    /* ignore */
   }
 }
 
-export async function clearDeskPresence(agentId?: string | null) {
-  if (agentId) {
-    writeLocal(readLocal().filter((a) => a.id !== agentId));
-  } else {
-    writeLocal([]);
-  }
-  if (sharedCh) {
+export async function clearDeskPresence(agentId: string) {
+  const local = readLocal().filter((a) => a.id !== agentId);
+  writeLocal(local);
+  if (sharedCh && channelPresenceKey === agentId) {
     try {
       await sharedCh.untrack();
     } catch {
