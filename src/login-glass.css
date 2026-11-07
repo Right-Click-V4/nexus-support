@@ -1,4 +1,4 @@
-/* login-glass-v4: subtler trail, transparent card, tabs */
+/* login-glass-v5: subtler trail, transparent card, tabs, full-pass flybys, pilot chat, screen-fit */
 .login-cosmos-sky {
   background:
     radial-gradient(ellipse 120% 80% at 50% -10%, rgba(139, 92, 246, 0.35) 0%, transparent 55%),
@@ -199,7 +199,6 @@
   animation: login-card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Customer / Agent segmented control */
 .login-tab {
   flex: 1;
   padding: 0.5rem 0.75rem;
@@ -272,12 +271,12 @@
   animation-fill-mode: forwards;
 }
 @keyframes login-flyby-ltr {
-  from { transform: translateX(-16vw); }
-  to { transform: translateX(112vw); }
+  from { transform: translate3d(-140px, 0, 0); }
+  to { transform: translate3d(calc(100vw + 140px), 0, 0); }
 }
 @keyframes login-flyby-rtl {
-  from { transform: translateX(112vw); }
-  to { transform: translateX(-16vw); }
+  from { transform: translate3d(calc(100vw + 140px), 0, 0); }
+  to { transform: translate3d(-140px, 0, 0); }
 }
 .login-flyby-rtl .login-flyby-ship {
   transform: scaleX(-1);
@@ -320,6 +319,54 @@
 @keyframes login-flame-flicker {
   from { transform: scaleX(0.82) scaleY(0.92); opacity: 0.75; }
   to { transform: scaleX(1.12) scaleY(1.06); opacity: 1; }
+}
+
+.login-pilot-chat {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: #f8f5ff;
+  background: rgba(36, 16, 70, 0.88);
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35), 0 0 12px rgba(139, 92, 246, 0.3);
+  pointer-events: none;
+  animation: login-pilot-chat-in 0.25s ease-out both;
+  z-index: 6;
+}
+.login-pilot-chat::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: rgba(36, 16, 70, 0.88);
+}
+@keyframes login-pilot-chat-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.92); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.login-screen-fit {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+@media (max-height: 780px) {
+  .login-screen-fit .login-glass-card { padding-top: 1.15rem !important; padding-bottom: 1.15rem !important; }
+  .login-screen-fit .login-cap:nth-child(n+3) { display: none; }
+  .login-screen-fit .login-hero-title { font-size: 1.65rem !important; }
+}
+@media (max-height: 680px) {
+  .login-screen-fit .login-cap { display: none; }
+  .login-screen-fit .login-status-pill { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
