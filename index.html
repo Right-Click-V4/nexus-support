@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/nexus-support/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#4f46e5" />
+    <title>Nexus Ops — Support Desk</title>
+    <script>
+      (function () {
+        try {
+          var v = localStorage.getItem('nexus-dark-v1');
+          var dark = v !== '0';
+          var r = document.documentElement;
+          r.classList.toggle('nexus-dark', dark);
+          r.classList.toggle('nexus-light', !dark);
+          r.classList.toggle('dark', dark);
+          r.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
+    <style id="nexus-critical-theme">
+      html.nexus-dark, html.dark { color-scheme: dark; }
+      html.nexus-dark body, html.dark body { background: #0a0618 !important; color: #e4e4e7 !important; }
+      html.nexus-dark .bg-white,
+      html.dark .bg-white,
+      html.nexus-dark [class*="bg-white"],
+      html.dark [class*="bg-white"] {
+        background: rgba(22, 14, 42, 0.94) !important;
+        border-color: rgba(167, 139, 250, 0.28) !important;
+        color: #ede9fe !important;
+      }
+      html.nexus-dark .text-slate-900, html.dark .text-slate-900,
+      html.nexus-dark .text-zinc-900, html.dark .text-zinc-900,
+      html.nexus-dark .text-slate-800, html.dark .text-slate-800 {
+        color: #f5f3ff !important;
+      }
+      html.nexus-dark .text-slate-500, html.dark .text-slate-500,
+      html.nexus-dark .text-zinc-500, html.dark .text-zinc-500,
+      html.nexus-dark .text-slate-400, html.dark .text-slate-400 {
+        color: #a1a1aa !important;
+      }
+      html.nexus-dark input:not([type="checkbox"]):not([type="radio"]),
+      html.dark input:not([type="checkbox"]):not([type="radio"]),
+      html.nexus-dark textarea, html.dark textarea,
+      html.nexus-dark select, html.dark select {
+        background: rgba(10, 6, 24, 0.95) !important;
+        border-color: rgba(167, 139, 250, 0.35) !important;
+        color: #f4f4f5 !important;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/nexus-support/assets/index-f5ieEI_A.js"></script>
+    <link rel="stylesheet" crossorigin href="/nexus-support/assets/index-DM-rcHHn.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
