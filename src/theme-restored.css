@@ -1,6 +1,5 @@
 /* Restored previous Nexus Ops theme (pre-breakage) */
 
-/* Login essentials */
 .login-cosmos {
   z-index: 0;
   isolation: isolate;
@@ -23,12 +22,12 @@
 .login-flyby-ltr { animation: login-flyby-ltr linear forwards; }
 .login-flyby-rtl { animation: login-flyby-rtl linear forwards; }
 @keyframes login-flyby-ltr {
-  from { transform: translateX(-14vw); }
-  to { transform: translateX(110vw); }
+  from { transform: translate3d(-140px, 0, 0); }
+  to { transform: translate3d(calc(100vw + 140px), 0, 0); }
 }
 @keyframes login-flyby-rtl {
-  from { transform: translateX(110vw); }
-  to { transform: translateX(-14vw); }
+  from { transform: translate3d(calc(100vw + 140px), 0, 0); }
+  to { transform: translate3d(-140px, 0, 0); }
 }
 .login-pilot-stage { overflow: visible; clip-path: none; }
 .login-pilot { position: absolute; will-change: transform; pointer-events: none; }
