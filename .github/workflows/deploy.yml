@@ -62,6 +62,8 @@ jobs:
             print('parseChatAttachment already fixed or pattern missing')
           PY
           echo "export { default } from './PortalLiveChatView';" > src/components/PortalLiveChat.tsx
+          # Agent LiveChat: Messenger top-to-bottom (oldest first)
+          if [ -f scripts/patch_livechat_order.py ]; then python3 scripts/patch_livechat_order.py || true; fi
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
           python3 scripts/patch_portal_logo.py || true
           grep -q "PortalLiveChat\|parseChatAttachment\|createChat" src/components/CustomerPortal.tsx || grep -q "export default" src/components/CustomerPortal.tsx
