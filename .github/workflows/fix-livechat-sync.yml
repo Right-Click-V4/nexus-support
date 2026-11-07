@@ -2,7 +2,9 @@ name: Fix livechat sync + presence + portal logo
 on:
   workflow_dispatch:
   push:
-    paths: ['.github/workflows/fix-livechat-sync.yml']
+    paths:
+      - '.github/workflows/fix-livechat-sync.yml'
+      - 'scripts/patch_livechat_platform.py'
 jobs:
   patch:
     runs-on: ubuntu-latest
@@ -21,10 +23,12 @@ jobs:
           sed -i 's/const TRACK_MIN_MS = 60_000;/const TRACK_MIN_MS = 25_000;/g' src/lib/deskPresence.ts || true
           sed -i 's/__nexusTouchAt < 60_000/__nexusTouchAt < 20_000/g' src/context/TicketContext.tsx || true
           python3 scripts/patch_livechat_platform.py
+          python3 -c "from pathlib import Path;p=Path('src/SystemAppCore.tsx');t=p.read_text();t2=t.replace('}, 90_000);','}, 30_000);',1);p.write_text(t2);print('sys',t!=t2)"
       - name: Commit
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
           git add -A
+          git status
           git commit -m "fix(livechat): presence + chat sync + admin poll" || exit 0
-          git push
+          git push origin HEAD:main
