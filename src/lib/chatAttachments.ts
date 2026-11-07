@@ -20,18 +20,46 @@ export function encodeChatAttachment(att: ChatAtt, caption?: string): string {
 }
 
 export function parseChatAttachment(text?: string | null): { att?: ChatAtt; text: string } {
-  if (text == null || typeof text !== 'string' || !text.startsWith(PREFIX)) return { text: text || '' };
-  const rest = text.slice(PREFIX.length);
-  const nl = rest.indexOf('\n');
-  const jsonPart = nl === -1 ? rest : rest.slice(0, nl);
-  const caption = nl === -1 ? '' : rest.slice(nl + 1);
-  try {
-    const att = JSON.parse(jsonPart) as ChatAtt;
-    if (!att?.url) return { text };
-    return { att, text: caption };
-  } catch {
-    return { text };
+  // LEGACY_JSON_ATT_V1
+  if (text == null || typeof text !== 'string') return { text: text || '' };
+  const raw = text.trim();
+  if (!raw) return { text: '' };
+
+  // Preferred: __ATT__{json}[\ncaption]
+  if (raw.startsWith(PREFIX)) {
+    const rest = raw.slice(PREFIX.length);
+    const nl = rest.indexOf('\n');
+    const jsonPart = nl === -1 ? rest : rest.slice(0, nl);
+    const caption = nl === -1 ? '' : rest.slice(nl + 1);
+    try {
+      const att = JSON.parse(jsonPart) as ChatAtt;
+      if (att?.url) return { att, text: caption };
+    } catch { /* fall through */ }
+    return { text: raw };
   }
+
+  // Legacy / mistaken: plain {"url":"data:...","name":"...","mime":"..."}
+  if (raw.startsWith('{') && (raw.includes('"url"') || raw.includes("'url'"))) {
+    try {
+      const obj = JSON.parse(raw) as ChatAtt & { __ATT__?: unknown };
+      // Nested mistake: {"url":"__ATT__{...}"}
+      if (typeof obj.url === 'string' && obj.url.startsWith(PREFIX)) {
+        return parseChatAttachment(obj.url);
+      }
+      if (typeof obj.url === 'string' && (obj.url.startsWith('data:') || obj.url.startsWith('http'))) {
+        return {
+          att: {
+            url: obj.url,
+            name: obj.name || 'attachment',
+            mime: obj.mime || (obj.url.startsWith('data:image') ? 'image/jpeg' : 'application/octet-stream'),
+          },
+          text: '',
+        };
+      }
+    } catch { /* ignore */ }
+  }
+
+  return { text: raw };
 }
 
 export function isImageMime(mime?: string) {
