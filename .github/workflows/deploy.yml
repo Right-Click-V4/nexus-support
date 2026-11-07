@@ -66,6 +66,7 @@ jobs:
           if [ -f scripts/patch_sidebar_and_light.py ]; then python3 scripts/patch_sidebar_and_light.py || true; fi
           if [ -f scripts/patch_help_chat_light.py ]; then python3 scripts/patch_help_chat_light.py || true; fi
           if [ -f scripts/patch_dark_contrast.py ]; then python3 scripts/patch_dark_contrast.py || true; fi
+          if [ -f scripts/patch_chat_exclusive.py ]; then python3 scripts/patch_chat_exclusive.py || true; fi
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
           python3 scripts/patch_portal_logo.py || true
           grep -q "PortalLiveChat\|parseChatAttachment\|createChat" src/components/CustomerPortal.tsx || grep -q "export default" src/components/CustomerPortal.tsx
