@@ -96,8 +96,8 @@ function LogoPilotStage() {
     let x = 0;
     let y = 0;
     let angle = -Math.PI / 2;
-    let scale = 1;
-    let scaleGoal = 1;
+    let scale = 0.62;
+    let scaleGoal = 0.62;
     let opacity = 1;
     let opacityGoal = 1;
     let targetX = 0;
@@ -145,7 +145,6 @@ function LogoPilotStage() {
       const weaveReady = now - lastWeaveAt >= 30000;
       const r = Math.random();
       modeSpeed = randomIn(0.75, 1.45);
-
       if (weaveReady && r < 0.12) {
         mode = 'bob_v';
         bobAmp = randomIn(12, 22);
@@ -203,9 +202,7 @@ function LogoPilotStage() {
         while (delta > Math.PI) delta -= Math.PI * 2;
         while (delta < -Math.PI) delta += Math.PI * 2;
         const dist = Math.hypot(nx - x, ny - y);
-        const score = allowSharp
-          ? dist * 0.3 + Math.abs(delta) * 55
-          : dist * 0.45 - Math.abs(delta) * 90;
+        const score = allowSharp ? dist * 0.3 + Math.abs(delta) * 55 : dist * 0.45 - Math.abs(delta) * 90;
         if (score > bestScore && dist > 70) {
           bestScore = score;
           bestX = nx;
@@ -214,8 +211,7 @@ function LogoPilotStage() {
       }
       targetX = bestX;
       targetY = bestY;
-      // Depth parallax: smaller = farther, larger = nearer
-      scaleGoal = randomIn(0.52, 1.38);
+      scaleGoal = randomIn(0.42, 0.78);
       turnBoost = allowSharp ? 2.6 : 1;
     };
 
@@ -290,10 +286,7 @@ function LogoPilotStage() {
         pickMode(now);
       }
 
-      if (
-        Math.abs(sr.width - stageSizeRef.current.w) > 12 ||
-        Math.abs(sr.height - stageSizeRef.current.h) > 12
-      ) {
+      if (Math.abs(sr.width - stageSizeRef.current.w) > 12 || Math.abs(sr.height - stageSizeRef.current.h) > 12) {
         stageSizeRef.current = { w: sr.width, h: sr.height };
       }
 
@@ -326,7 +319,7 @@ function LogoPilotStage() {
             targetY = y;
             scale = 0.06;
             opacity = 0;
-            scaleGoal = randomIn(1.05, 1.32);
+            scaleGoal = randomIn(0.55, 0.78);
             opacityGoal = 1;
             showPortal(exitPortalRef.current, portalExitX, portalExitY, true);
             portalPhase = 'exit';
@@ -342,7 +335,7 @@ function LogoPilotStage() {
             mode = 'cruise';
             modeSpeed = randomIn(0.9, 1.35);
             modeUntil = now + randomIn(1600, 2800);
-            scaleGoal = randomIn(0.7, 1.25);
+            scaleGoal = randomIn(0.48, 0.72);
             opacityGoal = 1;
             opacity = 1;
             hidePortals();
@@ -352,10 +345,8 @@ function LogoPilotStage() {
         }
       } else {
         if (now >= modeUntil) pickMode(now);
-
         let speedMul = modeSpeed;
         if (mode === 'pause') speedMul = 0;
-
         if (mode !== 'pause') {
           const targetAngle = Math.atan2(targetY - y, targetX - x);
           let delta = targetAngle - angle;
@@ -365,11 +356,9 @@ function LogoPilotStage() {
           if (delta > maxTurn) delta = maxTurn;
           if (delta < -maxTurn) delta = -maxTurn;
           angle += delta;
-
           const step = BASE_SPEED * speedMul * dt;
           x += Math.cos(angle) * step;
           y += Math.sin(angle) * step;
-
           if (mode === 'bob_v' || mode === 'bob_h') {
             bobPhase += dt * 0.012;
             const wiggle = Math.sin(bobPhase) * bobAmp * (dt / 16) * 0.55;
@@ -377,10 +366,8 @@ function LogoPilotStage() {
             else x += wiggle;
           }
         }
-
         scale += (scaleGoal - scale) * Math.min(1, dt * 0.0018);
         opacity += (opacityGoal - opacity) * Math.min(1, dt * 0.004);
-
         const mX = sr.width * 0.06;
         const mY = sr.height * 0.06;
         let bounced = false;
@@ -412,7 +399,6 @@ function LogoPilotStage() {
             modeUntil = now + randomIn(600, 1400);
           }
         }
-
         if (mode !== 'pause' && Math.hypot(targetX - x, targetY - y) < 56) {
           pickTarget(sr.width, sr.height);
         }
@@ -526,15 +512,11 @@ function LogoPilotStage() {
         <span className="login-space-portal-ring login-space-portal-ring-b" />
         <span className="login-space-portal-core" />
       </div>
-      <div
-        ref={pilotRef}
-        className="login-pilot login-pilot-js"
-        style={{ left: 0, top: 0, transform: 'translate(-50%, -50%)' }}
-      >
+      <div ref={pilotRef} className="login-pilot login-pilot-js" style={{ left: 0, top: 0, transform: 'translate(-50%, -50%) scale(0.62)' }}>
         <span className="login-pilot-halo" />
         <span className="login-pilot-orbit" />
         <span className="login-pilot-spin">
-          <NexusLogoMark size={52} />
+          <NexusLogoMark size={34} />
         </span>
       </div>
     </div>
