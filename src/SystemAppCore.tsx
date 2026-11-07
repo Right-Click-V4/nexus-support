@@ -80,7 +80,6 @@ export function AgentShell() {
   const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllNotifications } = usePlatform();
   const [forceReady, setForceReady] = useState(false);
 
-  // Never stick on boot loader if auth/maintenance checks hang (Supabase paused/slow)
   useEffect(() => {
     const t = window.setTimeout(() => setForceReady(true), 2500);
     return () => window.clearTimeout(t);
@@ -135,8 +134,6 @@ export function AgentShell() {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  // Show login as soon as auth is known (or force timeout). Never block login on
-  // maintenance/admin checks — those only matter for the authenticated desk.
   const authKnown = forceReady || !authLoading;
   if (!authKnown) {
     return <BootLoader label="Loading…" />;
@@ -151,7 +148,6 @@ export function AgentShell() {
     );
   }
 
-  // Authenticated desk: soft-wait for maintenance flags, then force through
   const deskBlocked =
     !forceReady && (!maintenanceReady || !site404Ready || !adminReady);
   if (deskBlocked) {
@@ -212,7 +208,7 @@ export function AgentShell() {
           isAdmin={isAdmin}
         />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 shrink-0 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between px-4 gap-3">
+          <header className="relative z-50 h-14 shrink-0 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between px-4 gap-3 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-sm">
             <div className="min-w-0">
               <div className="text-sm font-semibold truncate">{TITLES[activeNav] || 'Nexus Ops'}</div>
             </div>
@@ -226,7 +222,7 @@ export function AgentShell() {
                   )}
                 </button>
                 {notifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-xl z-50 p-2">
+                  <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-2xl z-[100] p-2">
                     <div className="flex items-center justify-between px-2 py-1 mb-1">
                       <span className="text-xs font-semibold">Notifications</span>
                       <button type="button" className="text-[11px] text-violet-600" onClick={() => void markAllNotificationsRead()}>Mark all read</button>
@@ -261,7 +257,7 @@ export function AgentShell() {
               <button type="button" onClick={() => void signOut()} className="text-xs px-2 py-1 rounded-lg border border-zinc-200 dark:border-white/10">Sign out</button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4">{renderPage()}</main>
+          <main className="flex-1 overflow-auto p-4 relative z-0">{renderPage()}</main>
         </div>
       </div>
     </PostLoginShell>
