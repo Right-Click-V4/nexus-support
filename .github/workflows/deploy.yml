@@ -67,6 +67,7 @@ jobs:
           # Always-sync chat: optimistic send + realtime + 1.5s poll
           if [ -f scripts/patch_chat_realtime_sync.py ]; then python3 scripts/patch_chat_realtime_sync.py || true; fi
           if [ -f scripts/patch_sidebar_and_light.py ]; then python3 scripts/patch_sidebar_and_light.py || true; fi
+          if [ -f scripts/patch_help_chat_light.py ]; then python3 scripts/patch_help_chat_light.py || true; fi
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
           python3 scripts/patch_portal_logo.py || true
           grep -q "PortalLiveChat\|parseChatAttachment\|createChat" src/components/CustomerPortal.tsx || grep -q "export default" src/components/CustomerPortal.tsx
