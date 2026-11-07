@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { publishSkyCraft } from '../lib/skyTraffic';
 
 type FlybyKind = 'ufo' | 'rocket';
 
@@ -23,7 +24,6 @@ const CHATS = [
   'Deployed!',
 ];
 
-/** Teardrop exhaust attached to the nozzle. Origin is the right tip so the flicker grows backward. */
 function Flame({ eid, tone }: { eid: string; tone: 'fire' | 'violet' | 'cyan' | 'gold' }) {
   const stops =
     tone === 'violet'
@@ -166,6 +166,8 @@ const ROCKETS = [RocketClassic, RocketViolet, RocketOrange, RocketTeal, RocketBu
 export function SpaceFlybys() {
   const [flybys, setFlybys] = useState<Flyby[]>([]);
   const idRef = useRef(0);
+  const layerRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -174,45 +176,85 @@ export function SpaceFlybys() {
     const schedule = () => {
       if (cancelled) return;
       const id = ++idRef.current;
-      const isUfo = Math.random() < 0.3;
+      const isUfo = Math.random() < 0.32;
       const kind: FlybyKind = isUfo ? 'ufo' : 'rocket';
       const variant = isUfo ? (Math.random() < 0.55 ? 0 : 1) : Math.floor(Math.random() * ROCKETS.length);
-      const top = 10 + Math.random() * 64;
-      const duration = 10 + Math.random() * 6;
+      const top = 6 + Math.random() * 38;
+      const duration = 14 + Math.random() * 8;
       const dir: 'ltr' | 'rtl' = Math.random() < 0.5 ? 'ltr' : 'rtl';
-      const chat = Math.random() < 0.5 ? CHATS[Math.floor(Math.random() * CHATS.length)] : undefined;
-
-      setFlybys((prev) => [...prev.slice(-4), { id, kind, variant, top, duration, dir, chat }]);
-      setTimeout(() => {
-        setFlybys((prev) => prev.filter((f) => f.id !== id));
-      }, duration * 1000 + 200);
-
-      const gaps = [10, 14, 18, 22, 28, 34];
+      const chat = Math.random() < 0.45 ? CHATS[Math.floor(Math.random() * CHATS.length)] : undefined;
+      setFlybys((prev) => [...prev.slice(-5), { id, kind, variant, top, duration, dir, chat }]);
+      const gaps = [9, 12, 16, 20, 26];
       timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);
     };
 
-    timer = setTimeout(schedule, 1200 + Math.random() * 1800);
+    timer = setTimeout(schedule, 900 + Math.random() * 1200);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
   }, []);
 
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const layer = layerRef.current;
+      if (!layer) return;
+      const lr = layer.getBoundingClientRect();
+      let bestScore = -1;
+      let bestCraft: Parameters<typeof publishSkyCraft>[0] = null;
+      nodeRefs.current.forEach((el, id) => {
+        const r = el.getBoundingClientRect();
+        if (r.width < 2) return;
+        const cx = r.left + r.width / 2 - lr.left;
+        const cy = r.top + r.height / 2 - lr.top;
+        if (cx < -80 || cx > lr.width + 80) return;
+        const mid = lr.width * 0.5;
+        const score = 1 / (1 + Math.abs(cx - mid) * 0.008);
+        const f = flybys.find((x) => x.id === id);
+        if (!f) return;
+        if (score > bestScore) {
+          bestScore = score;
+          bestCraft = { id, x: cx, y: cy, dir: f.dir, kind: f.kind, label: f.chat };
+        }
+      });
+      publishSkyCraft(bestCraft);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      publishSkyCraft(null);
+    };
+  }, [flybys]);
+
+  const onAnimEnd = (id: number) => {
+    setFlybys((prev) => prev.filter((f) => f.id !== id));
+    nodeRefs.current.delete(id);
+  };
+
   return (
-    <div className="login-flybys absolute inset-0 pointer-events-none z-[4] overflow-hidden" aria-hidden>
+    <div ref={layerRef} className="login-flybys absolute inset-0 pointer-events-none z-[4] overflow-hidden" aria-hidden>
       {flybys.map((f) => {
         const Rocket = ROCKETS[f.variant] ?? RocketClassic;
         return (
           <div
             key={f.id}
+            ref={(el) => {
+              if (el) nodeRefs.current.set(f.id, el);
+              else nodeRefs.current.delete(f.id);
+            }}
             className={`login-flyby login-flyby-${f.dir}`}
             style={{ top: `${f.top}%`, animationDuration: `${f.duration}s` }}
+            onAnimationEnd={() => onAnimEnd(f.id)}
           >
             {f.chat && <div className="login-flyby-chat">{f.chat}</div>}
             <div className="login-flyby-craft">
               <div className="login-flyby-ship">
                 {f.kind === 'ufo'
-                  ? (f.variant === 1 ? <UfoIon uid={`ufo-${f.id}`} /> : <UfoClassic uid={`ufo-${f.id}`} />)
+                  ? f.variant === 1
+                    ? <UfoIon uid={`ufo-${f.id}`} />
+                    : <UfoClassic uid={`ufo-${f.id}`} />
                   : <Rocket eid={`rocketFlame-${f.id}`} />}
               </div>
             </div>
