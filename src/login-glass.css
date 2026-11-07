@@ -1,4 +1,4 @@
-/* login-glass-v3 + portal hop + flybys */
+/* login-glass-v4: subtler trail, transparent card, tabs */
 .login-cosmos-sky {
   background:
     radial-gradient(ellipse 120% 80% at 50% -10%, rgba(139, 92, 246, 0.35) 0%, transparent 55%),
@@ -83,25 +83,25 @@
   position: absolute; inset: 0; width: 100%; height: 100%;
   overflow: visible; pointer-events: none; z-index: 1;
 }
-.login-trail-ribbon-glow { stroke-width: 10; opacity: 0.35; }
-.login-trail-ribbon { stroke-width: 3.5; opacity: 0.9; }
-.login-trail-ribbon-core { stroke-width: 1.4; opacity: 1; }
-.login-trail-wave { stroke-width: 1.2; opacity: 0.55; }
-.login-trail-wave-a { opacity: 0.45; }
-.login-trail-wave-b { opacity: 0.4; }
+.login-trail-ribbon-glow { stroke-width: 4; opacity: 0.14; }
+.login-trail-ribbon { stroke-width: 1.6; opacity: 0.55; }
+.login-trail-ribbon-core { stroke-width: 0.7; opacity: 0.75; }
+.login-trail-wave { stroke-width: 0.7; opacity: 0.28; }
+.login-trail-wave-a { opacity: 0.22; }
+.login-trail-wave-b { opacity: 0.18; }
 .login-trail-spark {
   position: absolute; border-radius: 50%;
   background: #f5d0fe;
-  box-shadow: 0 0 8px rgba(240, 171, 252, 0.9);
+  box-shadow: 0 0 4px rgba(240, 171, 252, 0.45);
   pointer-events: none;
 }
 .login-trail-spark-1 {
   background: #a5f3fc;
-  box-shadow: 0 0 8px rgba(103, 232, 249, 0.85);
+  box-shadow: 0 0 4px rgba(103, 232, 249, 0.4);
 }
 .login-trail-spark-2 {
   background: #e9d5ff;
-  box-shadow: 0 0 7px rgba(192, 132, 252, 0.8);
+  box-shadow: 0 0 3px rgba(192, 132, 252, 0.35);
 }
 .login-pilot {
   position: absolute;
@@ -133,7 +133,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Space portal hop */
 .login-space-portal {
   position: absolute;
   width: 72px;
@@ -192,13 +191,40 @@
 
 .login-glass-card {
   position: relative; z-index: 30 !important;
-  background: linear-gradient(160deg, rgba(30, 15, 60, 0.38) 0%, rgba(20, 10, 45, 0.42) 100%) !important;
-  border: 1px solid rgba(196, 181, 253, 0.28) !important;
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-  backdrop-filter: blur(16px) saturate(1.25) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(1.25) !important;
+  background: linear-gradient(160deg, rgba(28, 14, 55, 0.28) 0%, rgba(18, 8, 40, 0.32) 100%) !important;
+  border: 1px solid rgba(196, 181, 253, 0.22) !important;
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.08), 0 20px 40px -14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(18px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.2) !important;
   animation: login-card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Customer / Agent segmented control */
+.login-tab {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(233, 213, 255, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(196, 181, 253, 0.16);
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  cursor: pointer;
+}
+.login-tab:hover {
+  color: rgba(245, 233, 255, 0.95);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(196, 181, 253, 0.28);
+}
+.login-tab-on {
+  color: #f8f5ff !important;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.55), rgba(192, 38, 211, 0.42)) !important;
+  border-color: rgba(196, 181, 253, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.25), 0 6px 16px rgba(124, 58, 237, 0.28);
+}
+
 @keyframes login-card-in { from { opacity: 0; transform: translateY(16px) scale(0.985); } to { opacity: 1; transform: none; } }
 .login-card-logo {
   display: flex; align-items: center; justify-content: center;
@@ -215,7 +241,6 @@
 }
 .login-hero-title { background: linear-gradient(180deg, #ffffff 30%, #e9d5ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-/* —— Flybys: full sky, correct direction, flame life —— */
 .login-flybys {
   position: absolute !important;
   inset: 0 !important;
