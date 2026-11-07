@@ -199,13 +199,15 @@ export function SpaceFlybys() {
       const top = 5 + Math.random() * 42;
       const duration = 16 + Math.random() * 10;
       const dir: 'ltr' | 'rtl' = Math.random() < 0.5 ? 'ltr' : 'rtl';
-      const chat = Math.random() < 0.5 ? CHATS[Math.floor(Math.random() * CHATS.length)] : undefined;
-      setFlybys((prev) => [...prev.slice(-6), { id, kind, variant, top, duration, dir, chat }]);
-      const gaps = [7, 10, 13, 17, 22];
+      const chat = Math.random() < 0.28 ? CHATS[Math.floor(Math.random() * CHATS.length)] : undefined;
+      // Keep at most 3 craft on screen so the sky stays calm
+      setFlybys((prev) => [...prev.slice(-2), { id, kind, variant, top, duration, dir, chat }]);
+      // Longer gaps = fewer flybys
+      const gaps = [16, 22, 28, 34, 42];
       timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);
     };
 
-    timer = setTimeout(schedule, 900 + Math.random() * 1200);
+    timer = setTimeout(schedule, 2200 + Math.random() * 1800);
     return () => {
       cancelled = true;
       clearTimeout(timer);
