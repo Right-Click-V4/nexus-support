@@ -24,108 +24,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Restore last working system (86280b5)
+      - name: Restore + patch portal
         run: |
           set -e
-          GOOD=86280b5d5fac3906c1fd833966bb64194200a6ec
-          restore_if_bad() {
-            local path="$1"
-            local min="$2"
-            local sz
-            sz=$(wc -c < "$path" 2>/dev/null || echo 0)
-            if [ ! -f "$path" ] || [ "$sz" -lt "$min" ]; then
-              echo "RESTORING $path (was $sz bytes, need >= $min)"
-              git show "$GOOD:$path" > "$path"
-              echo "  now $(wc -c < "$path") bytes"
-            else
-              echo "OK $path ($sz bytes)"
-            fi
-          }
-          restore_if_bad src/components/PortalLiveChat.tsx 15000
-          restore_if_bad src/components/CustomerPortal.tsx 50000
-          restore_if_bad src/context/TicketContext.tsx 15000
-          restore_if_bad src/lib/deskPresence.ts 2000
-          CP_SZ=$(wc -c < src/components/CustomerPortal.tsx || echo 0)
-          if [ "$CP_SZ" -lt 50000 ] || ! grep -q "PortalLiveChat" src/components/CustomerPortal.tsx; then
-            echo "Restoring CustomerPortal from c3edde90 then wire..."
-            git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
-            if [ -f scripts/wire_account_panel.py ]; then
-              python3 scripts/wire_account_panel.py
-            fi
-            if [ -f scripts/wire_help_kb.py ]; then python3 scripts/wire_help_kb.py; fi
-          elif ! grep -q "AccountProfilePanel" src/components/CustomerPortal.tsx; then
-            if [ -f scripts/wire_account_panel.py ]; then
-              python3 scripts/wire_account_panel.py
-            fi
+          GOOD=c3edde907e5e5be48439b7fea0df6dbe3dca6611
+          CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
+          if [ "$CP_SZ" -lt 50000 ] || ! grep -q "PortalLiveChat" src/components/CustomerPortal.tsx 2>/dev/null; then
+            echo "Restoring CustomerPortal from $GOOD"
+            git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx
           fi
+          if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
+          python3 scripts/patch_portal_logo.py || true
           grep -q "PortalLiveChat" src/components/CustomerPortal.tsx
           test -f src/SystemApp.tsx
-          test "$(wc -c < src/components/PortalLiveChat.tsx)" -gt 15000
-
-      - name: Apply portal + ticket patches
-        run: |
-          set -e
-          if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py; fi
-          if [ -f scripts/portal_fixes.py ]; then python3 scripts/portal_fixes.py; fi
-          if [ -f scripts/wire_help_kb.py ]; then python3 scripts/wire_help_kb.py; fi
-          if [ -f scripts/fix_customer_tickets.py ]; then python3 scripts/fix_customer_tickets.py; fi
-          if [ -f scripts/install_clean_create_ticket.py ]; then python3 scripts/install_clean_create_ticket.py; fi
-          if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py; fi
-          grep -q "await supabase.from('tickets').insert(row)" src/context/TicketContext.tsx && echo "OK clean createTicket" || echo "WARN createTicket"
-
-      - name: Star-X portal logo after CP restore
-        run: |
-          set -e
-          python3 << 'PYLOGO'
-          from pathlib import Path
-          p = Path('src/components/CustomerPortal.tsx')
-          if not p.exists() or p.stat().st_size < 1000:
-              raise SystemExit('CP missing')
-          t = p.read_text()
-          if "useBranding" not in t:
-              t = t.replace(
-                  "import { usePlatform } from '../context/PlatformContext';",
-                  "import { usePlatform } from '../context/PlatformContext';\nimport { useBranding } from '../context/BrandingContext';",
-              )
-          new_brand = """function BrandMark({ logoUrl, className = 'w-8 h-8' }: { logoUrl?: string; className?: string }) {
-  if (logoUrl) {
-    return (
-      <div className={`${className} rounded-xl overflow-hidden bg-white/10 ring-1 ring-white/15 flex items-center justify-center shrink-0`}>
-        <img src={logoUrl} alt="" className="w-full h-full object-contain" />
-      </div>
-    );
-  }
-  return (
-    <div className={`${className} rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-md shadow-brand-900/40 shrink-0`}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path d="M4 4 L20 20 M20 4 L4 20" stroke="white" strokeWidth="3.2" strokeLinecap="round" />
-        <path d="M12 2 L13.6 9.6 L21 11.2 L13.6 12.8 L12 20.5 L10.4 12.8 L3 11.2 L10.4 9.6 Z" fill="white" />
-        <circle cx="12" cy="11.2" r="1.4" fill="white" />
-      </svg>
-    </div>
-  );
-}"""
-          if 'function BrandMark' in t:
-              start = t.index('function BrandMark')
-              i = t.index('{', start)
-              depth = 0
-              for j in range(i, len(t)):
-                  if t[j] == '{': depth += 1
-                  elif t[j] == '}':
-                      depth -= 1
-                      if depth == 0:
-                          t = t[:start] + new_brand + t[j+1:]
-                          break
-          if 'const { branding } = useBranding()' not in t:
-              needle = "export default function CustomerPortal({ onBackToAgent }: Props) {"
-              if needle in t:
-                  idx = t.index(needle) + len(needle)
-                  t = t[:idx] + "\n  const { branding } = useBranding();\n  const logoUrl = (branding.logoUrl || '').trim();\n  const appName = (branding.appName || '').trim() || 'Nexus Ops';" + t[idx:]
-          t = t.replace('<BrandMark />', '<BrandMark logoUrl={logoUrl} />')
-          t = t.replace('<BrandMark className="w-8 h-8" />', '<BrandMark logoUrl={logoUrl} className="w-8 h-8" />')
-          p.write_text(t)
-          print('logo patch', 'useBranding' in t)
-          PYLOGO
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
