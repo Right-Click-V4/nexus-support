@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
-"""Wire star-X BrandMark + useBranding into CustomerPortal."""
+"""Wire star-X BrandMark + useBranding into CustomerPortal (correct brace match)."""
 from pathlib import Path
+import re
 
 p = Path('src/components/CustomerPortal.tsx')
 if not p.exists() or p.stat().st_size < 1000:
     raise SystemExit('CP missing or stub')
 t = p.read_text()
 
-if 'useBranding' not in t:
-    t = t.replace(
-        "import { usePlatform } from '../context/PlatformContext';",
-        "import { usePlatform } from '../context/PlatformContext';\nimport { useBranding } from '../context/BrandingContext';",
-    )
-
-new_brand = '''function BrandMark({ logoUrl, className = 'w-8 h-8' }: { logoUrl?: string; className?: string }) {
+m = re.search(r"function BrandMark\([^)]*\)[^{]*\{", t)
+if m:
+    start = m.start()
+    body_start = m.end() - 1
+    depth = 0
+    end = None
+    for j in range(body_start, len(t)):
+        if t[j] == '{':
+            depth += 1
+        elif t[j] == '}':
+            depth -= 1
+            if depth == 0:
+                end = j + 1
+                break
+    if end:
+        new_brand = """function BrandMark({ logoUrl, className = 'w-8 h-8' }: { logoUrl?: string; className?: string }) {
   if (logoUrl) {
     return (
       <div className={`${className} rounded-xl overflow-hidden bg-white/10 ring-1 ring-white/15 flex items-center justify-center shrink-0`}>
@@ -30,20 +40,17 @@ new_brand = '''function BrandMark({ logoUrl, className = 'w-8 h-8' }: { logoUrl?
       </svg>
     </div>
   );
-}'''
+}"""
+        t = t[:start] + new_brand + t[end:]
+        print('BrandMark replaced')
+else:
+    print('BrandMark not found')
 
-if 'function BrandMark' in t:
-    start = t.index('function BrandMark')
-    i = t.index('{', start)
-    depth = 0
-    for j in range(i, len(t)):
-        if t[j] == '{':
-            depth += 1
-        elif t[j] == '}':
-            depth -= 1
-            if depth == 0:
-                t = t[:start] + new_brand + t[j + 1:]
-                break
+if 'useBranding' not in t:
+    t = t.replace(
+        "import { usePlatform } from '../context/PlatformContext';",
+        "import { usePlatform } from '../context/PlatformContext';\nimport { useBranding } from '../context/BrandingContext';",
+    )
 
 if "const { branding } = useBranding()" not in t:
     needle = "export default function CustomerPortal({ onBackToAgent }: Props) {"
@@ -55,7 +62,9 @@ if "const { branding } = useBranding()" not in t:
             + t[idx:]
         )
 
-t = t.replace('<BrandMark />', '<BrandMark logoUrl={logoUrl} />')
-t = t.replace('<BrandMark className="w-8 h-8" />', '<BrandMark logoUrl={logoUrl} className="w-8 h-8" />')
+t = re.sub(r'<BrandMark\s*/>', '<BrandMark logoUrl={logoUrl} />', t)
+t = re.sub(r'<BrandMark\s+className="([^"]*)"\s*/>', r'<BrandMark logoUrl={logoUrl} className="\1" />', t)
+t = re.sub(r'<BrandMark\s+className=\{([^}]*)\}\s*/>', r'<BrandMark logoUrl={logoUrl} className={\1} />', t)
+
 p.write_text(t)
-print('portal logo patched', p.stat().st_size, 'useBranding' in t)
+print('portal logo patched', p.stat().st_size, 'useBranding' in t, 'broken' if '}: { className' in t else 'ok')
