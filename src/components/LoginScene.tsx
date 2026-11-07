@@ -17,7 +17,7 @@ function useFallingStars(count: number) {
         color: i % 5 === 0 ? '#f9a8d4' : i % 4 === 0 ? '#67e8f9' : i % 3 === 0 ? '#ffffff' : '#c4b5fd',
         opacity: 0.25 + (i % 5) * 0.12,
       })),
-    [count]
+    [count],
   );
 }
 
@@ -27,7 +27,7 @@ const SAMPLE_MS = 14;
 const BASE_SPEED = 0.24;
 const TURN_RATE = 0.0045;
 
-type PilotMode = 'cruise' | 'pause' | 'dash' | 'bob_v' | 'bob_h';
+type PilotMode = 'cruise' | 'pause' | 'dash' | 'bob_v' | 'bob_h' | 'portal';
 
 function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -81,6 +81,8 @@ function trimTrail(list: TrailPoint[], maxDist: number): TrailPoint[] {
 function LogoPilotStage() {
   const pilotRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const enterPortalRef = useRef<HTMLDivElement>(null);
+  const exitPortalRef = useRef<HTMLDivElement>(null);
   const history = useRef<TrailPoint[]>([]);
   const stageSizeRef = useRef({ w: 1, h: 1 });
   const [trail, setTrail] = useState<TrailPoint[]>([]);
@@ -96,6 +98,8 @@ function LogoPilotStage() {
     let angle = -Math.PI / 2;
     let scale = 1;
     let scaleGoal = 1;
+    let opacity = 1;
+    let opacityGoal = 1;
     let targetX = 0;
     let targetY = 0;
     let ready = false;
@@ -106,10 +110,38 @@ function LogoPilotStage() {
     let modeUntil = 0;
     let modeSpeed = 1;
     let lastWeaveAt = 0;
+    let lastPortalAt = 0;
     let bobPhase = 0;
     let bobAmp = 16;
+    let portalPhase: 'enter' | 'transit' | 'exit' | null = null;
+    let portalExitX = 0;
+    let portalExitY = 0;
+    const PORTAL_EVERY_MS = 20_000;
+
+    const hidePortals = () => {
+      const a = enterPortalRef.current;
+      const b = exitPortalRef.current;
+      if (a) {
+        a.classList.remove('is-active', 'is-closing');
+        a.style.opacity = '0';
+      }
+      if (b) {
+        b.classList.remove('is-active', 'is-closing');
+        b.style.opacity = '0';
+      }
+    };
+
+    const showPortal = (el: HTMLDivElement | null, px: number, py: number, active: boolean) => {
+      if (!el) return;
+      el.style.left = `${px}px`;
+      el.style.top = `${py}px`;
+      el.style.opacity = active ? '1' : '0';
+      el.classList.toggle('is-active', active);
+      el.classList.remove('is-closing');
+    };
 
     const pickMode = (now: number) => {
+      if (mode === 'portal') return;
       const weaveReady = now - lastWeaveAt >= 30000;
       const r = Math.random();
       modeSpeed = randomIn(0.75, 1.45);
@@ -182,8 +214,43 @@ function LogoPilotStage() {
       }
       targetX = bestX;
       targetY = bestY;
-      scaleGoal = randomIn(0.94, 1.08);
+      // Depth parallax: smaller = farther, larger = nearer
+      scaleGoal = randomIn(0.52, 1.38);
       turnBoost = allowSharp ? 2.6 : 1;
+    };
+
+    const pickPortalExit = (w: number, h: number) => {
+      const marginX = w * 0.14;
+      const marginY = h * 0.12;
+      let bestX = randomIn(marginX, w - marginX);
+      let bestY = randomIn(marginY, h - marginY);
+      let bestDist = 0;
+      for (let i = 0; i < 10; i++) {
+        const nx = randomIn(marginX, w - marginX);
+        const ny = randomIn(marginY, h - marginY);
+        const d = Math.hypot(nx - x, ny - y);
+        if (d > bestDist) {
+          bestDist = d;
+          bestX = nx;
+          bestY = ny;
+        }
+      }
+      return { x: bestX, y: bestY };
+    };
+
+    const startPortal = (now: number, w: number, h: number) => {
+      mode = 'portal';
+      portalPhase = 'enter';
+      modeUntil = now + 720;
+      modeSpeed = 0;
+      scaleGoal = 0.06;
+      opacityGoal = 0;
+      const exit = pickPortalExit(w, h);
+      portalExitX = exit.x;
+      portalExitY = exit.y;
+      showPortal(enterPortalRef.current, x, y, true);
+      showPortal(exitPortalRef.current, portalExitX, portalExitY, false);
+      lastPortalAt = now;
     };
 
     const publishTrail = (list: TrailPoint[]) => {
@@ -219,6 +286,7 @@ function LogoPilotStage() {
         stageSizeRef.current = { w: sr.width, h: sr.height };
         pickTarget(sr.width, sr.height);
         lastWeaveAt = now;
+        lastPortalAt = now;
         pickMode(now);
       }
 
@@ -232,81 +300,136 @@ function LogoPilotStage() {
       const dt = Math.min(32, Math.max(0, now - lastTick));
       lastTick = now;
 
-      if (now >= modeUntil) pickMode(now);
+      if (mode !== 'portal' && now - lastPortalAt >= PORTAL_EVERY_MS) {
+        startPortal(now, sr.width, sr.height);
+      }
 
-      let speedMul = modeSpeed;
-      if (mode === 'pause') speedMul = 0;
-
-      if (mode !== 'pause') {
-        const targetAngle = Math.atan2(targetY - y, targetX - x);
-        let delta = targetAngle - angle;
-        while (delta > Math.PI) delta -= Math.PI * 2;
-        while (delta < -Math.PI) delta += Math.PI * 2;
-        const maxTurn = TURN_RATE * turnBoost * (mode === 'dash' ? 1.5 : 1) * dt;
-        if (delta > maxTurn) delta = maxTurn;
-        if (delta < -maxTurn) delta = -maxTurn;
-        angle += delta;
-
-        const step = BASE_SPEED * speedMul * dt;
-        x += Math.cos(angle) * step;
-        y += Math.sin(angle) * step;
-
-        if (mode === 'bob_v' || mode === 'bob_h') {
-          bobPhase += dt * 0.012;
-          const wiggle = Math.sin(bobPhase) * bobAmp * (dt / 16) * 0.55;
-          if (mode === 'bob_v') y += wiggle;
-          else x += wiggle;
+      if (mode === 'portal') {
+        if (portalPhase === 'enter') {
+          scale += (scaleGoal - scale) * Math.min(1, dt * 0.008);
+          opacity += (opacityGoal - opacity) * Math.min(1, dt * 0.008);
+          showPortal(enterPortalRef.current, x, y, true);
+          if (now >= modeUntil || scale < 0.12) {
+            portalPhase = 'transit';
+            history.current = [];
+            publishTrail([]);
+            const enterEl = enterPortalRef.current;
+            if (enterEl) {
+              enterEl.classList.add('is-closing');
+              enterEl.style.opacity = '0';
+            }
+            x = portalExitX;
+            y = portalExitY;
+            prevX = x;
+            prevY = y;
+            targetX = x;
+            targetY = y;
+            scale = 0.06;
+            opacity = 0;
+            scaleGoal = randomIn(1.05, 1.32);
+            opacityGoal = 1;
+            showPortal(exitPortalRef.current, portalExitX, portalExitY, true);
+            portalPhase = 'exit';
+            modeUntil = now + 900;
+          }
+        } else if (portalPhase === 'exit') {
+          scale += (scaleGoal - scale) * Math.min(1, dt * 0.006);
+          opacity += (opacityGoal - opacity) * Math.min(1, dt * 0.006);
+          x = portalExitX;
+          y = portalExitY;
+          if (now >= modeUntil || scale > scaleGoal * 0.92) {
+            portalPhase = null;
+            mode = 'cruise';
+            modeSpeed = randomIn(0.9, 1.35);
+            modeUntil = now + randomIn(1600, 2800);
+            scaleGoal = randomIn(0.7, 1.25);
+            opacityGoal = 1;
+            opacity = 1;
+            hidePortals();
+            pickTarget(sr.width, sr.height);
+            angle = Math.random() * Math.PI * 2;
+          }
         }
-      }
+      } else {
+        if (now >= modeUntil) pickMode(now);
 
-      scale += (scaleGoal - scale) * Math.min(1, dt * 0.002);
+        let speedMul = modeSpeed;
+        if (mode === 'pause') speedMul = 0;
 
-      const mX = sr.width * 0.06;
-      const mY = sr.height * 0.06;
-      let bounced = false;
-      if (x < mX) {
-        x = mX;
-        angle = Math.PI - angle;
-        bounced = true;
-      } else if (x > sr.width - mX) {
-        x = sr.width - mX;
-        angle = Math.PI - angle;
-        bounced = true;
-      }
-      if (y < mY) {
-        y = mY;
-        angle = -angle;
-        bounced = true;
-      } else if (y > sr.height - mY) {
-        y = sr.height - mY;
-        angle = -angle;
-        bounced = true;
-      }
-      if (bounced) {
-        while (angle > Math.PI) angle -= Math.PI * 2;
-        while (angle < -Math.PI) angle += Math.PI * 2;
-        pickTarget(sr.width, sr.height, true);
-        if (mode === 'pause') {
-          mode = 'cruise';
-          modeSpeed = randomIn(1.0, 1.6);
-          modeUntil = now + randomIn(600, 1400);
+        if (mode !== 'pause') {
+          const targetAngle = Math.atan2(targetY - y, targetX - x);
+          let delta = targetAngle - angle;
+          while (delta > Math.PI) delta -= Math.PI * 2;
+          while (delta < -Math.PI) delta += Math.PI * 2;
+          const maxTurn = TURN_RATE * turnBoost * (mode === 'dash' ? 1.5 : 1) * dt;
+          if (delta > maxTurn) delta = maxTurn;
+          if (delta < -maxTurn) delta = -maxTurn;
+          angle += delta;
+
+          const step = BASE_SPEED * speedMul * dt;
+          x += Math.cos(angle) * step;
+          y += Math.sin(angle) * step;
+
+          if (mode === 'bob_v' || mode === 'bob_h') {
+            bobPhase += dt * 0.012;
+            const wiggle = Math.sin(bobPhase) * bobAmp * (dt / 16) * 0.55;
+            if (mode === 'bob_v') y += wiggle;
+            else x += wiggle;
+          }
+        }
+
+        scale += (scaleGoal - scale) * Math.min(1, dt * 0.0018);
+        opacity += (opacityGoal - opacity) * Math.min(1, dt * 0.004);
+
+        const mX = sr.width * 0.06;
+        const mY = sr.height * 0.06;
+        let bounced = false;
+        if (x < mX) {
+          x = mX;
+          angle = Math.PI - angle;
+          bounced = true;
+        } else if (x > sr.width - mX) {
+          x = sr.width - mX;
+          angle = Math.PI - angle;
+          bounced = true;
+        }
+        if (y < mY) {
+          y = mY;
+          angle = -angle;
+          bounced = true;
+        } else if (y > sr.height - mY) {
+          y = sr.height - mY;
+          angle = -angle;
+          bounced = true;
+        }
+        if (bounced) {
+          while (angle > Math.PI) angle -= Math.PI * 2;
+          while (angle < -Math.PI) angle += Math.PI * 2;
+          pickTarget(sr.width, sr.height, true);
+          if (mode === 'pause') {
+            mode = 'cruise';
+            modeSpeed = randomIn(1.0, 1.6);
+            modeUntil = now + randomIn(600, 1400);
+          }
+        }
+
+        if (mode !== 'pause' && Math.hypot(targetX - x, targetY - y) < 56) {
+          pickTarget(sr.width, sr.height);
         }
       }
 
       pilot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${scale})`;
+      pilot.style.opacity = String(Math.max(0, Math.min(1, opacity)));
 
-      if (mode !== 'pause' && Math.hypot(targetX - x, targetY - y) < 56) {
-        pickTarget(sr.width, sr.height);
-      }
-
-      const moved = Math.hypot(x - prevX, y - prevY);
-      if (now - lastSample >= SAMPLE_MS && moved >= 0.8) {
-        lastSample = now;
-        prevX = x;
-        prevY = y;
-        history.current = [{ x, y, t: now }, ...history.current];
-        history.current = trimTrail(history.current, TRAIL_MAX_DIST + 30);
-        publishTrail([...history.current]);
+      if (mode !== 'portal' && mode !== 'pause' && Math.hypot(x - prevX, y - prevY) >= 0.8) {
+        if (now - lastSample >= SAMPLE_MS) {
+          lastSample = now;
+          prevX = x;
+          prevY = y;
+          history.current = [{ x, y, t: now }, ...history.current];
+          history.current = trimTrail(history.current, TRAIL_MAX_DIST + 30);
+          publishTrail([...history.current]);
+        }
       } else if (mode === 'pause' && now - lastSample >= 80) {
         lastSample = now;
         if (history.current.length > 12) {
@@ -317,7 +440,10 @@ function LogoPilotStage() {
     };
 
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      hidePortals();
+    };
   }, []);
 
   return (
@@ -390,6 +516,16 @@ function LogoPilotStage() {
           />
         );
       })}
+      <div ref={enterPortalRef} className="login-space-portal" aria-hidden>
+        <span className="login-space-portal-ring login-space-portal-ring-a" />
+        <span className="login-space-portal-ring login-space-portal-ring-b" />
+        <span className="login-space-portal-core" />
+      </div>
+      <div ref={exitPortalRef} className="login-space-portal" aria-hidden>
+        <span className="login-space-portal-ring login-space-portal-ring-a" />
+        <span className="login-space-portal-ring login-space-portal-ring-b" />
+        <span className="login-space-portal-core" />
+      </div>
       <div
         ref={pilotRef}
         className="login-pilot login-pilot-js"
