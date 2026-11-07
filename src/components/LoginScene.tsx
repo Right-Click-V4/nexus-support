@@ -22,7 +22,7 @@ function useFallingStars(count: number) {
 }
 
 type TrailPoint = { x: number; y: number; t: number };
-const TRAIL_MAX_DIST = 280;
+const TRAIL_MAX_DIST = 130;
 const SAMPLE_MS = 14;
 const BASE_SPEED = 0.24;
 const TURN_RATE = 0.0045;
@@ -254,8 +254,8 @@ function LogoPilotStage() {
       setTrail(fixed);
       setPaths({
         core: trailPath(fixed, 0, 0, 0),
-        waveA: trailPath(fixed, 5, 0, 0.32),
-        waveB: trailPath(fixed, 4, Math.PI * 0.9, 0.38),
+        waveA: trailPath(fixed, 2.2, 0, 0.32),
+        waveB: trailPath(fixed, 1.6, Math.PI * 0.9, 0.38),
       });
       const oldest = fixed[fixed.length - 1];
       const newest = fixed[0];
@@ -413,7 +413,7 @@ function LogoPilotStage() {
           prevX = x;
           prevY = y;
           history.current = [{ x, y, t: now }, ...history.current];
-          history.current = trimTrail(history.current, TRAIL_MAX_DIST + 30);
+          history.current = trimTrail(history.current, TRAIL_MAX_DIST + 12);
           publishTrail([...history.current]);
         }
       } else if (mode === 'pause' && now - lastSample >= 80) {
@@ -438,30 +438,29 @@ function LogoPilotStage() {
         <defs>
           <linearGradient id="loginTrailViolet" gradientUnits="userSpaceOnUse" x1={grad.x1} y1={grad.y1} x2={grad.x2} y2={grad.y2}>
             <stop offset="0%" stopColor="#4c1d95" stopOpacity="0" />
-            <stop offset="20%" stopColor="#8b5cf6" stopOpacity="0.35" />
-            <stop offset="55%" stopColor="#e879f9" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#fce7f3" stopOpacity="1" />
+            <stop offset="25%" stopColor="#8b5cf6" stopOpacity="0.2" />
+            <stop offset="60%" stopColor="#e879f9" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#fce7f3" stopOpacity="0.85" />
           </linearGradient>
           <linearGradient id="loginTrailCyan" gradientUnits="userSpaceOnUse" x1={grad.x1} y1={grad.y1} x2={grad.x2} y2={grad.y2}>
             <stop offset="0%" stopColor="#0e7490" stopOpacity="0" />
-            <stop offset="35%" stopColor="#22d3ee" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#a5f3fc" stopOpacity="0.9" />
+            <stop offset="40%" stopColor="#22d3ee" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#a5f3fc" stopOpacity="0.55" />
           </linearGradient>
           <linearGradient id="loginTrailCore" gradientUnits="userSpaceOnUse" x1={grad.x1} y1={grad.y1} x2={grad.x2} y2={grad.y2}>
             <stop offset="0%" stopColor="#a78bfa" stopOpacity="0" />
-            <stop offset="45%" stopColor="#f0abfc" stopOpacity="0.65" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="50%" stopColor="#f0abfc" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.75" />
           </linearGradient>
-          <filter id="loginTrailGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="5" result="blur" />
+          <filter id="loginTrailGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
             <feMerge>
-              <feMergeNode in="blur" />
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <filter id="loginTrailSoft" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <filter id="loginTrailSoft" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="1.2" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -484,17 +483,17 @@ function LogoPilotStage() {
       </svg>
       {trail.map((p, i) => {
         const fade = 1 - i / Math.max(1, trail.length - 1);
-        if (fade < 0.08) return null;
+        if (fade < 0.12) return null;
         const kind = i % 3;
-        const size = kind === 0 ? 2.5 + fade * 5.5 : kind === 1 ? 1.8 + fade * 4 : 1.2 + fade * 3;
+        const size = kind === 0 ? 1.4 + fade * 2.2 : kind === 1 ? 1.1 + fade * 1.6 : 0.9 + fade * 1.2;
         return (
           <span
             key={`spark-${i}-${Math.round(p.x)}-${Math.round(p.y)}`}
             className={`login-trail-spark login-trail-spark-${kind}`}
             style={{
-              left: p.x + ((i % 5) - 2) * 3.5 * fade,
-              top: p.y + ((i % 3) - 1) * 3 * fade,
-              opacity: 0.3 + fade * 0.7,
+              left: p.x + ((i % 5) - 2) * 2 * fade,
+              top: p.y + ((i % 3) - 1) * 1.5 * fade,
+              opacity: 0.12 + fade * 0.35,
               width: size,
               height: size,
               transform: 'translate(-50%, -50%)',
