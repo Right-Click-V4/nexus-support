@@ -1,47 +1,9 @@
+# Disabled
 name: Restore CP e973
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/restore-cp-e973.yml'
 jobs:
-  restore:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Restore file from e973
-        run: |
-          set -euo pipefail
-          git show e973f0632f202e8dc0dabbbc65a8be25600c23f9:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
-          wc -c src/components/CustomerPortal.tsx
-          head -3 src/components/CustomerPortal.tsx
-          grep -q "export default function CustomerPortal" src/components/CustomerPortal.tsx
-          # soft theme sidebar classes
-          sed -i 's/bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30/portal-sidebar flex-col relative z-30/' src/components/CustomerPortal.tsx
-          # append CSS rules
-          grep -q portal-comet-head src/portal-lounge.css || cat >> src/portal-lounge.css << 'EOF'
-
-.portal-sidebar{background:rgba(245,243,255,.72)!important;backdrop-filter:blur(18px);border-right:1px solid rgba(196,181,253,.35);color:#1e1b4b;transition:background .85s,border-color .85s,color .85s}
-html.nexus-dark .portal-sidebar{background:rgba(12,8,28,.78)!important;border-right-color:rgba(63,63,70,.45);color:#f4f4f5}
-.app-cosmos>aside.portal-sidebar{background:rgba(245,243,255,.72)!important}
-html.nexus-dark .app-cosmos>aside.portal-sidebar{background:rgba(12,8,28,.78)!important}
-.portal-shooting-star{position:absolute;left:0;width:110px;height:22px;opacity:0;animation:portal-comet-fly 30s linear infinite;background:none!important;box-shadow:none!important}
-.portal-shooting-1{top:16%;animation-delay:2s}.portal-shooting-2{top:40%;animation-delay:12s}.portal-shooting-3{top:65%;animation-delay:22s}
-.portal-comet-trail{position:absolute;right:14px;top:50%;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.15) 30%,rgba(165,243,252,.9) 80%,#fff);box-shadow:0 0 8px 2px rgba(34,211,238,.5);height:3px;width:90px;transform:translateY(-50%)}
-.portal-comet-trail-a{width:90px;height:4px}.portal-comet-trail-b{width:68px;height:2.5px;opacity:.75}.portal-comet-trail-c{width:48px;height:2px;opacity:.55}
-.portal-comet-head{position:absolute;right:0;top:50%;width:10px;height:10px;transform:translateY(-50%);border-radius:50%;background:radial-gradient(circle,#fff,#a5f3fc 40%,#22d3ee 70%,transparent);box-shadow:0 0 12px 3px rgba(34,211,238,.9)}
-.portal-comet-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:#a5f3fc;box-shadow:0 0 6px #22d3ee}
-.portal-comet-p1{right:28px;top:30%}.portal-comet-p2{right:44px;top:60%}.portal-comet-p3{right:58px;top:25%}
-@keyframes portal-comet-fly{0%,88%{opacity:0;transform:translate3d(-120px,0,0) rotate(-8deg)}90%{opacity:1}97%{opacity:.9;transform:translate3d(110vw,50px,0) rotate(-8deg)}100%{opacity:0}}
-EOF
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/CustomerPortal.tsx src/portal-lounge.css
-          git status
-          git commit -m "fix(portal): restore CustomerPortal + theme sidebar + cyan comets" || exit 0
-          git push
+      - run: echo disabled

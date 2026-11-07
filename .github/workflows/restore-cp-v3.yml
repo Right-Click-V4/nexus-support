@@ -1,26 +1,9 @@
+# Disabled
 name: Restore CP v3
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - ".github/workflows/restore-cp-v3.yml"
-      - "scripts/patch_cp.py"
 jobs:
-  restore:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Patch CustomerPortal
-        run: python3 scripts/patch_cp.py
-      - name: Commit
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/CustomerPortal.tsx src/portal-lounge.css
-          git status
-          git commit -m "fix(portal): restore CustomerPortal + glass sidebar + cyan comets" || exit 0
-          git push
+      - run: echo disabled

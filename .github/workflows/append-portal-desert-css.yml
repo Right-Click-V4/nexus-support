@@ -1,20 +1,9 @@
+# Disabled
 name: Append portal desert CSS
 on:
   workflow_dispatch:
-permissions:
-  contents: write
 jobs:
-  run:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
-        with:
-          ref: main
-      - run: python3 scripts/append_portal_desert_css.py
-      - run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/index.css
-          if git diff --cached --quiet; then echo No changes; exit 0; fi
-          git commit -m "CSS: desert night sky light/dark for customer portal"
-          git push origin HEAD:main
+      - run: echo disabled

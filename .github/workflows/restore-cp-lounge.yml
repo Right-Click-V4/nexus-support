@@ -1,48 +1,9 @@
-name: Restore CustomerPortal lounge mount
+# Disabled
+name: Restore CP lounge
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/restore-cp-lounge.yml'
 jobs:
-  restore:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Restore and patch CustomerPortal
-        run: |
-          set -e
-          git show f962bc078f7f9800d969021fd350e97be9b8039e:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
-          wc -c src/components/CustomerPortal.tsx
-          python3 << 'PY'
-          from pathlib import Path
-          text = Path('src/components/CustomerPortal.tsx').read_text()
-          old = """    <div className=\"app-cosmos flex min-h-screen relative\">
-      <PortalSpaceLoungeBg />
-      <aside className=\"hidden md:flex w-60 shrink-0 bg-zinc-950/90 text-zinc-100 flex-col border-r border-zinc-800/80 relative z-30\">"""
-          new = """    <div className=\"app-cosmos flex min-h-screen relative\">
-      <aside className=\"hidden md:flex w-60 shrink-0 bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30\">"""
-          if old not in text:
-              raise SystemExit('block1 missing')
-          text = text.replace(old, new, 1)
-          old2 = """      <div className=\"portal-shell flex-1 flex flex-col min-w-0 min-h-screen relative z-10\">
-        <header className=\"relative z-20 h-12 shrink-0 nexus-topbar flex items-center gap-3 px-4 lg:px-6\">"""
-          new2 = """      <div className=\"portal-shell flex-1 flex flex-col min-w-0 min-h-screen relative z-10\">
-        <PortalSpaceLoungeBg />
-        <header className=\"relative z-20 h-12 shrink-0 nexus-topbar flex items-center gap-3 px-4 lg:px-6\">"""
-          if old2 not in text:
-              raise SystemExit('block2 missing')
-          text = text.replace(old2, new2, 1)
-          Path('src/components/CustomerPortal.tsx').write_text(text)
-          print('patched', len(text))
-          PY
-          git config user.name "nexus-bot"
-          git config user.email "bot@nexus.ops"
-          git add src/components/CustomerPortal.tsx
-          git status
-          git commit -m "fix(portal): restore CustomerPortal — lounge bg only in content area" || echo "no changes"
-          git push origin HEAD:main
+      - run: echo disabled

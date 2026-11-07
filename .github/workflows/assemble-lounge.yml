@@ -1,25 +1,9 @@
-name: Assemble lounge photo modules
+# Disabled
+name: Assemble lounge
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'scripts/lounge/**'
-      - '.github/workflows/assemble-lounge.yml'
 jobs:
-  assemble:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - name: Assemble day/night TS modules
-        run: |
-          cat scripts/lounge/day_mod_a.txt scripts/lounge/day_mod_b.txt > src/components/loungeDay.ts
-          cat scripts/lounge/night_mod_a.txt scripts/lounge/night_mod_b.txt > src/components/loungeNight.ts
-          wc -c src/components/loungeDay.ts src/components/loungeNight.ts
-          head -c 60 src/components/loungeDay.ts; echo
-          git config user.name "nexus-bot"
-          git config user.email "bot@nexus.ops"
-          git add src/components/loungeDay.ts src/components/loungeNight.ts
-          git commit -m "Assemble lounge day/night photo modules" || true
-          git push
+      - run: echo disabled

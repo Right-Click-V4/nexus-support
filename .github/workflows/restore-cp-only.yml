@@ -1,72 +1,9 @@
+# Disabled
 name: Restore CP only
 on:
   workflow_dispatch:
-  push:
-    paths: ['.github/workflows/restore-cp-only.yml']
 jobs:
-  restore:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Restore CustomerPortal
-        run: |
-          set -e
-          git checkout e973f0632f202e8dc0dabbbc65a8be25600c23f9 -- src/components/CustomerPortal.tsx
-          # Theme sidebar + colored icons
-          python3 -c "
-from pathlib import Path
-p=Path('src/components/CustomerPortal.tsx')
-t=p.read_text()
-t=t.replace('hidden md:flex w-60 shrink-0 bg-zinc-950 text-zinc-100 flex-col border-r border-zinc-800 relative z-30','portal-sidebar hidden md:flex w-60 shrink-0 flex-col relative z-30',1)
-t=t.replace('px-4 py-5 flex items-center gap-3 border-b border-zinc-800/80','portal-sidebar-header px-4 py-5 flex items-center gap-3',1)
-t=t.replace('text-sm font-semibold tracking-tight\">Nexus Ops','text-sm font-semibold tracking-tight portal-sidebar-title\">Nexus Ops',1)
-t=t.replace('text-[11px] text-zinc-500\">Customer portal','text-[11px] portal-sidebar-sub\">Customer portal',1)
-t=t.replace('text-[10px] font-semibold uppercase tracking-wider text-zinc-600\">Support','text-[10px] font-semibold uppercase tracking-wider portal-sidebar-label\">Support',1)
-t=t.replace('p-3 border-t border-zinc-800/80 space-y-1','portal-sidebar-footer p-3 space-y-1',1)
-t=t.replace(\"active ? 'bg-brand-600/20 text-white' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'\",\"active ? 'portal-nav-active' : 'portal-nav-item'\",1)
-t=t.replace('<Icon size={18} className=\"shrink-0\" />','<Icon size={18} className={\`shrink-0 \${({ home: \\"text-violet-400\\", community: \\"text-sky-400\\", submit: \\"text-amber-400\\", chat: \\"text-fuchsia-400\\", track: \\"text-emerald-400\\", mytickets: \\"text-blue-400\\", help: \\"text-indigo-400\\", account: \\"text-pink-400\\" } as Record<string, string>)[item.id] || \\"text-violet-400\\"}\`} />',1)
-p.write_text(t)
-print('ok', 'portal-sidebar' in t)
-"
-          # Append sidebar/comet CSS if missing
-          if ! grep -q portal-comet-head src/portal-lounge.css; then
-            cat >> src/portal-lounge.css << 'EOF'
-
-/* login cyan comets */
-.portal-shooting-star{position:absolute;left:0;width:110px;height:22px;opacity:0;will-change:transform,opacity;animation:portal-comet-fly 30s linear infinite;background:none!important;box-shadow:none!important}
-.portal-shooting-1{top:16%;animation-delay:2s}.portal-shooting-2{top:40%;animation-delay:12s}.portal-shooting-3{top:65%;animation-delay:22s}
-.portal-comet-trail{position:absolute;right:14px;top:50%;border-radius:999px;transform-origin:right center;background:linear-gradient(90deg,transparent,rgba(34,211,238,.05) 10%,rgba(103,232,249,.45) 45%,rgba(165,243,252,.9) 78%,#fff);box-shadow:0 0 8px 2px rgba(34,211,238,.5)}
-.portal-comet-trail-a{width:90px;height:4px;transform:translateY(-50%) rotate(-2deg)}
-.portal-comet-trail-b{width:68px;height:2.5px;top:calc(50% - 5px);transform:translateY(-50%) rotate(4deg);opacity:.75}
-.portal-comet-trail-c{width:48px;height:2px;top:calc(50% + 5px);transform:translateY(-50%) rotate(-5deg);opacity:.55}
-.portal-comet-head{position:absolute;right:0;top:50%;width:10px;height:10px;transform:translateY(-50%);border-radius:50%;background:radial-gradient(circle,#fff 0%,#a5f3fc 40%,#22d3ee 70%,transparent);box-shadow:0 0 8px 2px #fff,0 0 16px 4px rgba(34,211,238,.9)}
-.portal-comet-particle{position:absolute;width:4px;height:4px;border-radius:50%;background:radial-gradient(circle,#fff,#a5f3fc 40%,transparent 70%);box-shadow:0 0 8px 2px rgba(34,211,238,.85)}
-.portal-comet-p1{right:30px;top:30%}.portal-comet-p2{right:46px;top:65%;width:3px;height:3px}.portal-comet-p3{right:60px;top:25%;width:3.5px;height:3.5px}
-@keyframes portal-comet-fly{0%,88%{opacity:0;transform:translate3d(-120px,0,0) rotate(-8deg)}90%{opacity:1}97%{opacity:.95;transform:translate3d(110vw,50px,0) rotate(-8deg)}100%{opacity:0;transform:translate3d(115vw,55px,0) rotate(-8deg)}}
-.portal-sidebar{background:rgba(245,243,255,.72)!important;backdrop-filter:blur(18px);border-right:1px solid rgba(196,181,253,.35);color:#1e1b4b;transition:background .85s,border-color .85s,color .85s}
-html.nexus-dark .portal-sidebar{background:rgba(12,8,28,.78)!important;border-right-color:rgba(63,63,70,.45);color:#f4f4f5}
-.portal-sidebar-header{border-bottom:1px solid rgba(196,181,253,.3)}
-html.nexus-dark .portal-sidebar-header{border-bottom-color:rgba(63,63,70,.5)}
-.portal-sidebar-title{color:#1e1b4b}html.nexus-dark .portal-sidebar-title{color:#fafafa}
-.portal-sidebar-sub{color:#7c3aed}html.nexus-dark .portal-sidebar-sub{color:#a1a1aa}
-.portal-sidebar-label{color:#8b5cf6}html.nexus-dark .portal-sidebar-label{color:#71717a}
-.portal-sidebar-footer{border-top:1px solid rgba(196,181,253,.3)}
-html.nexus-dark .portal-sidebar-footer{border-top-color:rgba(63,63,70,.5)}
-.portal-nav-item{color:#4c1d95}.portal-nav-item:hover{background:rgba(139,92,246,.12)}
-html.nexus-dark .portal-nav-item{color:#a1a1aa}html.nexus-dark .portal-nav-item:hover{background:rgba(255,255,255,.06);color:#e4e4e7}
-.portal-nav-active{background:rgba(124,58,237,.18)!important;color:#2e1065!important}
-html.nexus-dark .portal-nav-active{background:rgba(124,58,237,.28)!important;color:#fff!important}
-.app-cosmos>aside.portal-sidebar{background:rgba(245,243,255,.72)!important}
-html.nexus-dark .app-cosmos>aside.portal-sidebar{background:rgba(12,8,28,.78)!important}
-EOF
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/CustomerPortal.tsx src/portal-lounge.css
-          git status
-          git diff --cached --quiet || (git commit -m "fix(portal): restore CP + theme sidebar + cyan comets" && git push)
+      - run: echo disabled

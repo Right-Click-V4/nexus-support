@@ -1,20 +1,9 @@
-name: Fix light sidebar
+# Disabled
+name: Fix sidebar light
 on:
-  push:
-    paths:
-      - scripts/fix_sidebar_light.py
-      - .github/workflows/fix-sidebar-light.yml
+  workflow_dispatch:
 jobs:
-  fix:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - run: python3 scripts/fix_sidebar_light.py
-      - run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add src/index.css
-          git commit -m "fix: light mode sidebar white glass" || exit 0
-          git push
+      - run: echo disabled

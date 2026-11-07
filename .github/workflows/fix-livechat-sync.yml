@@ -1,34 +1,9 @@
-name: Fix livechat sync + presence + portal logo
+# Disabled
+name: Fix livechat sync
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/fix-livechat-sync.yml'
-      - 'scripts/patch_livechat_platform.py'
 jobs:
-  patch:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Patch
-        run: |
-          set -e
-          sed -i 's/ONLINE_WINDOW_MS = 45_000/ONLINE_WINDOW_MS = 90_000/g' src/lib/onlineAgents.ts || true
-          sed -i 's/const LIVE_MS = 45_000;/const LIVE_MS = 90_000;/g' src/lib/deskPresence.ts || true
-          sed -i 's/const TRACK_MIN_MS = 60_000;/const TRACK_MIN_MS = 25_000;/g' src/lib/deskPresence.ts || true
-          sed -i 's/__nexusTouchAt < 60_000/__nexusTouchAt < 20_000/g' src/context/TicketContext.tsx || true
-          python3 scripts/patch_livechat_platform.py
-          python3 -c "from pathlib import Path;p=Path('src/SystemAppCore.tsx');t=p.read_text();t2=t.replace('}, 90_000);','}, 30_000);',1);p.write_text(t2);print('sys',t!=t2)"
-      - name: Commit
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email github-actions[bot]@users.noreply.github.com
-          git add -A
-          git status
-          git commit -m "fix(livechat): presence + chat sync + admin poll" || exit 0
-          git push origin HEAD:main
+      - run: echo disabled

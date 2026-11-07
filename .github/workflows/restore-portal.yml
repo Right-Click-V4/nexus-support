@@ -1,56 +1,9 @@
-name: Restore portal layout
+# Disabled
+name: Restore portal
 on:
   workflow_dispatch:
 jobs:
-  restore:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-      - name: Restore CustomerPortal from pre-desert
-        run: |
-          git show 59ecaf8d57:src/components/CustomerPortal.tsx > src/components/CustomerPortal.tsx
-          if grep -q "portal-desert.css" src/index.css; then
-            sed -i "/@import '\.\/portal-desert.css';/d" src/index.css
-          fi
-          if ! grep -q "portal-glass-card" src/index.css; then
-            cat >> src/index.css << 'EOF'
-
-/* Portal cards */
-.portal-glass-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e4e4e7;
-  box-shadow: 0 4px 16px rgba(24, 24, 27, 0.05);
-}
-html.nexus-dark .portal-glass-card {
-  background: rgba(24, 24, 27, 0.85);
-  border-color: #3f3f46;
-}
-.portal-home-card {
-  background: #fff !important;
-  border-color: #e4e4e7 !important;
-}
-html.nexus-dark .portal-home-card {
-  background: rgba(24, 24, 27, 0.9) !important;
-  border-color: #3f3f46 !important;
-}
-.portal-home-hero {
-  background: #fff !important;
-  border: 1px solid #e4e4e7;
-}
-html.nexus-dark .portal-home-hero {
-  background: rgba(24, 24, 27, 0.9) !important;
-  border-color: #3f3f46;
-}
-EOF
-          fi
-          git config user.name "nexus-bot"
-          git config user.email "bot@nexus.ops"
-          git add src/components/CustomerPortal.tsx src/index.css
-          git status
-          git commit -m "Restore normal Customer Portal layout (remove desert bg + dino)" || echo "nothing to commit"
-          git push origin main
+      - run: echo disabled

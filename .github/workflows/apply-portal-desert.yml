@@ -1,26 +1,9 @@
-name: Apply portal desert bg
+# Disabled
+name: Apply portal desert
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - scripts/apply_portal_desert.py
-
-permissions:
-  contents: write
-
 jobs:
-  apply:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
-        with:
-          ref: main
-      - run: python3 scripts/apply_portal_desert.py
-      - name: Commit
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/CustomerPortal.tsx src/components/PortalHome.tsx src/components/PortalDesertBg.tsx src/index.css
-          if git diff --cached --quiet; then echo No changes; exit 0; fi
-          git commit -m "Customer portal: desert sky bg, glass cards, tighter tabs"
-          git push origin HEAD:main
+      - run: echo disabled

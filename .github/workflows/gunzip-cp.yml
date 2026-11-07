@@ -1,22 +1,9 @@
+# Disabled
 name: Gunzip CP
 on:
-  push:
-    paths:
-      - scripts/cpgz_b.txt
-      - scripts/gunzip_cp.py
-      - .github/workflows/gunzip-cp.yml
+  workflow_dispatch:
 jobs:
-  restore:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - run: python3 scripts/gunzip_cp.py
-      - run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add src/components/CustomerPortal.tsx
-          git status
-          git commit -m "fix: restore full CustomerPortal features" || exit 0
-          git push
+      - run: echo disabled

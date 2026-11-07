@@ -1,30 +1,9 @@
-name: Wire lounge CSS
+# Disabled
+name: Wire lounge
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'src/portal-lounge.css'
-      - '.github/workflows/wire-lounge.yml'
 jobs:
-  wire:
+  noop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          if ! grep -q "portal-lounge.css" src/index.css; then
-            if grep -q "portal-desert.css" src/index.css; then
-              sed -i "s|@import './portal-desert.css';|@import './portal-lounge.css';|" src/index.css
-            else
-              sed -i "/@tailwind utilities;/a @import './portal-lounge.css';" src/index.css
-            fi
-          else
-            sed -i "/portal-desert.css/d" src/index.css || true
-          fi
-          head -8 src/index.css
-          git config user.name "nexus-bot"
-          git config user.email "bot@nexus.ops"
-          git add src/index.css
-          git commit -m "Wire portal-lounge.css into index.css; drop desert import" || true
-          git push
+      - run: echo disabled

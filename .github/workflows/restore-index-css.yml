@@ -1,35 +1,9 @@
-name: Restore index.css
+# Disabled
+name: Restore index css
 on:
   workflow_dispatch:
-permissions:
-  contents: write
 jobs:
-  restore:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: main
-          fetch-depth: 0
-      - name: Restore index.css from commit before truncation
-        run: |
-          git show 3f387938d91fce95577d7392a0072e37ec6e4fc1:src/index.css > src/index.css
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/index.css')
-          t = p.read_text()
-          start = t.find('/* —— Customer portal desert night sky (light + dark) —— */')
-          if start > 0:
-              p.write_text(t[:start].rstrip() + '\n')
-              print('trimmed desert block')
-          else:
-              print('no desert block found, kept full file')
-          print('size', p.stat().st_size)
-          PY
-      - run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/index.css
-          git diff --cached --quiet && echo "No changes" && exit 0
-          git commit -m "Restore full index.css (remove only duplicate desert rules)"
-          git push origin HEAD:main
+      - run: echo disabled
