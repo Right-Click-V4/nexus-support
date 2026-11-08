@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wire Account panel + compact Help CTA + sidebar avatar into CustomerPortal. SAFE."""
+"""Wire Account panel + per-email avatar cache + sidebar into CustomerPortal. SAFE."""
 from pathlib import Path
 import re
 
@@ -16,7 +16,6 @@ if 'AccountProfilePanel' not in cp:
         "import PortalSpaceLoungeBg from './PortalSpaceLoungeBg';\nimport AccountProfilePanel from './AccountProfilePanel';",
     )
 
-# Prefer full destructure with updateEmail
 cp = cp.replace(
     'const { user, accountRole, signOut, requiresAuth } = useAuth();',
     'const { user, accountRole, signOut, requiresAuth, updateProfile, updatePassword, updateEmail } = useAuth();',
@@ -26,9 +25,24 @@ cp = cp.replace(
     'const { user, accountRole, signOut, requiresAuth, updateProfile, updatePassword, updateEmail } = useAuth();',
 )
 
-old_dn = """  const displayName =
+# --- Identity + per-email avatar (never shared localStorage key) ---
+old_dn_variants = [
+"""  const displayName =
     (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'Customer';
-  const initials = displayName.slice(0, 2).toUpperCase();"""
+  const initials = displayName.slice(0, 2).toUpperCase();""",
+"""  const legalName =
+    (user?.user_metadata?.full_name as string | undefined)?.trim() ||
+    (user?.user_metadata?.name as string | undefined)?.trim() ||
+    user?.email?.split('@')[0] ||
+    'Customer';
+  const nicknameMeta = (user?.user_metadata?.nickname as string | undefined)?.trim() || '';
+  const displayName = nicknameMeta ? `${legalName} (${nicknameMeta})` : legalName;
+  const initials = legalName.slice(0, 2).toUpperCase();
+  const avatarUrlMeta =
+    (user?.user_metadata?.avatar_url as string | undefined) ||
+    (typeof localStorage !== 'undefined' ? localStorage.getItem('nexus-portal-avatar') || '' : '');""",
+]
+
 new_dn = """  const legalName =
     (user?.user_metadata?.full_name as string | undefined)?.trim() ||
     (user?.user_metadata?.name as string | undefined)?.trim() ||
@@ -39,10 +53,37 @@ new_dn = """  const legalName =
   const initials = legalName.slice(0, 2).toUpperCase();
   const avatarUrlMeta =
     (user?.user_metadata?.avatar_url as string | undefined) ||
-    (typeof localStorage !== 'undefined' ? localStorage.getItem('nexus-portal-avatar') || '' : '');"""
-if old_dn in cp:
-    cp = cp.replace(old_dn, new_dn)
-    print('displayName ok')
+    (() => {
+      try {
+        const e = (user?.email || '').trim().toLowerCase();
+        if (!e) return '';
+        // Per-account key only — never the legacy shared "nexus-portal-avatar"
+        return localStorage.getItem(`nexus-portal-avatar:${e}`) || '';
+      } catch {
+        return '';
+      }
+    })();"""
+
+for old_dn in old_dn_variants:
+    if old_dn in cp:
+        cp = cp.replace(old_dn, new_dn)
+        print('displayName/avatar per-email ok')
+        break
+else:
+    if "localStorage.getItem('nexus-portal-avatar')" in cp and 'nexus-portal-avatar:${' not in cp.replace('`', "'"):
+        cp = cp.replace(
+            "(typeof localStorage !== 'undefined' ? localStorage.getItem('nexus-portal-avatar') || '' : '')",
+            """(() => {
+      try {
+        const e = (user?.email || '').trim().toLowerCase();
+        if (!e) return '';
+        return localStorage.getItem(`nexus-portal-avatar:${e}`) || '';
+      } catch {
+        return '';
+      }
+    })()""",
+        )
+        print('forced shared avatar key → per-email')
 
 if 'const [sidebarAvatar' not in cp and 'avatarUrlMeta' in cp:
     inject = """
@@ -51,22 +92,38 @@ if 'const [sidebarAvatar' not in cp and 'avatarUrlMeta' in cp:
     setSidebarAvatar(avatarUrlMeta || '');
   }, [avatarUrlMeta]);
   useEffect(() => {
+    // Drop legacy shared browser avatar so accounts never cross-contaminate
+    try { localStorage.removeItem('nexus-portal-avatar'); } catch { /* ignore */ }
     const onUpd = (e: Event) => {
-      const d = (e as CustomEvent).detail as { avatar_url?: string | null } | undefined;
-      if (d && d.avatar_url) setSidebarAvatar(d.avatar_url);
-      else if (typeof localStorage !== 'undefined') {
-        const local = localStorage.getItem('nexus-portal-avatar');
-        if (local) setSidebarAvatar(local);
+      const d = (e as CustomEvent).detail as { avatar_url?: string | null; email?: string } | undefined;
+      if (d && d.avatar_url) {
+        setSidebarAvatar(d.avatar_url);
+        return;
       }
+      try {
+        const em = (user?.email || d?.email || '').trim().toLowerCase();
+        if (!em) return;
+        const local = localStorage.getItem(`nexus-portal-avatar:${em}`);
+        if (local) setSidebarAvatar(local);
+      } catch { /* ignore */ }
     };
     window.addEventListener('nexus-profile-updated', onUpd);
     return () => window.removeEventListener('nexus-profile-updated', onUpd);
-  }, []);
+  }, [user?.email]);
 """
-    marker = "    (typeof localStorage !== 'undefined' ? localStorage.getItem('nexus-portal-avatar') || '' : '');"
-    if marker in cp:
-        cp = cp.replace(marker, marker + inject, 1)
-        print('sidebar avatar state ok')
+    markers = [
+        "        return localStorage.getItem(`nexus-portal-avatar:${e}`) || '';\n      } catch {\n        return '';\n      }\n    })();",
+        "    (typeof localStorage !== 'undefined' ? localStorage.getItem('nexus-portal-avatar') || '' : '');",
+    ]
+    injected = False
+    for marker in markers:
+        if marker in cp:
+            cp = cp.replace(marker, marker + inject, 1)
+            print('sidebar avatar state ok')
+            injected = True
+            break
+    if not injected:
+        print('sidebar inject marker not found')
 
 acc_pat = re.compile(r"\{view === 'account' && \([\s\S]*?\n            \)\}", re.M)
 acc_new = """{view === 'account' && (
@@ -90,7 +147,6 @@ if m:
     cp = cp[: m.start()] + acc_new + cp[m.end() :]
     print('account panel ok')
 elif "AccountProfilePanel" in cp and "updateEmail={updateEmail}" not in cp:
-    # already has panel but missing updateEmail prop
     cp = cp.replace(
         '                updatePassword={updatePassword}\n              />',
         '                updatePassword={updatePassword}\n                updateEmail={updateEmail}\n              />',
@@ -117,6 +173,13 @@ if old_side in cp:
     print('sidebar avatar UI ok')
 else:
     print('sidebar pattern not found / already patched')
+
+if "localStorage.getItem('nexus-portal-avatar')" in cp:
+    cp = cp.replace(
+        "localStorage.getItem('nexus-portal-avatar')",
+        "localStorage.getItem(`nexus-portal-avatar:${(user?.email || '').trim().toLowerCase()}`)",
+    )
+    print('replaced remaining shared getItem with per-email')
 
 old_cta = (
     '                <section className="portal-overview-glass rounded-2xl p-4 sm:p-5">\n'
@@ -151,3 +214,4 @@ if len(cp) < 90000:
 
 p.write_text(cp)
 print('CP wired OK', len(cp), 'AccountProfilePanel' in cp, 'sidebarAvatar' in cp, 'updateEmail' in cp)
+print('shared get remaining', cp.count("localStorage.getItem('nexus-portal-avatar')"))
