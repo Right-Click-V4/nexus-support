@@ -14,6 +14,44 @@ import {
   LogOut,
 } from 'lucide-react';
 
+const JOB_TITLE_OPTIONS = [
+  'Staff',
+  'Nurse',
+  'Doctor',
+  'HR',
+  'Utility',
+  'MedTech',
+  'RadTech',
+  'Cashier',
+  'Branch/Department Head',
+  'Midwife',
+  'Pharmacist',
+  'Others',
+] as const;
+
+function splitJobTitle(raw: string): { preset: string; other: string } {
+  const v = (raw || '').trim();
+  if (!v) return { preset: '', other: '' };
+  if ((JOB_TITLE_OPTIONS as readonly string[]).includes(v) && v !== 'Others') {
+    return { preset: v, other: '' };
+  }
+  // Stored as "Others: custom" or unknown free-text → treat as Others
+  if (v.startsWith('Others:')) {
+    return { preset: 'Others', other: v.slice(7).trim() };
+  }
+  if (v === 'Others') return { preset: 'Others', other: '' };
+  return { preset: 'Others', other: v };
+}
+
+function combineJobTitle(preset: string, other: string): string {
+  if (!preset) return '';
+  if (preset === 'Others') {
+    const o = other.trim();
+    return o ? o : 'Others';
+  }
+  return preset;
+}
+
 /** Resize image to max edge px as JPEG data-URL (keeps Supabase metadata small). */
 function compressAvatar(dataUrl: string, maxEdge = 128, quality = 0.82): Promise<string> {
   return new Promise((resolve) => {
@@ -103,7 +141,9 @@ function AccountProfilePanel({
 }: AccountProfilePanelProps) {
   const [username, setUsername] = useState(initialNick);
   const [phone, setPhone] = useState(initialPhone);
-  const [jobTitle, setJobTitle] = useState(initialJob);
+  const initialJobSplit = splitJobTitle(initialJob);
+  const [jobPreset, setJobPreset] = useState(initialJobSplit.preset);
+  const [jobOther, setJobOther] = useState(initialJobSplit.other);
   const [avatar, setAvatar] = useState(initialAvatar || readAvatarCache(email));
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -126,7 +166,9 @@ function AccountProfilePanel({
   useEffect(() => {
     setUsername(initialNick);
     setPhone(initialPhone);
-    setJobTitle(initialJob);
+    const split = splitJobTitle(initialJob);
+    setJobPreset(split.preset);
+    setJobOther(split.other);
     const next = initialAvatar || readAvatarCache(email);
     setAvatar(next);
     // Legacy shared key caused multiple accounts on one browser to show the same photo
@@ -176,7 +218,7 @@ function AccountProfilePanel({
       await updateProfile({
         nickname: username.trim() || '',
         phone: phone.trim() || '',
-        job_title: jobTitle.trim() || '',
+        job_title: combineJobTitle(jobPreset, jobOther),
         avatar_url: avatarToSave,
       });
       if (avatarToSave) writeAvatarCache(email, avatarToSave);
@@ -373,13 +415,32 @@ function AccountProfilePanel({
                   <Briefcase size={12} /> Job title
                 </span>
               </label>
-              <input
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-                placeholder="e.g. Branch cashier, Store manager"
-                maxLength={60}
-                className={field}
-              />
+              <select
+                value={jobPreset}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setJobPreset(v);
+                  if (v !== 'Others') setJobOther('');
+                }}
+                className={field + ' cursor-pointer'}
+              >
+                <option value="">Select job title</option>
+                {JOB_TITLE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              {jobPreset === 'Others' && (
+                <input
+                  value={jobOther}
+                  onChange={(e) => setJobOther(e.target.value)}
+                  placeholder="Type your job title"
+                  maxLength={60}
+                  className={field + ' mt-2.5'}
+                  autoFocus
+                />
+              )}
             </div>
           </div>
 
