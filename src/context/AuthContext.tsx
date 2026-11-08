@@ -382,7 +382,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = async (newPassword: string) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
     if (!newPassword || newPassword.length < 6) {
-      throw new Error('Password must be at least 6 characters');\n    }
+      throw new Error('Password must be at least 6 characters');
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw friendlyAuthError(error);
   };
