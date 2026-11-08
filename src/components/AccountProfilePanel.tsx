@@ -129,6 +129,8 @@ function AccountProfilePanel({
     setJobTitle(initialJob);
     const next = initialAvatar || readAvatarCache(email);
     setAvatar(next);
+    // Legacy shared key caused multiple accounts on one browser to show the same photo
+    try { localStorage.removeItem('nexus-portal-avatar'); } catch { /* ignore */ }
   }, [initialNick, initialPhone, initialJob, initialAvatar, email]);
 
   const field =
@@ -180,7 +182,15 @@ function AccountProfilePanel({
       if (avatarToSave) writeAvatarCache(email, avatarToSave);
       setMsg('Updated Profile');
       try {
-        window.dispatchEvent(new CustomEvent('nexus-profile-updated'));
+        window.dispatchEvent(
+          new CustomEvent('nexus-profile-updated', {
+            detail: {
+              avatar_url: avatarToSave,
+              email: (email || '').trim().toLowerCase(),
+              nickname: username.trim() || '',
+            },
+          }),
+        );
       } catch {
         /* ignore */
       }
@@ -251,7 +261,6 @@ function AccountProfilePanel({
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-4 pb-4">
-      {/* Hero */}
       <section className={`${card} overflow-hidden`}>
         <div className="relative px-5 py-6 sm:px-8 sm:py-7">
           <div
@@ -309,7 +318,6 @@ function AccountProfilePanel({
         </div>
       </section>
 
-      {/* Profile details */}
       <section className={`${card} p-5 sm:p-6`}>
         <div className="flex items-center gap-2.5 mb-5">
           <div className="w-9 h-9 rounded-xl bg-fuchsia-500/15 text-fuchsia-300 flex items-center justify-center">
@@ -397,7 +405,6 @@ function AccountProfilePanel({
         </form>
       </section>
 
-      {/* Email change */}
       <section className={`${card} p-5 sm:p-6`}>
         <div className="flex items-center gap-2.5 mb-4">
           <div className="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-300 flex items-center justify-center">
@@ -434,7 +441,6 @@ function AccountProfilePanel({
         </form>
       </section>
 
-      {/* Password */}
       <section className={`${card} p-5 sm:p-6`}>
         <div className="flex items-center gap-2.5 mb-4">
           <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-300 flex items-center justify-center">
@@ -502,7 +508,6 @@ function AccountProfilePanel({
         </form>
       </section>
 
-      {/* Session */}
       {requiresAuth && (
         <section className={`${card} p-5 sm:p-6`}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
