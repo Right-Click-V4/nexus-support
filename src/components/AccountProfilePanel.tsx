@@ -11,7 +11,6 @@ import {
   Mail,
   Shield,
   AtSign,
-  LogOut,
 } from 'lucide-react';
 
 const JOB_TITLE_OPTIONS = [
@@ -424,7 +423,9 @@ function AccountProfilePanel({
                 }}
                 className={field + ' cursor-pointer'}
               >
-                <option value="">Select job title</option>
+                <option value="" disabled hidden>
+                  Select job title
+                </option>
                 {JOB_TITLE_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -568,30 +569,6 @@ function AccountProfilePanel({
           </button>
         </form>
       </section>
-
-      {requiresAuth && (
-        <section className={`${card} p-5 sm:p-6`}>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-zinc-500/20 text-zinc-300 flex items-center justify-center">
-                <Shield size={16} />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-white">Session</h2>
-                <p className="text-[11px] text-zinc-400">Sign out on shared devices when you are done.</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold border border-white/15 bg-white/5 text-zinc-100 hover:bg-white/10 transition"
-            >
-              <LogOut size={15} />
-              Sign out
-            </button>
-          </div>
-        </section>
-      )}
     </div>
   );
 }
