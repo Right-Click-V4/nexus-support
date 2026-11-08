@@ -16,9 +16,14 @@ if 'AccountProfilePanel' not in cp:
         "import PortalSpaceLoungeBg from './PortalSpaceLoungeBg';\nimport AccountProfilePanel from './AccountProfilePanel';",
     )
 
+# Prefer full destructure with updateEmail
 cp = cp.replace(
     'const { user, accountRole, signOut, requiresAuth } = useAuth();',
+    'const { user, accountRole, signOut, requiresAuth, updateProfile, updatePassword, updateEmail } = useAuth();',
+)
+cp = cp.replace(
     'const { user, accountRole, signOut, requiresAuth, updateProfile, updatePassword } = useAuth();',
+    'const { user, accountRole, signOut, requiresAuth, updateProfile, updatePassword, updateEmail } = useAuth();',
 )
 
 old_dn = """  const displayName =
@@ -77,12 +82,20 @@ acc_new = """{view === 'account' && (
                 onSignOut={() => void signOut()}
                 updateProfile={updateProfile}
                 updatePassword={updatePassword}
+                updateEmail={updateEmail}
               />
             )}"""
 m = acc_pat.search(cp)
 if m:
     cp = cp[: m.start()] + acc_new + cp[m.end() :]
     print('account panel ok')
+elif "AccountProfilePanel" in cp and "updateEmail={updateEmail}" not in cp:
+    # already has panel but missing updateEmail prop
+    cp = cp.replace(
+        '                updatePassword={updatePassword}\n              />',
+        '                updatePassword={updatePassword}\n                updateEmail={updateEmail}\n              />',
+    )
+    print('added updateEmail prop')
 
 old_side = (
     '            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 '
@@ -137,4 +150,4 @@ if len(cp) < 90000:
     raise SystemExit(1)
 
 p.write_text(cp)
-print('CP wired OK', len(cp), 'AccountProfilePanel' in cp, 'sidebarAvatar' in cp)
+print('CP wired OK', len(cp), 'AccountProfilePanel' in cp, 'sidebarAvatar' in cp, 'updateEmail' in cp)
