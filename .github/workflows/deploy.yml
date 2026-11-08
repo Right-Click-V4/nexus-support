@@ -77,6 +77,7 @@ jobs:
           grep -q "PortalLiveChat\|parseChatAttachment\|createChat" src/components/CustomerPortal.tsx || grep -q "export default" src/components/CustomerPortal.tsx
           test -f src/SystemApp.tsx
           test $(wc -c < src/components/PortalLiveChatView.tsx) -gt 5000
+          python3 scripts/wire_account_panel.py || true
           echo "Portal files ready"
 
       - name: Setup Node
