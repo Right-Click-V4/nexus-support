@@ -73,12 +73,12 @@ jobs:
           if [ -f scripts/patch_login_polish_v4.py ]; then python3 scripts/patch_login_polish_v4.py || true; fi
           if [ -f scripts/patch_sat_modes_login.py ]; then python3 scripts/patch_sat_modes_login.py || true; fi
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
-          if [ -f scripts/patch_dry_run_chat.py ]; then python3 scripts/patch_dry_run_chat.py || true; fi
           python3 scripts/patch_portal_logo.py || true
           grep -q "PortalLiveChat\|parseChatAttachment\|createChat" src/components/CustomerPortal.tsx || grep -q "export default" src/components/CustomerPortal.tsx
           test -f src/SystemApp.tsx
           test $(wc -c < src/components/PortalLiveChatView.tsx) -gt 5000
           python3 scripts/wire_account_panel.py || true
+          python3 scripts/patch_community_light_glass.py || true
           echo "Portal files ready"
 
       - name: Setup Node
