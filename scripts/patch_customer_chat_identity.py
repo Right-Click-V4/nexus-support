@@ -12,13 +12,31 @@ if 'CUSTOMER_CHAT_IDENTITY_V1' in s:
     print('already applied')
     raise SystemExit(0)
 
-if 'findTicket' not in s:
-    s = s.replace(
+def bind_ticket_api(src: str) -> str:
+    """Make sure tickets + findTicket are real locals before the chat header uses them."""
+    if re.search(r'const\s*\{[^}]*\bfindTicket\b[^}]*\}\s*=\s*useTickets\(\)', src):
+        print('findTicket already bound')
+        return src
+    patterns = [
+        'const { agents, tickets } = useTickets();',
+        'const { tickets, agents } = useTickets();',
         'const { agents } = useTickets();',
-        'const { agents, findTicket, tickets } = useTickets();',
-        1,
-    )
-    print('findTicket hook')
+        'const { tickets } = useTickets();',
+    ]
+    for p in patterns:
+        if p in src:
+            inner = p[p.index('{') + 1:p.index('}')]
+            names = [x.strip() for x in inner.split(',') if x.strip()]
+            for extra in ('tickets', 'findTicket'):
+                if extra not in names:
+                    names.append(extra)
+            repl = 'const { ' + ', '.join(names) + ' } = useTickets();'
+            print('bound', repl)
+            return src.replace(p, repl, 1)
+    print('HOOK MISS')
+    return src
+
+s = bind_ticket_api(s)
 
 anchor = '''  const conversation = useMemo(
     () => (chatId ? conversations.find((c) => c.id === chatId) : null),
@@ -48,18 +66,16 @@ helper = '''  const conversation = useMemo(
 
   const linkedTicket = useMemo(() => {
     if (!linkedTicketId) return null;
-    try {
-      if (typeof findTicket === 'function') {
-        const t = findTicket(linkedTicketId);
-        if (t) return t;
-      }
-    } catch {}
-    const list = tickets || [];
+    const list = Array.isArray(tickets) ? tickets : [];
     return (
-      list.find((t: any) => String(t.id) === linkedTicketId || String(t.number) === linkedTicketId || String(t.code) === linkedTicketId) ||
-      null
+      list.find((t) => {
+        const id = String(t.id || '');
+        const extra = t as { ticket_number?: string; number?: string; code?: string; subject?: string; title?: string };
+        const num = String(extra.ticket_number || extra.number || extra.code || '');
+        return id === linkedTicketId || num === linkedTicketId;
+      }) || null
     );
-  }, [linkedTicketId, findTicket, tickets]);
+  }, [linkedTicketId, tickets]);
 
   const customerName =
     conversation?.customer_name ||
@@ -96,13 +112,7 @@ if anchor in s:
 else:
     print('anchor miss')
 
-m = re.search(
-    r'(<div className="px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 flex items-center justify-between gap-3">.*?</div>\\s*)(\{isOnHold &&)',
-    s,
-    re.S,
-)
-if m:
-    new_header = '''<div className="px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 space-y-3">
+new_header = '''<div className="px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 min-w-0">
               <MessageCircle size={16} className="text-violet-600 dark:text-violet-400 shrink-0" />
@@ -144,7 +154,7 @@ if m:
               <div className="font-semibold tracking-wide uppercase text-[10px] text-amber-700 dark:text-amber-300 mb-0.5">Ticket in progress</div>
               <div className="font-medium">
                 {linkedTicketId}
-                {linkedTicket?.subject ? ` · ${linkedTicket.subject}` : ''}
+                {linkedTicket?.title ? ` · ${linkedTicket.title}` : ''}
               </div>
               <div className="text-[11px] opacity-80 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
                 {linkedTicket?.status ? <span>Status: {String(linkedTicket.status)}</span> : null}
@@ -153,13 +163,30 @@ if m:
               </div>
             </div>
           )}
-        </div>
+        </div>'''
 
-        {isOnHold &&'''
-    s = s[: m.start(1)] + new_header + s[m.start(2) :]
+m = re.search(
+    r'(<div className="px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 flex items-center justify-between gap-3">.*?</div>\s*)(\{isOnHold &&)',
+    s,
+    re.S,
+)
+if m and s[m.start(1):m.end(1)].count('<div') == s[m.start(1):m.end(1)].count('</div>'):
+    s = s[: m.start(1)] + new_header + '\n\n        ' + s[m.start(2) :]
     print('header replaced')
 else:
-    print('header regex miss')
+    old_header = '''        <div className="px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <MessageCircle size={16} className="text-violet-600 dark:text-violet-400" /> Live Chat
+            <span className="text-[11px] font-normal text-zinc-500">
+              {conversation ? `Connected · ${conversation.id.slice(0, 8)}` : ''}
+            </span>
+          </div>
+        </div>'''
+    if old_header in s:
+        s = s.replace(old_header, new_header, 1)
+        print('header replaced via exact block')
+    else:
+        print('header regex miss')
 
 msg_start = s.find('{messages.map((m) => {')
 if msg_start != -1 and 'whoName' not in s:
