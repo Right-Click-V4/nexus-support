@@ -83,6 +83,7 @@ jobs:
           python3 scripts/wire_account_panel.py || true
           if [ -f scripts/patch_community_light_glass.py ]; then python3 scripts/patch_community_light_glass.py || true; fi
           if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
+          if [ -f scripts/patch_signout_confirm.py ]; then python3 scripts/patch_signout_confirm.py || true; fi
           echo "Portal files ready"
 
       - name: Setup Node
