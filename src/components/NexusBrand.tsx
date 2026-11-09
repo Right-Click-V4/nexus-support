@@ -31,11 +31,11 @@ function LetterX({ size, color }: { size: number; color: string }) {
       aria-hidden
       style={{
         display: 'inline-block',
-        // Push down so star center sits on text baseline like a normal capital X
-        verticalAlign: '-0.18em',
+        // Optical center with capital letters (slight lift, not drop)
+        verticalAlign: 'middle',
         position: 'relative',
-        top: '0.14em',
-        margin: '0 -0.04em',
+        top: '-0.02em',
+        margin: '0 -0.02em',
       }}
     >
       <path d="M6 6 L26 26 M26 6 L6 26" stroke={color} strokeWidth="5.5" strokeLinecap="round" />
