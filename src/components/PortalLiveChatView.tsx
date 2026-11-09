@@ -1,4 +1,5 @@
 /* portal-live-chat-v1 */
+/* fix-customer-end-chat-v1 */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   MessageCircle, Paperclip, Send, X, Sparkles, Circle, Users,
@@ -26,7 +27,7 @@ interface Props {
 export default function PortalLiveChatView({ onBack }: Props) {
   const { user } = useAuth();
   const { agents } = useTickets();
-  const { conversations, createChat, sendChatMessage, refreshPlatform } = usePlatform();
+  const { conversations, createChat, sendChatMessage, setChatStatus, refreshPlatform } = usePlatform();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,6 +36,7 @@ export default function PortalLiveChatView({ onBack }: Props) {
   const [chatId, setChatId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [error, setError] = useState('');
   const [fileError, setFileError] = useState('');
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -50,6 +52,18 @@ export default function PortalLiveChatView({ onBack }: Props) {
   useEffect(() => {
     void refreshPlatform();
   }, [refreshPlatform]);
+
+  // Resume an existing open conversation for this customer (prevents stuck "ghost" chats)
+  useEffect(() => {
+    if (chatId || !user?.email) return;
+    const customerEmail = user.email.toLowerCase();
+    const open = conversations.find((c) => {
+      const s = (c.status || '').toLowerCase();
+      const emailMatch = (c.customer_email || '').toLowerCase() === customerEmail;
+      return emailMatch && s !== 'archived' && s !== 'ended';
+    });
+    if (open) setChatId(open.id);
+  }, [conversations, user?.email, chatId]);
 
   const conversation = useMemo(
     () => (chatId ? conversations.find((c) => c.id === chatId) : null),
@@ -102,6 +116,23 @@ export default function PortalLiveChatView({ onBack }: Props) {
       setError(e instanceof Error ? e.message : 'Could not start chat');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const endChat = async () => {
+    if (!chatId || ending) return;
+    setEnding(true);
+    setError('');
+    try {
+      // Critical: mark conversation ended/archived in Supabase so customer can start a fresh one
+      await setChatStatus(chatId, 'ended');
+    } catch (e) {
+      console.error('Failed to end chat', e);
+      // Still clear local state so the customer is not stuck in the UI
+    } finally {
+      setChatId(null);
+      setDraft('');
+      setEnding(false);
     }
   };
 
@@ -256,13 +287,11 @@ export default function PortalLiveChatView({ onBack }: Props) {
           </div>
           <button
             type="button"
-            onClick={() => {
-              setChatId(null);
-              setDraft('');
-            }}
-            className="text-xs text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+            disabled={ending}
+            onClick={() => void endChat()}
+            className="text-xs text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 disabled:opacity-50"
           >
-            End / new chat
+            {ending ? 'Ending…' : 'End / new chat'}
           </button>
         </div>
 
