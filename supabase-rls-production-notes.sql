@@ -1,0 +1,10 @@
+-- OPTIONAL for public launch (NOT required for internal dry run).
+-- Current app policies are permissive (using (true)) so staff/customer
+-- flows work without complex auth claims.
+--
+-- Before public production, replace open policies with role-scoped ones, e.g.:
+--   - customers only SELECT/UPDATE their own tickets & chat by email/user_id
+--   - agents full access on desk tables
+--   - anon denied on sensitive tables
+--
+-- Keep this file as a reminder; do not run until auth roles are finalized.
