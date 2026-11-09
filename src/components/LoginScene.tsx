@@ -7,17 +7,61 @@ export { NexusLogoMark, NexusWordmark };
 function useFallingStars(count: number) {
   return useMemo(
     () =>
-      Array.from({ length: count }, (_, i) => ({
-        id: i,
-        left: `${(i * 37 + 7) % 100}%`,
-        top: `${(i * 53 + 11) % 100}%`,
-        size: i % 7 === 0 ? 2.4 : i % 3 === 0 ? 1.6 : 1,
-        delay: -((i * 0.47) % 18),
-        duration: 14 + (i % 9) * 2.2,
-        twinkle: 2.4 + (i % 5) * 0.7,
-        color: i % 5 === 0 ? '#f9a8d4' : i % 4 === 0 ? '#67e8f9' : i % 3 === 0 ? '#ffffff' : '#c4b5fd',
-        opacity: 0.25 + (i % 5) * 0.12,
-      })),
+      Array.from({ length: count }, (_, i) => {
+        // 4 depth layers: far dust, mid haze, near spark, bright foreground
+        const layer = i % 4;
+        const size =
+          layer === 0
+            ? 0.7 + (i % 3) * 0.2
+            : layer === 1
+              ? 1.1 + (i % 4) * 0.25
+              : layer === 2
+                ? 1.6 + (i % 3) * 0.35
+                : 2.2 + (i % 5) * 0.45;
+        const duration =
+          layer === 0
+            ? 22 + (i % 9) * 2.4
+            : layer === 1
+              ? 16 + (i % 8) * 1.8
+              : layer === 2
+                ? 12 + (i % 7) * 1.5
+                : 9 + (i % 6) * 1.2;
+        const color =
+          layer === 0
+            ? i % 2 === 0
+              ? '#a78bfa'
+              : '#c4b5fd'
+            : layer === 1
+              ? i % 3 === 0
+                ? '#67e8f9'
+                : '#ddd6fe'
+              : layer === 2
+                ? i % 4 === 0
+                  ? '#f9a8d4'
+                  : '#e9d5ff'
+                : i % 5 === 0
+                  ? '#ffffff'
+                  : i % 3 === 0
+                    ? '#f0abfc'
+                    : '#a5f3fc';
+        return {
+          id: i,
+          left: `${(i * 37 + 7 + layer * 11) % 100}%`,
+          top: `${(i * 53 + 11 + layer * 17) % 100}%`,
+          size,
+          delay: -((i * 0.37 + layer * 1.1) % 22),
+          duration,
+          color,
+          opacity:
+            layer === 0
+              ? 0.18 + (i % 4) * 0.04
+              : layer === 1
+                ? 0.28 + (i % 4) * 0.05
+                : layer === 2
+                  ? 0.4 + (i % 3) * 0.08
+                  : 0.55 + (i % 4) * 0.1,
+        };
+      }),
     [count],
   );
 }
@@ -207,8 +251,6 @@ function LogoPilotStage() {
       lastTick = now;
 
       const craft = craftRef.current;
-      // HERO_ESCORT_V2
-      // HERO_ESCORT_SPARSE — only occasionally follow a chatty craft
       if (
         mode !== 'portal' &&
         mode !== 'curious' &&
@@ -365,7 +407,7 @@ function LogoPilotStage() {
 }
 
 export function CosmicFallBackground() {
-  const stars = useFallingStars(48);
+  const stars = useFallingStars(180);
   return (
     <div className="login-cosmos absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       <div className="login-cosmos-sky absolute inset-0" />
