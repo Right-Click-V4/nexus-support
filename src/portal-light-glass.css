@@ -1,68 +1,57 @@
-/* LIGHT-GLASS-UNIFY-V1 — Community / Live Chat / Account match Overview glass in light mode */
+/* LIGHT-GLASS-UNIFY-V2 — match Overview frosted cards */
 
 html.nexus-light .portal-overview-glass {
-  background: rgba(255, 255, 255, 0.55) !important;
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08) !important;
-  backdrop-filter: blur(14px) saturate(1.1) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.1) !important;
+  backdrop-filter: blur(16px) saturate(1.12) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.12) !important;
 }
 
-/* Community shell + side rails */
-html.nexus-light .portal-community-shell,
+/* Community full shell + rails */
+html.nexus-light .portal-community-shell {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08) !important;
+}
 html.nexus-light .portal-community-rail {
-  background: rgba(255, 255, 255, 0.48) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  backdrop-filter: blur(14px) saturate(1.1) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.1) !important;
+  background: rgba(255, 255, 255, 0.42) !important;
   color: #0f172a !important;
 }
-html.nexus-light .portal-community-shell .text-zinc-100,
-html.nexus-light .portal-community-shell .text-zinc-200,
-html.nexus-light .portal-community-shell .text-zinc-300,
-html.nexus-light .portal-community-rail .text-zinc-100,
-html.nexus-light .portal-community-rail .text-zinc-200,
-html.nexus-light .portal-community-rail .text-zinc-300 {
-  color: #0f172a !important;
+html.nexus-light .portal-community-shell .text-violet-400 {
+  color: #6d28d9 !important;
 }
-html.nexus-light .portal-community-shell .text-zinc-400,
-html.nexus-light .portal-community-shell .text-zinc-500,
-html.nexus-light .portal-community-rail .text-zinc-400,
-html.nexus-light .portal-community-rail .text-zinc-500 {
-  color: #475569 !important;
+html.nexus-light .portal-community-shell .text-zinc-400 {
+  color: #64748b !important;
 }
 
-/* Live Chat pre-chat cards (dark zinc glass → light overview glass) */
-html.nexus-light .portal-shell main .bg-zinc-950\/60,
-html.nexus-light .portal-shell main .bg-zinc-950\/70,
-html.nexus-light .portal-shell main .bg-zinc-950\/50 {
-  background: rgba(255, 255, 255, 0.55) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  color: #0f172a !important;
-  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08) !important;
-  backdrop-filter: blur(14px) saturate(1.1) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.1) !important;
+/* Live Chat cards */
+html.nexus-light .portal-shell main .portal-overview-glass {
+  background: rgba(255, 255, 255, 0.62) !important;
 }
-html.nexus-light .portal-shell main .bg-zinc-950\/60 .text-zinc-100,
-html.nexus-light .portal-shell main .bg-zinc-950\/60 .text-white,
-html.nexus-light .portal-shell main .bg-zinc-950\/70 .text-zinc-100,
-html.nexus-light .portal-shell main .bg-zinc-950\/70 .text-white,
+html.nexus-light .portal-shell main .bg-zinc-950\/40,
+html.nexus-light .portal-shell main .bg-zinc-950\/50,
+html.nexus-light .portal-shell main .bg-zinc-950\/60,
+html.nexus-light .portal-shell main .bg-zinc-950\/70 {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  color: #0f172a !important;
+}
+html.nexus-light .portal-shell main .bg-zinc-950\/40 h1,
+html.nexus-light .portal-shell main .bg-zinc-950\/40 h2,
+html.nexus-light .portal-shell main .bg-zinc-950\/40 .text-white,
+html.nexus-light .portal-shell main .bg-zinc-950\/40 .text-zinc-100,
 html.nexus-light .portal-shell main .bg-zinc-950\/60 h1,
 html.nexus-light .portal-shell main .bg-zinc-950\/60 h2,
-html.nexus-light .portal-shell main .bg-zinc-950\/70 h1,
-html.nexus-light .portal-shell main .bg-zinc-950\/70 h2 {
+html.nexus-light .portal-shell main .bg-zinc-950\/60 .text-white,
+html.nexus-light .portal-shell main .bg-zinc-950\/60 .text-zinc-100 {
   color: #0f172a !important;
 }
+html.nexus-light .portal-shell main .bg-zinc-950\/40 .text-zinc-400,
+html.nexus-light .portal-shell main .bg-zinc-950\/40 .text-zinc-500,
+html.nexus-light .portal-shell main .bg-zinc-950\/40 label,
 html.nexus-light .portal-shell main .bg-zinc-950\/60 .text-zinc-400,
 html.nexus-light .portal-shell main .bg-zinc-950\/60 .text-zinc-500,
-html.nexus-light .portal-shell main .bg-zinc-950\/70 .text-zinc-400,
-html.nexus-light .portal-shell main .bg-zinc-950\/70 .text-zinc-500,
-html.nexus-light .portal-shell main .bg-zinc-950\/60 label,
-html.nexus-light .portal-shell main .bg-zinc-950\/70 label {
+html.nexus-light .portal-shell main .bg-zinc-950\/60 label {
   color: #475569 !important;
-}
-
-/* Account profile already uses portal-overview-glass; ensure readable labels */
-html.nexus-light .portal-shell main .portal-overview-glass label {
-  color: #1e293b !important;
 }
