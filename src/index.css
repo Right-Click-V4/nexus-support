@@ -4,6 +4,8 @@
 @import './theme-modes.css';
 @import './theme-legacy-a.css';
 @import './theme-legacy-b.css';
+@import './portal-lounge.css';
+@import './portal-light-glass.css';
 
 @tailwind base;
 @tailwind components;
