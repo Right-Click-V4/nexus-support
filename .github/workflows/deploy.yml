@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -18,47 +19,55 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
         with:
           fetch-depth: 0
 
-      - name: Patch sources
+      - name: Restore + patch portal
         run: |
           set +e
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-          echo "CP=$CP_SZ"
-          if [ "$CP_SZ" -lt 50000 ]; then
-            for REF in c3edde907e5e5be48439b7fea0df6dbe3dca6611 HEAD~50 HEAD~100; do
-              git show "$REF:src/components/CustomerPortal.tsx" > /tmp/cp_try.tsx 2>/dev/null
-              SZ=$(wc -c < /tmp/cp_try.tsx 2>/dev/null || echo 0)
-              if [ "$SZ" -gt 50000 ]; then
-                cp /tmp/cp_try.tsx src/components/CustomerPortal.tsx
-                echo "Restored CP $REF $SZ"
-                break
-              fi
-            done
+          echo "CustomerPortal bytes=$CP_SZ"
+          if [ "$CP_SZ" -lt 50000 ] || ! grep -q "PortalLiveChat\|Live Chat\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
+            GOOD=c3edde907e5e5be48439b7fea0df6dbe3dca6611
+            echo "Restoring CustomerPortal from $GOOD (was $CP_SZ bytes)"
+            git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx 2>/dev/null || true
           fi
-          if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py; fi
-          if [ -f scripts/patch_livechat_persist.py ]; then python3 scripts/patch_livechat_persist.py; fi
-          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py; fi
-          grep -q CHAT_ID_KEY src/components/PortalLiveChatView.tsx && echo OK_LIVECHAT || echo WARN_LIVECHAT
-          grep -q appConfirm src/components/CustomersPage.tsx && echo OK_DIALOGS || echo WARN_DIALOGS
+          if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
+          if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py || true; fi
+          if [ -f scripts/patch_livechat_persist.py ]; then python3 scripts/patch_livechat_persist.py || true; fi
+          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
+          if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
+          if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
+          if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
+          if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
+          if [ -f scripts/patch_signout_confirm.py ]; then python3 scripts/patch_signout_confirm.py || true; fi
+          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
+          CP_FINAL=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
+          echo "CustomerPortal final bytes=$CP_FINAL"
+          grep -q "CHAT_ID_KEY" src/components/PortalLiveChatView.tsx && echo "OK_LIVECHAT" || echo "WARN_LIVECHAT"
+          grep -q "appConfirm" src/components/CustomersPage.tsx && echo "OK_DIALOGS" || echo "WARN_DIALOGS"
+          grep -q "useState" src/components/Sidebar.tsx || echo "WARN_SIDEBAR"
           set -e
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '20'
-          cache: npm
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - run: npm run build
+      - name: Build
+        run: npm run build
         env:
           GITHUB_ACTIONS: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - uses: peaceiris/actions-gh-pages@v4
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
