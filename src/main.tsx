@@ -8,6 +8,17 @@ import { installPollThrottle } from './lib/pollThrottle'
 
 // Must run before any React tree schedules setInterval polls
 installPollThrottle()
+
+// EARLY_404_UNLOCK — clear sticky #404 from older ErrorBoundary builds
+try {
+  const h = (window.location.hash || '').replace(/^#\/?/, '').toLowerCase()
+  if (h === '404' || h === 'notfound') {
+    localStorage.setItem('nexus-site-404-on', '0')
+    localStorage.removeItem('nexus-site-404-on')
+    window.location.hash = ''
+  }
+} catch { /* ignore */ }
+
 applyUiPrefs()
 
 /** Runtime theme override — always wins over Tailwind utility order in the built CSS. */
