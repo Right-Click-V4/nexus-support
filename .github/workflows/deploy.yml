@@ -35,33 +35,23 @@ jobs:
             git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx 2>/dev/null || true
           fi
           UA_SZ=$(wc -c < src/components/UsersAdminPage.tsx 2>/dev/null || echo 0)
-          echo "UsersAdminPage bytes=$UA_SZ"
           if [ "$UA_SZ" -lt 5000 ]; then
-            echo "Restoring UsersAdminPage (was $UA_SZ)"
             git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/UsersAdminPage.tsx > src/components/UsersAdminPage.tsx 2>/dev/null || true
           fi
           APP_SZ=$(wc -c < src/components/AccountProfilePanel.tsx 2>/dev/null || echo 0)
-          echo "AccountProfilePanel bytes=$APP_SZ"
           if [ "$APP_SZ" -lt 5000 ] || ! grep -q "saveProfile\|updateProfile" src/components/AccountProfilePanel.tsx 2>/dev/null; then
-            APP_GOOD=5c66d77e570a692458f687b232763a609ae2e435
-            echo "Restoring AccountProfilePanel from $APP_GOOD (was $APP_SZ bytes)"
-            git show "$APP_GOOD:src/components/AccountProfilePanel.tsx" > src/components/AccountProfilePanel.tsx 2>/dev/null || true
+            git show 5c66d77e570a692458f687b232763a609ae2e435:src/components/AccountProfilePanel.tsx > src/components/AccountProfilePanel.tsx 2>/dev/null || true
           fi
           LS_SZ=$(wc -c < src/components/LoginScene.tsx 2>/dev/null || echo 0)
-          echo "LoginScene bytes=$LS_SZ"
-          if [ "$LS_SZ" -lt 18000 ] || ! grep -q "login-trail-spark\|LogoPilotStage" src/components/LoginScene.tsx 2>/dev/null; then
-            SCENE_GOOD=3e5d6e35245ff6aef5e0f49e7c06ee7e24183f61
-            echo "Restoring LoginScene from $SCENE_GOOD (was $LS_SZ bytes)"
-            git show "$SCENE_GOOD:src/components/LoginScene.tsx" > src/components/LoginScene.tsx 2>/dev/null || true
+          if [ "$LS_SZ" -lt 18000 ] || ! grep -q "login-trail-spark\|LogoHeroStage" src/components/LoginScene.tsx 2>/dev/null; then
+            git show 3e5d6e35245ff6aef5e0f49e7c06ee7e24183f61:src/components/LoginScene.tsx > src/components/LoginScene.tsx 2>/dev/null || true
           fi
           LF_SZ=$(wc -c < src/components/LoginFlybys.tsx 2>/dev/null || echo 0)
           if [ "$LF_SZ" -lt 5000 ] || ! grep -q "SpaceFlybys" src/components/LoginFlybys.tsx 2>/dev/null; then
             git show 3e5d6e35245ff6aef5e0f49e7c06ee7e24183f61:src/components/LoginFlybys.tsx > src/components/LoginFlybys.tsx 2>/dev/null || true
           fi
           AC_SZ=$(wc -c < src/context/AuthContext.tsx 2>/dev/null || echo 0)
-          echo "AuthContext bytes=$AC_SZ"
           if [ "$AC_SZ" -lt 5000 ] || ! grep -q "updateProfile" src/context/AuthContext.tsx 2>/dev/null; then
-            echo "Restoring AuthContext (was $AC_SZ)"
             git show 8d96841be7ce561fcd2ccf6604cf766ba59db8e0:src/context/AuthContext.tsx > src/context/AuthContext.tsx 2>/dev/null || true
           fi
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
@@ -82,17 +72,10 @@ jobs:
           if [ -f scripts/patch_hold_preserve.py ]; then python3 scripts/patch_hold_preserve.py || true; fi
           if [ -f scripts/patch_hold_nuclear.py ]; then python3 scripts/patch_hold_nuclear.py || true; fi
           if [ -f scripts/patch_portal_chat_ui.py ]; then python3 scripts/patch_portal_chat_ui.py || true; fi
+          if [ -f scripts/patch_claim_chat.py ]; then python3 scripts/patch_claim_chat.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
-          CP_FINAL=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-          LS_FINAL=$(wc -c < src/components/LoginScene.tsx 2>/dev/null || echo 0)
-          APP_FINAL=$(wc -c < src/components/AccountProfilePanel.tsx 2>/dev/null || echo 0)
-          AC_FINAL=$(wc -c < src/context/AuthContext.tsx 2>/dev/null || echo 0)
-          UA_FINAL=$(wc -c < src/components/UsersAdminPage.tsx 2>/dev/null || echo 0)
-          echo "CP=$CP_FINAL LS=$LS_FINAL APP=$APP_FINAL AC=$AC_FINAL UA=$UA_FINAL"
-          grep -q "SYNC_CUSTOMER_BRANCH" src/context/AuthContext.tsx && echo "OK_BRANCH_SYNC" || echo "WARN_BRANCH_SYNC"
-          grep -q "export default" src/components/UsersAdminPage.tsx && echo "OK_USERS" || echo "WARN_USERS"
+          grep -q "claimChat" src/context/PlatformContext.tsx && echo "OK_CLAIM" || echo "WARN_CLAIM"
           grep -q "_held" src/context/PlatformContext.tsx && echo "OK_HOLD_NUCLEAR" || echo "WARN_HOLD_NUCLEAR"
-          grep -q "agentPresent\|max-w-6xl" src/components/PortalLiveChatView.tsx && echo "OK_CHAT_UI" || echo "WARN_CHAT_UI"
           set -e
 
       - name: Setup Node
