@@ -133,24 +133,24 @@ export default function PortalLiveChatView({ onBack }: Props) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-zinc-950/40 p-5 space-y-4">
+        <div className="rounded-2xl portal-overview-glass p-5 space-y-4">
           {error && <p className="text-sm text-rose-400">{error}</p>}
           <div>
-            <label className="text-xs font-medium text-zinc-400">Your name</label>
+            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Your name</label>
             <input className={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
             <p className="text-[11px] text-zinc-500 mt-1">Locked to your registered account name.</p>
           </div>
           <div>
-            <label className="text-xs font-medium text-zinc-400">Email</label>
+            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Email</label>
             <input className={field} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
             <p className="text-[11px] text-zinc-500 mt-1">Locked to your registered account email.</p>
           </div>
           <div>
-            <label className="text-xs font-medium text-zinc-400">Ticket number</label>
+            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Ticket number</label>
             <input className={field} value={ticketId} onChange={(e) => setTicketId(e.target.value)} placeholder="Optional" />
           </div>
           <div>
-            <label className="text-xs font-medium text-zinc-400">Branch</label>
+            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Branch</label>
             <input className={field} value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="Optional" />
           </div>
           <button
@@ -162,38 +162,38 @@ export default function PortalLiveChatView({ onBack }: Props) {
             {busy ? 'Connecting…' : 'Start live chat'}
           </button>
           {!hasAgentOnline && (
-            <p className="text-xs text-amber-400 text-center">
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
               No agents appear online right now. You can still start a chat — we will respond when available.
             </p>
           )}
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-zinc-950/30 p-4">
+          <div className="rounded-2xl portal-overview-glass p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={16} className="text-violet-400" />
-              <h2 className="text-sm font-semibold text-zinc-100">Before you start</h2>
+              <Sparkles size={16} className="text-violet-600 dark:text-violet-400" />
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Before you start</h2>
             </div>
-            <ul className="text-xs text-zinc-400 space-y-1.5 list-disc pl-4">
+            <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1.5 list-disc pl-4">
               <li>Have your ticket ID ready if this is about an existing request.</li>
               <li>Describe the issue in one short message first.</li>
               <li>You can attach screenshots after the chat starts.</li>
             </ul>
             <div className="flex flex-wrap gap-1.5 mt-3">
-              <span className="text-[11px] px-2 py-1 rounded-full border border-white/15 text-zinc-300">
+              <span className="text-[11px] px-2 py-1 rounded-full border border-zinc-300/60 dark:border-white/15 text-zinc-600 dark:text-zinc-300">
                 Avg reply under 5 min
               </span>
-              <span className="text-[11px] px-2 py-1 rounded-full border border-white/15 text-zinc-300 flex items-center gap-1">
+              <span className="text-[11px] px-2 py-1 rounded-full border border-zinc-300/60 dark:border-white/15 text-zinc-600 dark:text-zinc-300 flex items-center gap-1">
                 <Users size={10} /> {onlineAgents.length} agent{onlineAgents.length === 1 ? '' : 's'} online
               </span>
             </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-zinc-950/30 p-4">
+          <div className="rounded-2xl portal-overview-glass p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Circle size={10} className={hasAgentOnline ? 'text-emerald-400 fill-emerald-400' : 'text-zinc-500'} />
-              <h2 className="text-sm font-semibold text-zinc-100">Active now</h2>
+              <Circle size={10} className={hasAgentOnline ? 'text-emerald-500 fill-emerald-500' : 'text-zinc-400'} />
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Active now</h2>
               {hasAgentOnline && (
-                <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded">LIVE</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded">LIVE</span>
               )}
             </div>
             <p className="text-[11px] text-zinc-500 mb-2">
@@ -203,10 +203,10 @@ export default function PortalLiveChatView({ onBack }: Props) {
               <ul className="space-y-2">
                 {onlineAgents.slice(0, 5).map((a) => (
                   <li key={a.id} className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     <div className="min-w-0">
-                      <div className="text-xs font-medium text-zinc-100 truncate">{a.name}</div>
-                      <div className="text-[11px] text-emerald-400 capitalize">{a.status || 'online'}</div>
+                      <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{a.name}</div>
+                      <div className="text-[11px] text-emerald-600 dark:text-emerald-400 capitalize">{a.status || 'online'}</div>
                     </div>
                   </li>
                 ))}
@@ -222,10 +222,10 @@ export default function PortalLiveChatView({ onBack }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="rounded-2xl border border-white/10 bg-zinc-950/50 overflow-hidden flex flex-col min-h-[60vh]">
-        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-            <MessageCircle size={16} className="text-violet-400" /> Live Chat
+      <div className="rounded-2xl portal-overview-glass overflow-hidden flex flex-col min-h-[60vh]">
+        <div className="px-4 py-3 border-b border-zinc-200/50 dark:border-white/10 flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <MessageCircle size={16} className="text-violet-600 dark:text-violet-400" /> Live Chat
             <span className="text-[11px] font-normal text-zinc-500">
               {conversation ? `Connected · ${conversation.id.slice(0, 8)}` : ''}
             </span>
@@ -236,7 +236,7 @@ export default function PortalLiveChatView({ onBack }: Props) {
               setChatId(null);
               setDraft('');
             }}
-            className="text-xs text-zinc-400 hover:text-zinc-200"
+            className="text-xs text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
           >
             End / new chat
           </button>
@@ -258,7 +258,7 @@ export default function PortalLiveChatView({ onBack }: Props) {
               <div key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>
                 <div className={clsx(
                   'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
-                  mine ? 'bg-violet-600 text-white' : 'bg-white/10 text-zinc-100 border border-white/10',
+                  mine ? 'bg-violet-600 text-white' : 'bg-white/80 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10',
                 )}>
                   {att?.url ? (
                     <div className="space-y-1">
@@ -282,16 +282,16 @@ export default function PortalLiveChatView({ onBack }: Props) {
         </div>
 
         {!isOnHold && (
-          <div className="p-3 border-t border-white/10 space-y-2">
-            {fileError && <p className="text-xs text-rose-400">{fileError}</p>}
+          <div className="p-3 border-t border-zinc-200/50 dark:border-white/10 space-y-2">
+            {fileError && <p className="text-xs text-rose-500">{fileError}</p>}
             <div className="flex flex-wrap gap-1.5">
               {QUICK_REPLIES.map((q) => (
-                <button key={q} type="button" onClick={() => setDraft(q)} className="text-[11px] px-2 py-1 rounded-full border border-white/15 text-zinc-300 hover:bg-white/10">{q}</button>
+                <button key={q} type="button" onClick={() => setDraft(q)} className="text-[11px] px-2 py-1 rounded-full border border-zinc-300/60 dark:border-white/15 text-zinc-600 dark:text-zinc-300 hover:bg-white/50 dark:hover:bg-white/10">{q}</button>
               ))}
             </div>
             <div className="flex items-end gap-2">
               <input ref={fileRef} type="file" className="hidden" onChange={(e) => void onFile(e.target.files?.[0] || null)} />
-              <button type="button" onClick={() => fileRef.current?.click()} className="p-2.5 rounded-xl border border-white/15 text-zinc-400 hover:bg-white/10">
+              <button type="button" onClick={() => fileRef.current?.click()} className="p-2.5 rounded-xl border border-zinc-300/60 dark:border-white/15 text-zinc-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10">
                 <Paperclip size={16} />
               </button>
               <input
@@ -318,7 +318,7 @@ export default function PortalLiveChatView({ onBack }: Props) {
         )}
       </div>
       {onBack && (
-        <button type="button" onClick={onBack} className="mt-3 text-xs text-zinc-500 hover:text-zinc-300">
+        <button type="button" onClick={onBack} className="mt-3 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
           ← Back to portal
         </button>
       )}
