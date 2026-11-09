@@ -1,6 +1,81 @@
 #!/usr/bin/env python3
-"""Portal live chat UI: show agent name when present, avatars, wider layout; stamp agent_id on agent send."""
+"""Portal live chat UI: ensure customerAvatar/agentPresent, agent name, avatars, wider layout."""
 from pathlib import Path
+import re
+
+def ensure_vars(t: str) -> str:
+    if 'const customerAvatar' not in t:
+        t2, n = re.subn(
+            r"(const customerInitials = customerName[\s\S]*?\.toUpperCase\(\) \|\| 'Y';)",
+            r"""\1
+
+  const customerAvatar = String(
+    (user as { user_metadata?: Record<string, unknown> } | null)?.user_metadata?.avatar_url ||
+      (user as { user_metadata?: Record<string, unknown> } | null)?.user_metadata?.picture ||
+      '',
+  ).trim();
+""",
+            t,
+            count=1,
+        )
+        if n:
+            t = t2
+            print('customerAvatar added')
+        elif "const messages = conversation?.messages || [];" in t:
+            t = t.replace(
+                "const messages = conversation?.messages || [];",
+                "const messages = conversation?.messages || [];\n  const customerAvatar = String((user as { user_metadata?: Record<string, unknown> } | null)?.user_metadata?.avatar_url || (user as { user_metadata?: Record<string, unknown> } | null)?.user_metadata?.picture || '').trim();",
+                1,
+            )
+            print('customerAvatar emergency')
+
+    if 'const agentPresent' not in t:
+        t2, n = re.subn(
+            r"(const agentInitials = agentName[\s\S]*?\.toUpperCase\(\) \|\| 'A';)",
+            r"""\1
+
+  const agentPresent =
+    Boolean(assignedAgent) ||
+    (messages || []).some((m) => m.sender === 'agent') ||
+    ['active', 'on_hold', 'on-hold'].includes((conversation?.status || '').toLowerCase());
+""",
+            t,
+            count=1,
+        )
+        if n:
+            t = t2
+            print('agentPresent added')
+        elif "const agentAvatar = assignedAgent?.avatar_url || '';" in t:
+            t = t.replace(
+                "const agentAvatar = assignedAgent?.avatar_url || '';",
+                "const agentAvatar = assignedAgent?.avatar_url || '';\n  const agentPresent =\n    Boolean(assignedAgent) ||\n    (messages || []).some((m) => m.sender === 'agent') ||\n    ['active', 'on_hold', 'on-hold'].includes((conversation?.status || '').toLowerCase());",
+                1,
+            )
+            print('agentPresent via agentAvatar')
+
+    old_aa = """  const assignedAgent = useMemo(() => {
+    const aid = (conversation as any)?.agent_id;
+    if (!aid) return null;
+    return (agents || []).find((a: any) => a.id === aid) || null;
+  }, [conversation, agents]);
+"""
+    new_aa = """  const assignedAgent = useMemo(() => {
+    const aid = (conversation as { agent_id?: string } | null)?.agent_id;
+    if (aid) {
+      const hit = (agents || []).find((a) => a.id === aid);
+      if (hit) return hit;
+    }
+    const hasAgentMsg = (messages || []).some((m) => m.sender === 'agent');
+    if (!hasAgentMsg) return null;
+    return (agents || [])[0] || null;
+  }, [conversation, agents, messages]);
+"""
+    if old_aa in t:
+        t = t.replace(old_aa, new_aa, 1)
+        print('assignedAgent improved')
+
+    return t
+
 
 def patch_platform():
     p = Path('src/context/PlatformContext.tsx')
@@ -43,44 +118,7 @@ def patch_portal():
     if not pv.exists():
         return
     t = pv.read_text()
-
-    if 'const assignedAgent' not in t:
-        anchor = '  const hasAgentOnline = onlineAgents.length > 0;'
-        helper = '''  const hasAgentOnline = onlineAgents.length > 0;
-
-  const customerName = (name || conversation?.customer_name || user?.email?.split('@')[0] || 'You').trim();
-  const customerInitials = customerName.split(/\\s+/).map((x) => x[0]).join('').slice(0, 2).toUpperCase() || 'Y';
-  const userMeta = (user as { user_metadata?: Record<string, unknown> } | null)?.user_metadata || {};
-  const customerAvatar = String(userMeta.avatar_url || userMeta.picture || '').trim();
-
-  const assignedAgent = useMemo(() => {
-    const aid = (conversation as { agent_id?: string } | null)?.agent_id;
-    if (aid) {
-      const hit = (agents || []).find((a) => a.id === aid);
-      if (hit) return hit;
-    }
-    const hasAgentMsg = (messages || []).some((m) => m.sender === 'agent');
-    if (!hasAgentMsg) return null;
-    if (onlineAgents.length) {
-      const full = (agents || []).find((a) => a.id === onlineAgents[0].id);
-      if (full) return full;
-    }
-    return (agents || [])[0] || null;
-  }, [conversation, agents, messages, onlineAgents]);
-
-  const agentName = assignedAgent?.name || 'Support agent';
-  const agentAvatar = assignedAgent?.avatar_url || '';
-  const agentInitials = agentName.split(/\\s+/).map((x) => x[0]).join('').slice(0, 2).toUpperCase() || 'A';
-  const agentPresent =
-    Boolean(assignedAgent) ||
-    (messages || []).some((m) => m.sender === 'agent') ||
-    ['active', 'on_hold', 'on-hold'].includes((conversation?.status || '').toLowerCase());
-'''
-        if anchor in t:
-            t = t.replace(anchor, helper, 1)
-            print('helpers')
-        else:
-            print('WARN helpers anchor')
+    t = ensure_vars(t)
 
     t = t.replace(
         "{assignedAgent ? 'Agent' : 'Waiting for agent'}",
@@ -103,15 +141,12 @@ def patch_portal():
               </div>'''
     if old_cust in t:
         t = t.replace(old_cust, new_cust, 1)
-    t = t.replace(
-        'w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600',
-        'w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600',
-    )
 
-    start = t.find('{messages.map((m')
-    end = t.find('<div ref={bottomRef}', start) if start >= 0 else -1
-    if start >= 0 and end >= 0:
-        new_map = r'''{messages.map((m, i) => {
+    if 'const customerAvatar' in t:
+        start = t.find('{messages.map((m')
+        end = t.find('<div ref={bottomRef}', start) if start >= 0 else -1
+        if start >= 0 and end >= 0:
+            new_map = r'''{messages.map((m, i) => {
             const mine = m.sender === 'customer';
             const parsed = parseChatAttachment(m.text || m.body || '');
             const att = parsed.att;
@@ -176,11 +211,13 @@ def patch_portal():
             );
           })}
           '''
-        t = t[:start] + new_map + t[end:]
-        print('bubbles')
+            t = t[:start] + new_map + t[end:]
+            print('bubbles')
 
     pv.write_text(t)
     print('portal ui done', pv.stat().st_size)
+    assert 'const customerAvatar' in t, 'customerAvatar still missing'
+    assert 'const agentPresent' in t, 'agentPresent still missing'
 
 
 patch_platform()
