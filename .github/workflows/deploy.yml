@@ -27,64 +27,23 @@ jobs:
       - name: Restore + patch portal
         run: |
           set -e
-          GOOD_CP=c3edde907e5e5be48439b7fea0df6dbe3dca6611
-          GOOD_PLV=4ef62119
+          # Prefer bundled full CustomerPortal (star-X logo + livechat)
+          if [ -f scripts/restore_cp_b64.py ]; then python3 scripts/restore_cp_b64.py; fi
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-          PLV_SZ=$(wc -c < src/components/PortalLiveChatView.tsx 2>/dev/null || echo 0)
-          if [ "$CP_SZ" -lt 50000 ] || ! grep -q "PortalLiveChat\|CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
-            echo "Restoring CustomerPortal from $GOOD_CP"
-            git show "$GOOD_CP:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx
+          if [ "$CP_SZ" -lt 50000 ]; then
+            GOOD=c3edde907e5e5be48439b7fea0df6dbe3dca6611
+            echo "Fallback restore CustomerPortal from $GOOD"
+            git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx || true
           fi
-          if [ "$PLV_SZ" -lt 5000 ] || grep -q "PLACEHOLDER" src/components/PortalLiveChatView.tsx 2>/dev/null; then
-            echo "Restoring PortalLiveChatView from $GOOD_PLV"
-            git show "$GOOD_PLV:src/components/PortalLiveChatView.tsx" > src/components/PortalLiveChatView.tsx
-          fi
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/components/PortalLiveChatView.tsx')
-          s = p.read_text()
-          old = "const att = parseChatAttachment(m.text || m.body || '');"
-          if old in s and "const parsed = parseChatAttachment" not in s:
-            s = s.replace(
-              old,
-              "const parsed = parseChatAttachment(m.text || m.body || '');\n            const att = parsed.att;\n            const displayText = (parsed.text || m.text || m.body || '').trim();",
-              1,
-            )
-            s = s.replace(
-              "{att ? (\n                    isImageMime(att.mime) ? (\n                      <img src={att.url} alt={att.name} className=\"max-w-full rounded-lg\" />\n                    ) : (\n                      <a href={att.url} download={att.name} className=\"underline\">{att.name}</a>\n                    )\n                  ) : (\n                    <div className=\"whitespace-pre-wrap break-words\">{m.text || m.body || ''}</div>\n                  )}",
-              "{att ? (\n                    <div className=\"space-y-1\">\n                      {isImageMime(att.mime) ? (\n                        <img src={att.url} alt={att.name || 'attachment'} className=\"max-w-full rounded-lg\" />\n                      ) : (\n                        <a href={att.url} download={att.name} className=\"underline break-all\">{att.name || 'Download file'}</a>\n                      )}\n                      {displayText ? <div className=\"whitespace-pre-wrap break-words\">{displayText}</div> : null}\n                    </div>\n                  ) : (\n                    <div className=\"whitespace-pre-wrap break-words\">{displayText || m.text || m.body || ''}</div>\n                  )}",
-              1,
-            )
-            p.write_text(s)
-            print('Applied parseChatAttachment fix')
-          else:
-            print('parseChatAttachment already fixed or pattern missing')
-          PY
-          echo "export { default } from './PortalLiveChatView';" > src/components/PortalLiveChat.tsx
-          if [ -f scripts/patch_livechat_order.py ]; then python3 scripts/patch_livechat_order.py || true; fi
-          if [ -f scripts/patch_chat_realtime_sync.py ]; then python3 scripts/patch_chat_realtime_sync.py || true; fi
-          if [ -f scripts/patch_sidebar_and_light.py ]; then python3 scripts/patch_sidebar_and_light.py || true; fi
-          if [ -f scripts/patch_help_chat_light.py ]; then python3 scripts/patch_help_chat_light.py || true; fi
-          if [ -f scripts/patch_dark_contrast.py ]; then python3 scripts/patch_dark_contrast.py || true; fi
-          if [ -f scripts/patch_chat_exclusive.py ]; then python3 scripts/patch_chat_exclusive.py || true; fi
-          if [ -f scripts/patch_shell_fixes.py ]; then python3 scripts/patch_shell_fixes.py || true; fi
-          if [ -f scripts/patch_login_notif_space.py ]; then python3 scripts/patch_login_notif_space.py || true; fi
-          if [ -f scripts/patch_login_force.py ]; then python3 scripts/patch_login_force.py || true; fi
-          if [ -f scripts/patch_login_polish_v4.py ]; then python3 scripts/patch_login_polish_v4.py || true; fi
-          if [ -f scripts/patch_sat_modes_login.py ]; then python3 scripts/patch_sat_modes_login.py || true; fi
-          if [ -f scripts/patch_remove_hero_chips.py ]; then python3 scripts/patch_remove_hero_chips.py || true; fi
-          if [ -f scripts/patch_metric_bar_theme.py ]; then python3 scripts/patch_metric_bar_theme.py || true; fi
-          if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
-          if [ -f scripts/patch_dry_run_chat.py ]; then python3 scripts/patch_dry_run_chat.py || true; fi
-          python3 scripts/patch_portal_logo.py || true
-          grep -q "PortalLiveChat\|parseChatAttachment\|createChat" src/components/CustomerPortal.tsx || grep -q "export default" src/components/CustomerPortal.tsx
+          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
+          if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
+          if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
+          if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
+          if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
+          test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000
           test -f src/SystemApp.tsx
           test $(wc -c < src/components/PortalLiveChatView.tsx) -gt 5000
-          python3 scripts/wire_account_panel.py || true
-          if [ -f scripts/patch_community_light_glass.py ]; then python3 scripts/patch_community_light_glass.py || true; fi
-          if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
-          if [ -f scripts/patch_signout_confirm.py ]; then python3 scripts/patch_signout_confirm.py || true; fi
           echo "Portal files ready"
 
       - name: Setup Node
