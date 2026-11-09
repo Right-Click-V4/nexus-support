@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { publishSkyCraft } from '../lib/skyTraffic';
+import { SatelliteCraft } from './SatelliteCraft';
 
-type FlybyKind = 'ufo' | 'rocket';
+type FlybyKind = 'ufo' | 'rocket' | 'satellite';
 
 type Flyby = {
   id: number;
@@ -193,16 +194,26 @@ export function SpaceFlybys() {
     const schedule = () => {
       if (cancelled) return;
       const id = ++idRef.current;
-      const isUfo = Math.random() < 0.32;
-      const kind: FlybyKind = isUfo ? 'ufo' : 'rocket';
-      const variant = isUfo ? (Math.random() < 0.55 ? 0 : 1) : Math.floor(Math.random() * ROCKETS.length);
+      const roll = Math.random();
+      const kind: FlybyKind =
+        roll < 0.22 ? 'satellite' : roll < 0.48 ? 'ufo' : 'rocket';
+      const variant =
+        kind === 'ufo'
+          ? Math.random() < 0.55
+            ? 0
+            : 1
+          : kind === 'satellite'
+            ? 0
+            : Math.floor(Math.random() * ROCKETS.length);
       const top = 5 + Math.random() * 42;
-      const duration = 16 + Math.random() * 10;
+      const duration =
+        kind === 'satellite' ? 26 + Math.random() * 8 : 16 + Math.random() * 10;
       const dir: 'ltr' | 'rtl' = Math.random() < 0.5 ? 'ltr' : 'rtl';
-      const chat = Math.random() < 0.28 ? CHATS[Math.floor(Math.random() * CHATS.length)] : undefined;
-      // Keep at most 3 craft on screen so the sky stays calm
+      const chat =
+        kind !== 'satellite' && Math.random() < 0.28
+          ? CHATS[Math.floor(Math.random() * CHATS.length)]
+          : undefined;
       setFlybys((prev) => [...prev.slice(-2), { id, kind, variant, top, duration, dir, chat }]);
-      // Longer gaps = fewer flybys
       const gaps = [16, 22, 28, 34, 42];
       timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);
     };
@@ -270,11 +281,17 @@ export function SpaceFlybys() {
             {f.chat && <div className="login-flyby-chat">{f.chat}</div>}
             <div className="login-flyby-craft">
               <div className="login-flyby-ship">
-                {f.kind === 'ufo'
-                  ? f.variant === 1
-                    ? <UfoIon uid={`ufo-${f.id}`} />
-                    : <UfoClassic uid={`ufo-${f.id}`} />
-                  : <Rocket eid={`rocketFlame-${f.id}`} />}
+                {f.kind === 'satellite' ? (
+                  <SatelliteCraft uid={`sat-${f.id}`} />
+                ) : f.kind === 'ufo' ? (
+                  f.variant === 1 ? (
+                    <UfoIon uid={`ufo-${f.id}`} />
+                  ) : (
+                    <UfoClassic uid={`ufo-${f.id}`} />
+                  )
+                ) : (
+                  <Rocket eid={`rocketFlame-${f.id}`} />
+                )}
               </div>
             </div>
           </div>
