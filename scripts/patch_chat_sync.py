@@ -1,11 +1,39 @@
 #!/usr/bin/env python3
-'''Force live-chat optimistic send + always-poll + chat realtime.'''
+"""Optimistic chat send + always-poll. NO realtime channels (avoids subscribe/.on race)."""
 from pathlib import Path
 import re
 
 p = Path('src/context/PlatformContext.tsx')
 if p.exists():
     t = p.read_text()
+
+    # Strip any broken nexus-chat-rt injection from prior deploys
+    if 'nexus-chat-rt' in t:
+        t = re.sub(
+            r"const client = supabase;\s*"
+            r"if \(!client\) return;\s*"
+            r"const chatCh = client\s*"
+            r"\.channel\('nexus-chat-rt'\)[\s\S]*?\.subscribe\(\);\s*",
+            '',
+            t,
+        )
+        t = re.sub(
+            r"try \{ void client\.removeChannel\(chatCh\); \} catch \{[^\n]*\}\s*",
+            '',
+            t,
+        )
+        t = re.sub(
+            r"try \{ void supabase\.removeChannel\(chatCh\); \} catch \{[^\n]*\}\s*",
+            '',
+            t,
+        )
+        t = re.sub(
+            r"const chatCh = [^\n]*\n(?:.*\n)*?.*\.channel\('nexus-chat-rt'\)[\s\S]*?\.subscribe\(\);\s*",
+            '',
+            t,
+        )
+        print('stripped nexus-chat-rt')
+
     if 'Optimistic UI so sender sees message immediately' not in t:
         m = re.search(
             r"  const sendChatMessage = async \(conversationId: string, text: string, sender: 'agent' \| 'customer'\) => \{.*?\n  \};",
@@ -13,7 +41,7 @@ if p.exists():
             re.S,
         )
         if m:
-            new_send = '''  const sendChatMessage = async (conversationId: string, text: string, sender: 'agent' | 'customer') => {
+            new_send = """  const sendChatMessage = async (conversationId: string, text: string, sender: 'agent' | 'customer') => {
     const msg: ChatMessage = {
       id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       conversation_id: conversationId,
@@ -63,7 +91,7 @@ if p.exists():
     } catch (e) {
       console.error('sendChatMessage', e);
     }
-  };'''
+  };"""
             t = t[: m.start()] + new_send + t[m.end() :]
             print('send replaced')
         else:
@@ -71,46 +99,31 @@ if p.exists():
     else:
         print('send already optimistic')
 
-    if 'nexus-chat-rt' not in t:
-        t = t.replace(
-            'const id = window.setInterval(() => { void refreshPlatform(); }, 3000);',
-            '''const client = supabase;
-    if (!client) return;
-    const chatCh = client
-      .channel('nexus-chat-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_conversations' }, () => { void refreshPlatform(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => { void refreshPlatform(); })
-      .subscribe();
-    const id = window.setInterval(() => { void refreshPlatform(); }, 2000);''',
-        )
-        print('rt added')
     t = t.replace(
-        'const id = window.setInterval(() => { void refreshPlatform(); }, 3000);',
-        'const id = window.setInterval(() => { void refreshPlatform(); }, 2000);',
+        "const id = window.setInterval(() => { void refreshPlatform(); }, 3000);",
+        "const id = window.setInterval(() => { void refreshPlatform(); }, 2000);",
     )
     p.write_text(t)
 
 p2 = Path('src/components/LiveChatPage.tsx')
 if p2.exists():
     t2 = p2.read_text()
-    t2b = t2.replace(
-        '''  useEffect(() => {
+    old = """  useEffect(() => {
     if (!selectedId) return;
     const id = window.setInterval(() => {
       void refreshPlatform();
     }, 4000);
     return () => window.clearInterval(id);
-  }, [selectedId, refreshPlatform]);''',
-        '''  useEffect(() => {
+  }, [selectedId, refreshPlatform]);"""
+    new = """  useEffect(() => {
     void refreshPlatform();
     const id = window.setInterval(() => {
       void refreshPlatform();
     }, 2000);
     return () => window.clearInterval(id);
-  }, [refreshPlatform]);''',
-    )
-    if t2b != t2:
-        p2.write_text(t2b)
+  }, [refreshPlatform]);"""
+    if old in t2:
+        p2.write_text(t2.replace(old, new))
         print('livechat page poll')
     else:
         print('livechat page poll skip or already')
@@ -119,11 +132,10 @@ p3 = Path('src/components/PortalLiveChatView.tsx')
 if p3.exists():
     t3 = p3.read_text()
     if 'livechat-poll-v1' not in t3:
-        t3b = t3.replace(
-            '''  useEffect(() => {
+        old = """  useEffect(() => {
     void refreshPlatform();
-  }, [refreshPlatform]);''',
-            '''  useEffect(() => {
+  }, [refreshPlatform]);"""
+        new = """  useEffect(() => {
     void refreshPlatform();
   }, [refreshPlatform]);
 
@@ -132,11 +144,12 @@ if p3.exists():
     if (!chatId) return;
     const id = window.setInterval(() => { void refreshPlatform(); }, 2000);
     return () => window.clearInterval(id);
-  }, [chatId, refreshPlatform]);''',
-            1,
-        )
-        p3.write_text(t3b)
-        print('portal poll')
+  }, [chatId, refreshPlatform]);"""
+        if old in t3:
+            p3.write_text(t3.replace(old, new, 1))
+            print('portal poll')
+        else:
+            print('portal marker miss')
     else:
         print('portal already')
 
