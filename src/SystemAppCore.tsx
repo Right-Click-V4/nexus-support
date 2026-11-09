@@ -20,6 +20,7 @@ import SettingsPage from './components/SettingsPage';
 import ProfilePage from './components/ProfilePage';
 import AdminFeaturesPage from './components/AdminFeaturesPage';
 import CustomerPortal from './components/CustomerPortal';
+import PortalAuthGate from './components/PortalAuthGate';
 import NotFoundScreen from './components/NotFoundScreen';
 import { BootLoader } from './components/PostLoginLoader';
 import LoginPage from './components/LoginPage';
@@ -94,28 +95,23 @@ export function AgentShell() {
       avatar_url: presenceAgent.avatar_url,
       initials: presenceAgent.initials,
       color: presenceAgent.color,
+      at: Date.now(),
     });
-  }, [presenceAgent?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!presenceAgent?.id) return;
-    const tick = () => {
+    const id = window.setInterval(() => {
       void touchPresence?.();
       void publishDeskPresence({
         id: presenceAgent.id,
         name: presenceAgent.name || 'Agent',
-        status: (presenceAgent.status || 'online') === 'offline' ? 'online' : (presenceAgent.status || 'online'),
+        status: presenceAgent.status || 'online',
         avatar_url: presenceAgent.avatar_url,
         initials: presenceAgent.initials,
         color: presenceAgent.color,
+        at: Date.now(),
       });
+    }, 45_000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void touchPresence?.();
     };
-    tick();
-    const id = window.setInterval(() => {
-      if (typeof document !== 'undefined' && document.hidden) return;
-      tick();
-    }, 30_000);
-    const onVis = () => { if (!document.hidden) tick(); };
     document.addEventListener('visibilitychange', onVis);
     return () => {
       window.clearInterval(id);
@@ -134,7 +130,7 @@ export function AgentShell() {
 
   const authKnown = forceReady || !authLoading;
   if (!authKnown) {
-    return <BootLoader label="Loading\u2026" />;
+    return <BootLoader label="Loading…" />;
   }
 
   if (!user) {
@@ -144,6 +140,11 @@ export function AgentShell() {
   if (maintenanceReady && maintenanceOn && !isAdmin) {
     return <BootLoader label="Maintenance" />;
   }
+
+  // site404On reserved for admin feature; never auto-block login shell
+  void site404On;
+  void site404Ready;
+  void adminReady;
 
   const title = TITLES[activeNav] || 'Overview';
 
@@ -168,7 +169,7 @@ export function AgentShell() {
     case 'profile': body = <ProfilePage />; break;
     case 'admin':
     case 'admin-features': body = <AdminFeaturesPage />; break;
-    default: body = <Dashboard />; break;
+    default: body = <Dashboard />;
   }
 
   return (
@@ -177,29 +178,28 @@ export function AgentShell() {
         active={activeNav}
         onNavigate={setActiveNav}
         onSignOut={() => void signOut()}
-        userName={currentAgent?.name || user?.email || 'Agent'}
         userEmail={user?.email || ''}
-        avatarUrl={currentAgent?.avatar_url}
         agentStatus={currentAgent?.status || 'online'}
+        avatarUrl={currentAgent?.avatar_url}
+        isAdmin={!!isAdmin}
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="nexus-topbar h-14 shrink-0 flex items-center justify-between px-4 gap-3">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-zinc-100 truncate">{title}</div>
-          </div>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="shrink-0 h-14 px-4 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur">
+          <h1 className="text-sm font-semibold text-zinc-100">{title}</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button type="button" onClick={() => { window.location.hash = 'portal'; }} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10" title="Customer portal">
-              <ExternalLink size={16} />
+            <button
+              type="button"
+              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-white/5 relative"
+              onClick={() => setNotifOpen((v) => !v)}
+            >
+              <Bell size={16} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[10px] font-bold rounded-full bg-rose-500 text-white flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
-            <div className="relative" ref={notifRef}>
-              <button type="button" onClick={() => setNotifOpen((v) => !v)} className="relative p-2 rounded-lg hover:bg-white/10">
-                <Bell size={16} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center">{unreadCount > 9 ? '9+' : unreadCount}</span>
-                )}
-              </button>
-            </div>
             {currentAgent && <AgentAvatar agent={currentAgent} size={32} />}
           </div>
         </header>
@@ -210,7 +210,11 @@ export function AgentShell() {
 }
 
 function PortalShell() {
-  return <CustomerPortal />;
+  return (
+    <PortalAuthGate>
+      <CustomerPortal />
+    </PortalAuthGate>
+  );
 }
 
 export function Root() {
@@ -224,8 +228,33 @@ export function Root() {
   return (
     <TicketProvider>
       <PlatformProvider>
-        {mode === 'portal' ? <PortalShell /> : mode === 'notfound' ? <NotFoundScreen /> : <AgentShell />}
+        {mode === 'portal' ? (
+          <PortalShell />
+        ) : mode === 'notfound' ? (
+          <NotFoundScreen
+            onGoHome={() => {
+              try {
+                localStorage.setItem('nexus-site-404-on', '0');
+                localStorage.removeItem('nexus-site-404-on');
+              } catch { /* ignore */ }
+              window.location.hash = '';
+              window.location.reload();
+            }}
+            onAdminSignIn={() => {
+              try {
+                localStorage.setItem('nexus-site-404-on', '0');
+                localStorage.removeItem('nexus-site-404-on');
+              } catch { /* ignore */ }
+              window.location.hash = '';
+              window.location.reload();
+            }}
+          />
+        ) : (
+          <AgentShell />
+        )}
       </PlatformProvider>
     </TicketProvider>
   );
 }
+
+export default Root;
