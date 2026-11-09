@@ -8,6 +8,9 @@ import { usePlatform } from '../context/PlatformContext';
 import { useTickets } from '../context/TicketContext';
 import { useAuth } from '../context/AuthContext';
 import { encodeChatFile, parseChatAttachment, isImageMime } from '../lib/chatAttachments';
+import AgentAvatar from './AgentAvatar';
+import { getDeskPresence, watchDeskPresence, type DeskAgent } from '../lib/deskPresence';
+import { computeOnlineAgents } from '../lib/onlineAgents';
 
 const QUICK_REPLIES = [
   'I need help with my account',
@@ -55,12 +58,20 @@ export default function PortalLiveChatView({ onBack }: Props) {
   const messages = conversation?.messages || [];
   const isOnHold = (conversation?.status || '').toLowerCase() === 'on_hold';
 
-  const onlineAgents = useMemo(() => {
-    return (agents || []).filter((a) => {
-      const s = (a.status || '').toLowerCase();
-      return s === 'online' || s === 'available' || s === 'busy';
-    });
-  }, [agents]);
+  const [desk, setDesk] = useState<DeskAgent[]>(() => getDeskPresence());
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => watchDeskPresence(setDesk), []);
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 15_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  /** Only agents with a fresh desk heartbeat or last_seen_at (not stale status alone). */
+  const onlineAgents = useMemo(
+    () => computeOnlineAgents(agents, desk, now),
+    [agents, desk, now],
+  );
   const hasAgentOnline = onlineAgents.length > 0;
 
   useEffect(() => {
@@ -200,11 +211,24 @@ export default function PortalLiveChatView({ onBack }: Props) {
               Agents currently available on the desk.
             </p>
             {onlineAgents.length > 0 ? (
-              <ul className="space-y-2">
-                {onlineAgents.slice(0, 5).map((a) => (
-                  <li key={a.id} className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <div className="min-w-0">
+              <ul className="space-y-2.5">
+                {onlineAgents.slice(0, 6).map((a) => (
+                  <li key={a.id} className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative shrink-0">
+                      <AgentAvatar
+                        agent={{
+                          id: a.id,
+                          name: a.name,
+                          initials: a.initials,
+                          color: a.color,
+                          avatar_url: a.avatar_url,
+                        }}
+                        size={32}
+                        className="ring-1 ring-emerald-500/30"
+                      />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                    </div>
+                    <div className="min-w-0 flex-1">
                       <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{a.name}</div>
                       <div className="text-[11px] text-emerald-600 dark:text-emerald-400 capitalize">{a.status || 'online'}</div>
                     </div>
