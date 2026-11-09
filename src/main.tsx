@@ -9,14 +9,19 @@ import { installPollThrottle } from './lib/pollThrottle'
 // Must run before any React tree schedules setInterval polls
 installPollThrottle()
 
-// ALWAYS_CLEAR_SITE404 — never leave the app stuck on the station-overrun screen
+// UNREGISTER_SW + ALWAYS clear site-404 so login is never trapped
+try {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => r.unregister())
+    }).catch(() => {})
+  }
+} catch { /* ignore */ }
 try {
   localStorage.setItem('nexus-site-404-on', '0')
   localStorage.removeItem('nexus-site-404-on')
   const h = (window.location.hash || '').replace(/^#\/?/, '').toLowerCase()
-  if (h === '404' || h === 'notfound') {
-    window.location.hash = ''
-  }
+  if (h === '404' || h === 'notfound') window.location.hash = ''
 } catch { /* ignore */ }
 
 applyUiPrefs()
