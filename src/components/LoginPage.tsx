@@ -1,4 +1,4 @@
-/* login-customer-first-v1 + screen-fit */
+/* login-customer-first-v1 + screen-fit + type polish (restored 2f2219) */
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { markJustLoggedIn } from './PostLoginLoader';
@@ -80,23 +80,16 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
             </div>
           </div>
 
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fuchsia-300/80 mb-3">
+          <p className="login-eyebrow text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-300/90 mb-3">
             {isAgent ? 'Built for agent teams' : 'Built for customers'}
           </p>
-          <h1 className="login-hero-title text-3xl sm:text-4xl xl:text-[2.75rem] font-semibold leading-[1.08] tracking-tight">
+          <h1 className="login-hero-title text-[1.85rem] sm:text-[2.35rem] xl:text-[2.85rem] font-semibold leading-[1.12] tracking-[-0.03em]">
             {leftTitle}
-            <span
-              className="block font-normal mt-1 bg-clip-text text-transparent"
-              style={{
-                backgroundImage: 'linear-gradient(105deg, #f5d0fe 0%, #e9d5ff 40%, #c4b5fd 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
+            <span className="login-hero-sub block font-medium mt-1.5">
               {leftSub}
             </span>
           </h1>
-          <p className="mt-4 text-sm sm:text-[15px] text-fuchsia-100/75 leading-relaxed max-w-md">
+          <p className="login-hero-blurb mt-4 text-[13px] sm:text-[15px] text-violet-100/70 leading-[1.65] max-w-md">
             {leftBlurb}
           </p>
 
@@ -105,10 +98,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
               ? ['Omnichannel inbox', 'SLA tracking', 'Branch routing']
               : ['Live status', 'Secure portal', '24/7 desk']
             ).map((tag) => (
-              <span
-                key={tag}
-                className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-violet-100/90"
-              >
+              <span key={tag} className="login-chip">
                 {tag}
               </span>
             ))}
@@ -116,17 +106,17 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
 
           <ul className="mt-6 space-y-2.5 max-w-md">
             {caps.map((c, i) => (
-              <li key={c.title} className="login-cap">
+              <li key={c.title} className="login-cap group">
                 <span className="login-cap-index">{String(i + 1).padStart(2, '0')}</span>
                 <div>
-                  <div className="text-sm font-medium text-white">{c.title}</div>
-                  <div className="text-xs text-fuchsia-100/65 mt-0.5">{c.blurb}</div>
+                  <div className="text-[13px] sm:text-sm font-semibold text-violet-50 tracking-tight">{c.title}</div>
+                  <div className="text-[12px] text-violet-200/55 mt-0.5 leading-snug">{c.blurb}</div>
                 </div>
               </li>
             ))}
           </ul>
 
-          <div className="mt-8 text-[11px] text-fuchsia-300/40">
+          <div className="login-left-footer mt-auto pt-8 text-[11px] text-violet-300/35 tracking-wide">
             {isAgent
               ? 'NexusOps Agent Workspace · © 2026 Lizer & Kirzhian'
               : 'NexusOps Customer Portal · © 2026 Lizer & Kirzhian'}
@@ -214,7 +204,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
               <button
                 type="submit"
                 disabled={loading}
-                className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 text-white font-semibold text-sm py-2.5 shadow-lg shadow-fuchsia-600/30 disabled:opacity-60"
+                className="login-submit-btn w-full rounded-xl text-white font-semibold text-sm py-2.5 disabled:opacity-60"
               >
                 {loading ? 'Signing in…' : 'Sign in'}
               </button>
@@ -298,7 +288,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
               <button
                 type="submit"
                 disabled={loading}
-                className="login-submit-btn w-full rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 text-white font-semibold text-sm py-2.5 disabled:opacity-60"
+                className="login-submit-btn w-full rounded-xl text-white font-semibold text-sm py-2.5 disabled:opacity-60"
               >
                 {loading ? 'Creating…' : 'Create account'}
               </button>
