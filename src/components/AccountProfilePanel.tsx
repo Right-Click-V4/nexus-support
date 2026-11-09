@@ -1,3 +1,4 @@
+/* CUSTOMER_BRANCH_V1 */
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { loadAvailableBranches } from '../lib/branches';
 import {
@@ -139,6 +140,7 @@ function AccountProfilePanel({
   updateEmail,
 }: AccountProfilePanelProps) {
   const [username, setUsername] = useState(initialNick);
+  // CUSTOMER_BRANCH_V1
   const [branch, setBranch] = useState((initialBranch || '').trim().toUpperCase());
   const branchOptions = loadAvailableBranches(initialBranch ? [initialBranch] : []);
   const [phone, setPhone] = useState(initialPhone);
