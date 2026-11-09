@@ -37,6 +37,7 @@ jobs:
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
           if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py || true; fi
           if [ -f scripts/patch_livechat_persist.py ]; then python3 scripts/patch_livechat_persist.py || true; fi
+          if [ -f scripts/patch_chat_sync.py ]; then python3 scripts/patch_chat_sync.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
           if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
@@ -48,6 +49,7 @@ jobs:
           echo "CustomerPortal final bytes=$CP_FINAL"
           grep -q "CHAT_ID_KEY" src/components/PortalLiveChatView.tsx && echo "OK_LIVECHAT" || echo "WARN_LIVECHAT"
           grep -q "appConfirm" src/components/CustomersPage.tsx && echo "OK_DIALOGS" || echo "WARN_DIALOGS"
+          grep -q "Optimistic UI" src/context/PlatformContext.tsx && echo "OK_CHAT_SYNC" || echo "WARN_CHAT_SYNC"
           grep -q "useState" src/components/Sidebar.tsx || echo "WARN_SIDEBAR"
           set -e
 
