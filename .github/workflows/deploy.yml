@@ -44,6 +44,7 @@ jobs:
           if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
           if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
           if [ -f scripts/patch_signout_confirm.py ]; then python3 scripts/patch_signout_confirm.py || true; fi
+          if [ -f scripts/patch_branch_metric_contrast.py ]; then python3 scripts/patch_branch_metric_contrast.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           CP_FINAL=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           echo "CustomerPortal final bytes=$CP_FINAL"
