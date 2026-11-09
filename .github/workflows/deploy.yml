@@ -34,7 +34,13 @@ jobs:
             echo "Restoring CustomerPortal from $GOOD (was $CP_SZ bytes)"
             git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx 2>/dev/null || true
           fi
-          # Restore full LoginScene (logo trail + cosmos) if truncated/broken
+          APP_SZ=$(wc -c < src/components/AccountProfilePanel.tsx 2>/dev/null || echo 0)
+          echo "AccountProfilePanel bytes=$APP_SZ"
+          if [ "$APP_SZ" -lt 5000 ] || ! grep -q "saveProfile\|updateProfile" src/components/AccountProfilePanel.tsx 2>/dev/null; then
+            APP_GOOD=37b03da305824333882d61e252f8c1aad37c98ae
+            echo "Restoring AccountProfilePanel from $APP_GOOD (was $APP_SZ bytes)"
+            git show "$APP_GOOD:src/components/AccountProfilePanel.tsx" > src/components/AccountProfilePanel.tsx 2>/dev/null || true
+          fi
           LS_SZ=$(wc -c < src/components/LoginScene.tsx 2>/dev/null || echo 0)
           echo "LoginScene bytes=$LS_SZ"
           if [ "$LS_SZ" -lt 18000 ] || ! grep -q "login-trail-spark\|LogoPilotStage" src/components/LoginScene.tsx 2>/dev/null; then
@@ -64,7 +70,8 @@ jobs:
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           CP_FINAL=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           LS_FINAL=$(wc -c < src/components/LoginScene.tsx 2>/dev/null || echo 0)
-          echo "CustomerPortal final bytes=$CP_FINAL LoginScene final=$LS_FINAL"
+          APP_FINAL=$(wc -c < src/components/AccountProfilePanel.tsx 2>/dev/null || echo 0)
+          echo "CustomerPortal final=$CP_FINAL LoginScene final=$LS_FINAL AccountProfilePanel final=$APP_FINAL"
           grep -q "CHAT_ID_KEY\|MULTI_CHAT" src/components/PortalLiveChatView.tsx && echo "OK_LIVECHAT" || echo "WARN_LIVECHAT"
           grep -q "login-trail-spark" src/components/LoginScene.tsx && echo "OK_TRAIL" || echo "WARN_TRAIL"
           grep -q "ROLE_RESOLVE_V2\|resolveRole" src/context/AuthContext.tsx && echo "OK_AUTH" || echo "WARN_AUTH"
