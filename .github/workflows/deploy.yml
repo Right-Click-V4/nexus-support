@@ -73,6 +73,7 @@ jobs:
           if [ -f scripts/patch_login_polish_v4.py ]; then python3 scripts/patch_login_polish_v4.py || true; fi
           if [ -f scripts/patch_sat_modes_login.py ]; then python3 scripts/patch_sat_modes_login.py || true; fi
           if [ -f scripts/patch_remove_hero_chips.py ]; then python3 scripts/patch_remove_hero_chips.py || true; fi
+          if [ -f scripts/patch_metric_bar_theme.py ]; then python3 scripts/patch_metric_bar_theme.py || true; fi
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
           if [ -f scripts/patch_dry_run_chat.py ]; then python3 scripts/patch_dry_run_chat.py || true; fi
           python3 scripts/patch_portal_logo.py || true
