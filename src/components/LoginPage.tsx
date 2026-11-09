@@ -105,14 +105,14 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
       <div className="relative z-10 h-full max-h-full flex items-center overflow-hidden">
         <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-6 lg:gap-10 xl:gap-14 px-5 sm:px-8 lg:px-12 xl:px-16 py-5 lg:py-6 items-center max-h-full">
           <div className="flex flex-col relative z-10 order-2 lg:order-1 lg:pr-4 xl:pr-8 min-w-0">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-2.5">
                 <div className="login-brand-badge">
                   <NexusLogoMark size={22} />
                 </div>
                 <NexusWordmark height={22} className="text-white" color="currentColor" />
               </div>
-              <div className="text-[11px] text-fuchsia-200/70 pl-[34px]">
+              <div className="text-[11px] leading-tight text-fuchsia-200/75 pl-0 sm:pl-[2px] -mt-0.5">
                 {isAgent ? 'Support operations platform' : 'Customer support portal'}
               </div>
             </div>
@@ -148,7 +148,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
               <p className="mt-4 text-sm sm:text-[15px] text-fuchsia-100/75 leading-relaxed max-w-md">
                 {leftBlurb}
               </p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="login-hero-chips mt-5 flex flex-wrap gap-2">
                 {(isAgent
                   ? ['Omnichannel inbox', 'SLA tracking', 'Branch routing']
                   : ['Live status', 'Secure portal', '24/7 desk']
