@@ -196,7 +196,7 @@ export function SpaceFlybys() {
       const id = ++idRef.current;
       const roll = Math.random();
       const kind: FlybyKind =
-        roll < 0.22 ? 'satellite' : roll < 0.48 ? 'ufo' : 'rocket';
+        roll < 0.4 ? 'satellite' : roll < 0.55 ? 'ufo' : 'rocket';
       const variant =
         kind === 'ufo'
           ? Math.random() < 0.55
@@ -214,11 +214,11 @@ export function SpaceFlybys() {
           ? CHATS[Math.floor(Math.random() * CHATS.length)]
           : undefined;
       setFlybys((prev) => [...prev.slice(-2), { id, kind, variant, top, duration, dir, chat }]);
-      const gaps = [16, 22, 28, 34, 42];
+      const gaps = [12, 16, 20, 26, 32];
       timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);
     };
 
-    timer = setTimeout(schedule, 2200 + Math.random() * 1800);
+    timer = setTimeout(schedule, 1200 + Math.random() * 1000);
     return () => {
       cancelled = true;
       clearTimeout(timer);
