@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
-"""Replace native confirm/alert with appConfirm/appToast."""
+"""Replace native confirm/alert with appConfirm/appToast. Idempotent."""
 from pathlib import Path
 
-def ensure_import(path: Path, names: str):
+def ensure_import(path: Path, names: str) -> str:
     t = path.read_text()
-    if "from '../lib/dialogs'" in t or 'from "../lib/dialogs"' in t:
+    if "../lib/dialogs" in t:
         return t
-    lines = t.split('\n')
+    lines = t.split("\n")
     insert = 0
     for i, line in enumerate(lines):
-        if line.startswith('import '):
+        if line.startswith("import "):
             insert = i + 1
     lines.insert(insert, f"import {{ {names} }} from '../lib/dialogs';")
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
-p = Path('src/components/CustomersPage.tsx')
+p = Path("src/components/CustomersPage.tsx")
 if p.exists():
-    t = ensure_import(p, 'appConfirm, appToast')
+    t = ensure_import(p, "appConfirm, appToast")
     t = t.replace(
         "alert('A branch with that name already exists.');",
         "appToast({ message: 'A branch with that name already exists.', variant: 'warning' });",
     )
-    t = t.replace('const deleteBranch = () => {', 'const deleteBranch = async () => {')
+    t = t.replace("const deleteBranch = () => {", "const deleteBranch = async () => {")
     t = t.replace(
-        'if (!confirm(msg)) return;',
+        "if (!confirm(msg)) return;",
         """const ok = await appConfirm({
       title: 'Delete branch',
       message: msg,
@@ -33,11 +33,11 @@ if p.exists():
     if (!ok) return;""",
     )
     p.write_text(t)
-    print('CustomersPage patched')
+    print("CustomersPage:", "appConfirm" in t, "confirm(" not in t)
 
-p = Path('src/components/TicketDetail.tsx')
+p = Path("src/components/TicketDetail.tsx")
 if p.exists():
-    t = ensure_import(p, 'appToast')
+    t = ensure_import(p, "appToast")
     t = t.replace(
         "alert('Only admins can permanently delete tickets.');",
         "appToast({ message: 'Only admins can permanently delete tickets.', variant: 'warning' });",
@@ -47,14 +47,14 @@ if p.exists():
         "appToast({ message: e instanceof Error ? e.message : 'Delete failed', variant: 'error' });",
     )
     p.write_text(t)
-    print('TicketDetail patched')
+    print("TicketDetail:", "appToast" in t)
 
-p = Path('src/components/PortalCommunityChat.tsx')
+p = Path("src/components/PortalCommunityChat.tsx")
 if p.exists():
-    t = ensure_import(p, 'appConfirm, appToast')
-    t = t.replace('const leaveGroup = () => {', 'const leaveGroup = async () => {')
+    t = ensure_import(p, "appConfirm, appToast")
+    t = t.replace("const leaveGroup = () => {", "const leaveGroup = async () => {")
     t = t.replace(
-        'if (!window.confirm(`Leave “${active.name}”?`)) return;',
+        "if (!window.confirm(`Leave “${active.name}”?`)) return;",
         """const ok = await appConfirm({ title: 'Leave community', message: `Leave “${active.name}”?`, confirmLabel: 'Leave', variant: 'danger' });
     if (!ok) return;""",
     )
@@ -63,6 +63,6 @@ if p.exists():
         "if (file.size > 1200000) { appToast({ message: 'Image must be under ~1.2MB', variant: 'warning' }); return; }",
     )
     p.write_text(t)
-    print('PortalCommunityChat patched')
+    print("PortalCommunityChat:", "appConfirm" in t)
 
-print('dialog wire done')
+print("dialog wire done")
