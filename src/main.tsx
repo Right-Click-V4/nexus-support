@@ -9,12 +9,12 @@ import { installPollThrottle } from './lib/pollThrottle'
 // Must run before any React tree schedules setInterval polls
 installPollThrottle()
 
-// EARLY_404_UNLOCK — clear sticky #404 from older ErrorBoundary builds
+// ALWAYS_CLEAR_SITE404 — never leave the app stuck on the station-overrun screen
 try {
+  localStorage.setItem('nexus-site-404-on', '0')
+  localStorage.removeItem('nexus-site-404-on')
   const h = (window.location.hash || '').replace(/^#\/?/, '').toLowerCase()
   if (h === '404' || h === 'notfound') {
-    localStorage.setItem('nexus-site-404-on', '0')
-    localStorage.removeItem('nexus-site-404-on')
     window.location.hash = ''
   }
 } catch { /* ignore */ }
