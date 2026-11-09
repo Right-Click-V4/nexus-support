@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Replace native confirm/alert with appConfirm/appToast. Idempotent."""
+"""Replace native confirm/alert with appConfirm/appToast. Idempotent. Safe import insert."""
 from pathlib import Path
 
 def ensure_import(path: Path, names: str) -> str:
@@ -8,9 +8,23 @@ def ensure_import(path: Path, names: str) -> str:
         return t
     lines = t.split("\n")
     insert = 0
+    in_brace = 0
     for i, line in enumerate(lines):
-        if line.startswith("import "):
+        stripped = line.strip()
+        if stripped.startswith("import "):
+            in_brace += stripped.count("{") - stripped.count("}")
             insert = i + 1
+            if in_brace > 0:
+                for j in range(i + 1, len(lines)):
+                    in_brace += lines[j].count("{") - lines[j].count("}")
+                    insert = j + 1
+                    if in_brace <= 0:
+                        break
+        elif in_brace > 0:
+            in_brace += line.count("{") - line.count("}")
+            insert = i + 1
+            if in_brace <= 0:
+                in_brace = 0
     lines.insert(insert, f"import {{ {names} }} from '../lib/dialogs';")
     return "\n".join(lines)
 
@@ -63,6 +77,6 @@ if p.exists():
         "if (file.size > 1200000) { appToast({ message: 'Image must be under ~1.2MB', variant: 'warning' }); return; }",
     )
     p.write_text(t)
-    print("PortalCommunityChat:", "appConfirm" in t)
+    print("PortalCommunityChat:", "appConfirm" in t, "import {\nimport" not in t)
 
 print("dialog wire done")

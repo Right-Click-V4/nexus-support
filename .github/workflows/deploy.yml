@@ -20,43 +20,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Restore + patch portal
+      - name: Ensure portal + dialogs
         run: |
           set +e
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-          if [ "$CP_SZ" -lt 50000 ] || ! grep -q "PortalLiveChat\|Live Chat\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
-            GOOD=c3edde907e5e5be48439b7fea0df6dbe3dca6611
-            echo "Restoring CustomerPortal from $GOOD (was $CP_SZ bytes)"
-            git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx || true
+          echo "CustomerPortal bytes=$CP_SZ"
+          if [ "$CP_SZ" -lt 50000 ]; then
+            for REF in c3edde907e5e5be48439b7fea0df6dbe3dca6611 HEAD~50 HEAD~100; do
+              git show "$REF:src/components/CustomerPortal.tsx" > /tmp/cp_try.tsx 2>/dev/null
+              SZ=$(wc -c < /tmp/cp_try.tsx 2>/dev/null || echo 0)
+              if [ "$SZ" -gt 50000 ]; then
+                cp /tmp/cp_try.tsx src/components/CustomerPortal.tsx
+                echo "Restored CP from $REF ($SZ bytes)"
+                break
+              fi
+            done
           fi
-          if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
-          if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py || true; fi
-          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
-          if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
-          if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
-          if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
-          if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
-          if [ -f scripts/patch_signout_confirm.py ]; then python3 scripts/patch_signout_confirm.py || true; fi
-          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
-          # Re-run dialogs wire after any portal restores
-          if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py || true; fi
-          CP_FINAL=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-          echo "CustomerPortal bytes=$CP_FINAL"
-          grep -q "appConfirm" src/components/CustomersPage.tsx && echo "OK: dialogs wired in CustomersPage" || echo "WARN: dialogs not in CustomersPage"
-          grep -q "useState" src/components/Sidebar.tsx || echo "WARN: Sidebar missing useState"
-          echo "Portal files ready"
+          if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py; fi
+          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py; fi
+          grep -q "appConfirm" src/components/CustomersPage.tsx && echo "OK dialogs" || echo "WARN no dialogs"
+          grep -q "CHAT_ID_KEY" src/components/PortalLiveChatView.tsx && echo "OK livechat persist" || echo "WARN no persist"
           set -e
 
       - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
 
-      - name: Install dependencies
+      - name: Install
         run: npm install
 
       - name: Build
@@ -66,8 +62,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
