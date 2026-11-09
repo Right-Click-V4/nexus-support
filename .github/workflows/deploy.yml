@@ -2,8 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,55 +18,47 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Restore + write fixed sources
+      - name: Patch sources
         run: |
           set +e
-          if [ -f scripts/write_customer_portal.py ]; then python3 scripts/write_customer_portal.py; fi
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-          echo "CustomerPortal bytes=$CP_SZ"
+          echo "CP=$CP_SZ"
           if [ "$CP_SZ" -lt 50000 ]; then
             for REF in c3edde907e5e5be48439b7fea0df6dbe3dca6611 HEAD~50 HEAD~100; do
               git show "$REF:src/components/CustomerPortal.tsx" > /tmp/cp_try.tsx 2>/dev/null
               SZ=$(wc -c < /tmp/cp_try.tsx 2>/dev/null || echo 0)
               if [ "$SZ" -gt 50000 ]; then
                 cp /tmp/cp_try.tsx src/components/CustomerPortal.tsx
-                echo "Restored CP from $REF ($SZ bytes)"
+                echo "Restored CP $REF $SZ"
                 break
               fi
             done
           fi
-          for s in write_portal_livechat write_customers_page write_ticket_detail write_portal_community; do
-            if [ -f scripts/${s}.py ]; then python3 scripts/${s}.py; fi
-          done
           if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py; fi
+          if [ -f scripts/patch_livechat_persist.py ]; then python3 scripts/patch_livechat_persist.py; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py; fi
-          grep -q "appConfirm" src/components/CustomersPage.tsx && echo "OK dialogs" || echo "WARN no dialogs"
-          grep -q "CHAT_ID_KEY" src/components/PortalLiveChatView.tsx && echo "OK livechat persist" || echo "WARN no persist"
+          grep -q CHAT_ID_KEY src/components/PortalLiveChatView.tsx && echo OK_LIVECHAT || echo WARN_LIVECHAT
+          grep -q appConfirm src/components/CustomersPage.tsx && echo OK_DIALOGS || echo WARN_DIALOGS
           set -e
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
 
-      - name: Install
-        run: npm install
+      - run: npm install
 
-      - name: Build
-        run: npm run build
+      - run: npm run build
         env:
           GITHUB_ACTIONS: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
+      - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
