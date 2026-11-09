@@ -1,5 +1,5 @@
-/* SystemAppCore - restored shell with throttled presence */
-import { useEffect, useRef, useState } from 'react';
+/* SystemAppCore - presence + safe login entry */
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import TicketsPage from './components/TicketsPage';
@@ -31,7 +31,7 @@ import { useMaintenance } from './context/MaintenanceContext';
 import { useSite404 } from './context/Site404Context';
 import { publishDeskPresence, clearDeskPresence } from './lib/deskPresence';
 import { useIsAdmin } from './components/useIsAdmin';
-import { Bell, Settings, ExternalLink } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import AgentAvatar from './components/AgentAvatar';
 import ThemeToggle from './components/ThemeToggle';
 
@@ -74,9 +74,16 @@ export function AgentShell() {
   const presenceAgent = currentAgent;
   const { user, loading: authLoading, signOut } = useAuth();
   const { enabled: maintenanceOn, ready: maintenanceReady } = useMaintenance();
-  const { enabled: site404On, ready: site404Ready } = useSite404();
-  const { isAdmin, adminReady } = useIsAdmin();
-  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllNotifications } = usePlatform();
+  const { enabled: _site404On, ready: _site404Ready } = useSite404();
+  const { isAdmin } = useIsAdmin();
+  const {
+    notifications,
+    unreadCount,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+    deleteAllNotifications,
+  } = usePlatform();
   const [forceReady, setForceReady] = useState(false);
 
   useEffect(() => {
@@ -141,14 +148,9 @@ export function AgentShell() {
     return <BootLoader label="Maintenance" />;
   }
 
-  // site404On reserved for admin feature; never auto-block login shell
-  void site404On;
-  void site404Ready;
-  void adminReady;
-
   const title = TITLES[activeNav] || 'Overview';
 
-  let body: React.ReactNode = <Dashboard />;
+  let body: ReactNode = <Dashboard />;
   switch (activeNav) {
     case 'tickets': body = <TicketsPage />; break;
     case 'customers':
@@ -183,23 +185,54 @@ export function AgentShell() {
         avatarUrl={currentAgent?.avatar_url}
         isAdmin={!!isAdmin}
       />
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="shrink-0 h-14 px-4 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur">
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <header className="shrink-0 h-14 px-4 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur z-40">
           <h1 className="text-sm font-semibold text-zinc-100">{title}</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
-              type="button"
-              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-white/5 relative"
-              onClick={() => setNotifOpen((v) => !v)}
-            >
-              <Bell size={16} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[10px] font-bold rounded-full bg-rose-500 text-white flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
+            <div className="relative" ref={notifRef}>
+              <button
+                type="button"
+                className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-white/5 relative"
+                onClick={() => setNotifOpen((v) => !v)}
+              >
+                <Bell size={16} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[10px] font-bold rounded-full bg-rose-500 text-white flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-2xl z-[100]">
+                  <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-200">Notifications</span>
+                    <button type="button" className="text-[11px] text-violet-300 hover:text-white" onClick={() => void markAllNotificationsRead()}>Mark all read</button>
+                  </div>
+                  {(notifications || []).length === 0 ? (
+                    <p className="p-4 text-xs text-zinc-500">No notifications</p>
+                  ) : (
+                    (notifications || []).slice(0, 30).map((n) => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2.5 border-b border-white/5 hover:bg-white/5"
+                        onClick={() => {
+                          void markNotificationRead(n.id);
+                          setNotifOpen(false);
+                        }}
+                      >
+                        <div className="text-xs font-medium text-zinc-100 truncate">{n.title || n.body || 'Notification'}</div>
+                        {n.body && <div className="text-[11px] text-zinc-400 line-clamp-2 mt-0.5">{n.body}</div>}
+                      </button>
+                    ))
+                  )}
+                  {(notifications || []).length > 0 && (
+                    <button type="button" className="w-full py-2 text-[11px] text-rose-300 hover:bg-white/5" onClick={() => void deleteAllNotifications()}>Clear all</button>
+                  )}
+                </div>
               )}
-            </button>
+            </div>
             {currentAgent && <AgentAvatar agent={currentAgent} size={32} />}
           </div>
         </header>
@@ -217,6 +250,23 @@ function PortalShell() {
   );
 }
 
+/** Login without mounting full agent shell first. */
+function AgentOrLogin() {
+  const { user, loading: authLoading } = useAuth();
+  const [forceReady, setForceReady] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setForceReady(true), 2500);
+    return () => window.clearTimeout(t);
+  }, []);
+  if (!(forceReady || !authLoading)) {
+    return <BootLoader label="Loading…" />;
+  }
+  if (!user) {
+    return <LoginPage />;
+  }
+  return <AgentShell />;
+}
+
 export function Root() {
   const [mode, setMode] = useState(() => getModeFromHash());
   useEffect(() => {
@@ -225,32 +275,24 @@ export function Root() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  const goLogin = () => {
+    try {
+      localStorage.setItem('nexus-site-404-on', '0');
+      localStorage.removeItem('nexus-site-404-on');
+    } catch { /* ignore */ }
+    window.location.hash = '';
+    window.location.reload();
+  };
+
   return (
     <TicketProvider>
       <PlatformProvider>
         {mode === 'portal' ? (
           <PortalShell />
         ) : mode === 'notfound' ? (
-          <NotFoundScreen
-            onGoHome={() => {
-              try {
-                localStorage.setItem('nexus-site-404-on', '0');
-                localStorage.removeItem('nexus-site-404-on');
-              } catch { /* ignore */ }
-              window.location.hash = '';
-              window.location.reload();
-            }}
-            onAdminSignIn={() => {
-              try {
-                localStorage.setItem('nexus-site-404-on', '0');
-                localStorage.removeItem('nexus-site-404-on');
-              } catch { /* ignore */ }
-              window.location.hash = '';
-              window.location.reload();
-            }}
-          />
+          <NotFoundScreen onGoHome={goLogin} onAdminSignIn={goLogin} />
         ) : (
-          <AgentShell />
+          <AgentOrLogin />
         )}
       </PlatformProvider>
     </TicketProvider>
