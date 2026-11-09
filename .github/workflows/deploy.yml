@@ -24,9 +24,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure portal + dialogs
+      - name: Restore + write fixed sources
         run: |
           set +e
+          if [ -f scripts/write_customer_portal.py ]; then python3 scripts/write_customer_portal.py; fi
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           echo "CustomerPortal bytes=$CP_SZ"
           if [ "$CP_SZ" -lt 50000 ]; then
@@ -40,6 +41,9 @@ jobs:
               fi
             done
           fi
+          for s in write_portal_livechat write_customers_page write_ticket_detail write_portal_community; do
+            if [ -f scripts/${s}.py ]; then python3 scripts/${s}.py; fi
+          done
           if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py; fi
           grep -q "appConfirm" src/components/CustomersPage.tsx && echo "OK dialogs" || echo "WARN no dialogs"
