@@ -4,7 +4,6 @@
 /* ROLE_RESOLVE_V2 */
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -68,7 +67,6 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
     return fromMeta;
   }
 
-  // 1) Admins always resolve as admin (sign in on Agent tab)
   try {
     const { data: prof } = await supabase
       .from('profiles')
@@ -77,7 +75,7 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
       .maybeSingle();
     if (prof?.is_admin || prof?.role === 'admin') return 'admin';
 
-    // 2) Presence in agents table wins over a mistaken profiles.customer flag
+    // Presence in agents table wins over a mistaken profiles.customer flag
     try {
       const { data: agentRow } = await supabase
         .from('agents')
@@ -94,7 +92,6 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
       /* agents table may not exist in all envs */
     }
 
-    // 3) Also match agents by email (legacy rows)
     try {
       const email = (user.email || '').toLowerCase();
       if (email) {
@@ -113,10 +110,12 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
     }
 
     if (prof?.role === 'agent' || prof?.role === 'customer') {
-      // If user is trying agent login and metadata says agent/admin, prefer that over stale customer profile
+      // Only override stale profiles.customer when metadata EXPLICITLY says agent/admin
       if (
         expectedRole === 'agent' &&
-        (fromMeta === 'agent' || fromMeta === 'admin' || String(meta.role || '') === 'agent')
+        prof.role === 'customer' &&
+        hasExplicitMeta &&
+        (fromMeta === 'agent' || fromMeta === 'admin')
       ) {
         return fromMeta === 'admin' ? 'admin' : 'agent';
       }
@@ -131,7 +130,7 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
 }
 
 async function assertApproved(user: User, role: AccountRole): Promise<void> {
-  if (!supabase || role === 'customer') return;
+  if (!supabase || role === 'customer') return return;
   try {
     const { data } = await supabase
       .from('profiles')
