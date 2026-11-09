@@ -1,37 +1,30 @@
 /** Shared sky traffic so the floating hero can notice flybys. */
+
 export type SkyCraft = {
   id: number;
-  x: number; // stage-relative px
+  x: number;
   y: number;
   dir: 'ltr' | 'rtl';
-  kind: 'ufo' | 'rocket';
+  kind: 'ufo' | 'rocket' | 'satellite';
   label?: string;
-};
+} | null;
 
-type Listener = (craft: SkyCraft | null) => void;
+let current: SkyCraft = null;
+const listeners = new Set<(c: SkyCraft) => void>();
 
-let current: SkyCraft | null = null;
-const listeners = new Set<Listener>();
-
-export function publishSkyCraft(craft: SkyCraft | null) {
+export function publishSkyCraft(craft: SkyCraft) {
   current = craft;
-  listeners.forEach((fn) => {
-    try {
-      fn(craft);
-    } catch {
-      /* ignore */
-    }
-  });
+  listeners.forEach((fn) => fn(craft));
 }
 
-export function getSkyCraft() {
-  return current;
-}
-
-export function subscribeSkyCraft(fn: Listener) {
+export function subscribeSkyCraft(fn: (c: SkyCraft) => void) {
   listeners.add(fn);
   fn(current);
   return () => {
     listeners.delete(fn);
   };
+}
+
+export function getSkyCraft() {
+  return current;
 }
