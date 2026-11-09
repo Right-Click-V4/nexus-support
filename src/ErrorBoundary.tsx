@@ -35,9 +35,10 @@ export default class ErrorBoundary extends Component<Props, State> {
     clear404Lock();
     try {
       window.location.hash = '';
-      window.location.reload();
+      const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL || '/';
+      window.location.replace(base);
     } catch {
-      window.location.href = '/';
+      try { window.location.href = '/nexus-support/'; } catch { window.location.href = '/'; }
     }
   };
 

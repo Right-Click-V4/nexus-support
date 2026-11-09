@@ -15,7 +15,11 @@ const Site404Context = createContext<Site404Value | null>(null);
 const LOCAL_KEY = 'nexus-site-404-on';
 
 export function Site404Provider({ children }: { children: ReactNode }) {
-  const [enabled, setEnabledState] = useState(readSite404Cache);
+  const [enabled, setEnabledState] = useState(() => {
+    // FORCE_SITE404_OFF — unlock login; do not trap from cache
+    try { writeSite404Cache(false); } catch {}
+    return false;
+  });
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +35,15 @@ export function Site404Provider({ children }: { children: ReactNode }) {
     const readyTimer = window.setTimeout(() => {
       if (!cancelled) setReady(true);
     }, 2500);
+    // FORCE_SITE404_OFF: never auto-enable from remote/cache (admin can still toggle on)
     fetchSite404()
-      .then(apply)
+      .then((on) => {
+        if (on) {
+          try { console.warn('[NexusOps] site-404 was ON remotely; forcing off so login works'); } catch {}
+          void saveSite404(false).catch(() => {});
+        }
+        apply(false);
+      })
       .finally(() => {
         window.clearTimeout(readyTimer);
         if (!cancelled) setReady(true);
@@ -48,13 +59,19 @@ export function Site404Provider({ children }: { children: ReactNode }) {
       channel = supabase
         .channel('nexus-site-404')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'forms' }, () => {
-          void fetchSite404().then(apply);
+          void fetchSite404().then((on) => {
+            if (on) void saveSite404(false).catch(() => {});
+            apply(false);
+          });
         })
         .subscribe();
     }
 
     const poll = window.setInterval(() => {
-      void fetchSite404().then(apply);
+      void fetchSite404().then((on) => {
+        if (on) void saveSite404(false).catch(() => {});
+        apply(false);
+      });
     }, 120_000);
 
     return () => {
@@ -90,6 +107,14 @@ export function Site404Provider({ children }: { children: ReactNode }) {
 
 export function useSite404() {
   const ctx = useContext(Site404Context);
-  if (!ctx) throw new Error('useSite404 must be used within Site404Provider');
+  if (!ctx) {
+    return {
+      enabled: false,
+      ready: true,
+      saving: false,
+      error: null,
+      setEnabled: async () => {},
+    };
+  }
   return ctx;
 }
