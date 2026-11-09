@@ -1,75 +1,54 @@
 /* auth-profile-update-v1 */
 /* login-speed-auth-v1 */
 /* supabase-paused-hint-v1 */
-/* force-offline-scope-v1 */
-/* auth-boot-timeout-v1 */
-/* presence-force-offline-v1 */
-/* session-boot-order-v1 */
-/* portal-customer-role-v1 */
+/* ROLE_RESOLVE_V2 */
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured, getSupabaseConfigError } from '../lib/supabase';
-import {
-  startTabSession,
-  detectNewBrowserSession,
-  markTabSessionLive,
-  clearSupabaseAuthStorage,
-} from '../lib/tabSession';
+import { getSupabaseConfigError, isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export type AccountRole = 'agent' | 'customer' | 'admin';
 
-interface AuthContextValue {
+type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
   authBusy: boolean;
-  requiresAuth: boolean;
-  configError: string | null;
   accountRole: AccountRole;
+  configError: string | null;
   signIn: (email: string, password: string, expectedRole?: 'agent' | 'customer') => Promise<void>;
-  signUp: (
-    email: string,
-    password: string,
-    fullName?: string,
-    role?: 'agent' | 'customer'
-  ) => Promise<void>;
+  signUp: (email: string, password: string, name?: string, role?: 'agent' | 'customer') => Promise<void>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updateProfile: (data: {
-    nickname?: string;
-    phone?: string;
-    job_title?: string;
-    avatar_url?: string | null;
-  }) => Promise<void>;
-  updatePassword: (newPassword: string) => Promise<void>;
-  updateEmail: (newEmail: string) => Promise<void>;
-}
+  resetPassword?: (email: string) => Promise<void>;
+  updateProfile?: (data: Record<string, unknown>) => Promise<void>;
+  updatePassword?: (password: string) => Promise<void>;
+  updateEmail?: (email: string) => Promise<void>;
+};
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function friendlyAuthError(err: unknown): Error {
-  if (!(err instanceof Error)) return new Error('Authentication failed');
-  const msg = err.message || '';
-  const lower = msg.toLowerCase();
-  if (
-    lower.includes('failed to fetch') ||
-    lower.includes('networkerror') ||
-    lower.includes('load failed') ||
-    lower.includes('err_name_not_resolved')
-  ) {
-    return new Error(
-      'Cannot reach Supabase (Failed to fetch). Most common cause: the Supabase project is PAUSED. ' +
-        'Open supabase.com/dashboard, open project gcpmmbiarqracxfskirp, click Restore. ' +
-        'Also allow *.supabase.co in the browser if an ad-blocker is on.'
-    );
+function friendlyAuthError(error: { message?: string; status?: number }): Error {
+  const msg = (error.message || '').toLowerCase();
+  if (msg.includes('invalid login') || msg.includes('invalid credentials')) {
+    return new Error('Incorrect email or password.');
   }
-  return err;
+  if (msg.includes('email not confirmed')) {
+    return new Error('Please confirm your email before signing in.');
+  }
+  if (msg.includes('rate limit') || msg.includes('too many')) {
+    return new Error('Too many attempts. Please wait a moment and try again.');
+  }
+  if (msg.includes('paused') || msg.includes('project is paused')) {
+    return new Error('The database project is paused. Resume it in the Supabase dashboard, then try again.');
+  }
+  return new Error(error.message || 'Authentication failed');
 }
 
 function roleFromMetadata(user: User): AccountRole {
@@ -80,6 +59,7 @@ function roleFromMetadata(user: User): AccountRole {
 }
 
 async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Promise<AccountRole> {
+  // ROLE_RESOLVE_V2 — agents/admins must not be forced into customer by a stale profiles.role
   const meta = (user.user_metadata || {}) as Record<string, unknown>;
   const hasExplicitMeta = !!(meta.role || meta.account_role);
   const fromMeta = roleFromMetadata(user);
@@ -87,19 +67,65 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
     if (!hasExplicitMeta && expectedRole) return expectedRole;
     return fromMeta;
   }
+
+  // 1) Admins always resolve as admin (sign in on Agent tab)
   try {
-    const { data } = await supabase
+    const { data: prof } = await supabase
       .from('profiles')
       .select('role, is_admin')
       .eq('id', user.id)
       .maybeSingle();
-    if (data?.is_admin) return 'admin';
-    if (data?.role === 'customer' || data?.role === 'agent' || data?.role === 'admin') {
-      return data.role as AccountRole;
+    if (prof?.is_admin || prof?.role === 'admin') return 'admin';
+
+    // 2) Presence in agents table wins over a mistaken profiles.customer flag
+    try {
+      const { data: agentRow } = await supabase
+        .from('agents')
+        .select('id, role, is_admin')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (agentRow) {
+        if ((agentRow as { is_admin?: boolean }).is_admin) return 'admin';
+        const ar = String((agentRow as { role?: string }).role || 'agent');
+        if (ar === 'admin') return 'admin';
+        return 'agent';
+      }
+    } catch {
+      /* agents table may not exist in all envs */
+    }
+
+    // 3) Also match agents by email (legacy rows)
+    try {
+      const email = (user.email || '').toLowerCase();
+      if (email) {
+        const { data: byEmail } = await supabase
+          .from('agents')
+          .select('id, role, is_admin')
+          .eq('email', email)
+          .maybeSingle();
+        if (byEmail) {
+          if ((byEmail as { is_admin?: boolean }).is_admin) return 'admin';
+          return 'agent';
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    if (prof?.role === 'agent' || prof?.role === 'customer') {
+      // If user is trying agent login and metadata says agent/admin, prefer that over stale customer profile
+      if (
+        expectedRole === 'agent' &&
+        (fromMeta === 'agent' || fromMeta === 'admin' || String(meta.role || '') === 'agent')
+      ) {
+        return fromMeta === 'admin' ? 'admin' : 'agent';
+      }
+      return prof.role as AccountRole;
     }
   } catch {
     /* fall through */
   }
+
   if (!hasExplicitMeta && expectedRole) return expectedRole;
   return fromMeta;
 }
@@ -133,136 +159,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T | null> =>
     Promise.race([
-      p.then((v) => v as T | null).catch(() => null),
-      new Promise<null>((resolve) => window.setTimeout(() => resolve(null), ms)),
+      p.then((v) => v as T | null),
+      new Promise<null>((r) => window.setTimeout(() => r(null), ms)),
     ]);
-
-  const forceAgentOffline = async () => {
-    try {
-      const id = localStorage.getItem('nexus-presence-agent-id');
-      if (!id || !supabase) return;
-      await withTimeout(
-        supabase.from('agents').update({ status: 'offline', last_seen_at: null }).eq('id', id).then(() => null),
-        2000,
-      );
-      localStorage.removeItem('nexus-presence-agent-id');
-    } catch {
-      /* ignore */
-    }
-  };
 
   useEffect(() => {
     if (!supabase) {
-      try {
-        if (localStorage.getItem('nexus-demo-session') === '1') {
-          const demoUser = {
-            id: 'demo-agent',
-            email: 'demo@nexus.local',
-            user_metadata: { role: 'agent', full_name: 'Demo Agent' },
-            app_metadata: {},
-            aud: 'authenticated',
-            created_at: '',
-          } as unknown as User;
-          setUser(demoUser);
-          setSession(null);
-          setAccountRole('agent');
-        }
-      } catch {
-        /* ignore */
-      }
       setLoading(false);
       return;
     }
-    let cancelled = false;
-
-    const applySession = async (next: Session | null) => {
-      if (cancelled) return;
+    let alive = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!alive) return;
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        if (data.session?.user) {
+          const role = await withTimeout(resolveRole(data.session.user), 2500);
+          if (alive && role) setAccountRole(role);
+        }
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
       setUser(next?.user ?? null);
       if (next?.user) {
-        setAccountRole(roleFromMetadata(next.user));
-        try {
-          const role = await resolveRole(next.user);
-          if (!cancelled) setAccountRole(role);
-        } catch {
-          /* keep metadata */
-        }
+        void resolveRole(next.user).then((role) => setAccountRole(role));
       } else {
         setAccountRole('agent');
       }
-      if (!cancelled) setLoading(false);
-    };
-
-    let tabCtl: { tabId: string; stop: () => void } | null = null;
-    let suppressAuthEvents = false;
-
-    const boot = async () => {
-      try {
-        const isNewSession = await detectNewBrowserSession();
-        if (isNewSession) {
-          suppressAuthEvents = true;
-          await forceAgentOffline();
-          clearSupabaseAuthStorage();
-          try {
-            await withTimeout(supabase.auth.signOut({ scope: 'local' }), 2000);
-          } catch {
-            /* ignore */
-          }
-          clearSupabaseAuthStorage();
-          if (!cancelled) {
-            setSession(null);
-            setUser(null);
-            setLoading(false);
-          }
-          tabCtl = startTabSession();
-          window.setTimeout(() => {
-            suppressAuthEvents = false;
-          }, 1500);
-          return;
-        }
-        tabCtl = startTabSession();
-        markTabSessionLive();
-        let sess = null;
-        try {
-          const result = await withTimeout(supabase.auth.getSession(), 2500);
-          if (result && typeof result === 'object' && result !== null && 'data' in result) {
-            sess = (result as { data: { session: Session | null } }).data?.session ?? null;
-          }
-        } catch {
-          /* ignore */
-        }
-        await applySession(sess);
-      } catch {
-        if (!cancelled) {
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-        }
-        if (!tabCtl) tabCtl = startTabSession();
-      }
-    };
-    void boot();
-    window.setTimeout(() => {
-      if (!cancelled) setLoading(false);
-    }, 4000);
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, next) => {
-      if (suppressAuthEvents) {
-        if (next) {
-          void supabase.auth.signOut({ scope: 'local' });
-          clearSupabaseAuthStorage();
-        }
-        return;
-      }
-      void applySession(next);
     });
-
     return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-      tabCtl?.stop();
+      alive = false;
+      sub.subscription.unsubscribe();
     };
   }, []);
 
@@ -317,6 +249,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           /* non-fatal */
         }
       }
+      // Heal stale profiles.customer when this is clearly an agent/admin sign-in
+      if (expectedRole === 'agent' && (role === 'agent' || role === 'admin')) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            role: role === 'admin' ? 'admin' : 'agent',
+            email: data.user.email,
+          });
+        } catch {
+          /* non-fatal */
+        }
+      }
       setAccountRole(role);
       setUser(data.user);
       setSession(data.session);
@@ -328,7 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (
     email: string,
     password: string,
-    fullName?: string,
+    name?: string,
     role: 'agent' | 'customer' = 'customer'
   ) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
@@ -337,12 +281,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { full_name: fullName || '', role } },
+        options: {
+          data: {
+            full_name: name || '',
+            role,
+            account_role: role,
+          },
+        },
       });
       if (error) throw friendlyAuthError(error);
-      if (data.session) {
-        await supabase.auth.signOut();
+      if (data.user) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            role,
+            email: data.user.email,
+            full_name: name || '',
+            status: role === 'agent' ? 'pending' : 'active',
+          });
+        } catch {
+          /* non-fatal */
+        }
       }
+      if (role === 'agent') {
+        throw new Error('Account created. An admin must approve your agent access before you can sign in.');
+      }
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const signOut = async () => {
+    if (!supabase) return;
+    setAuthBusy(true);
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
+      setAccountRole('agent');
     } finally {
       setAuthBusy(false);
     }
@@ -350,131 +326,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
-    const redirectTo =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}${window.location.pathname}`
-        : undefined;
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      email.trim(),
-      redirectTo ? { redirectTo } : undefined
-    );
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
     if (error) throw friendlyAuthError(error);
   };
 
-  const updateProfile = async (data: {
-    nickname?: string;
-    phone?: string;
-    job_title?: string;
-    avatar_url?: string | null;
-  }) => {
+  const updateProfile = async (data: Record<string, unknown>) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
-    const payload: Record<string, unknown> = {};
-    if (data.nickname !== undefined) payload.nickname = data.nickname;
-    if (data.phone !== undefined) payload.phone = data.phone;
-    if (data.job_title !== undefined) payload.job_title = data.job_title;
-    if (data.avatar_url !== undefined) payload.avatar_url = data.avatar_url;
-    const { data: res, error } = await supabase.auth.updateUser({ data: payload });
+    const { error } = await supabase.auth.updateUser({ data });
     if (error) throw friendlyAuthError(error);
-    if (res.user) setUser(res.user);
-    if (res.session) setSession(res.session);
+    const { data: sess } = await supabase.auth.getSession();
+    setUser(sess.session?.user ?? null);
+    setSession(sess.session);
   };
 
-  const updatePassword = async (newPassword: string) => {
+  const updatePassword = async (password: string) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
-    if (!newPassword || newPassword.length < 6) {
-      throw new Error('Password must be at least 6 characters');
-    }
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const { error } = await supabase.auth.updateUser({ password });
     if (error) throw friendlyAuthError(error);
   };
 
-  const updateEmail = async (newEmail: string) => {
+  const updateEmail = async (email: string) => {
     if (!supabase) throw new Error(configError || 'Supabase is not configured');
-    const email = (newEmail || '').trim().toLowerCase();
-    if (!email || !email.includes('@')) {
-      throw new Error('Enter a valid email address');
-    }
-    const { data: res, error } = await supabase.auth.updateUser({ email });
+    const { error } = await supabase.auth.updateUser({ email: email.trim() });
     if (error) throw friendlyAuthError(error);
-    if (res.user) setUser(res.user);
-    if (res.session) setSession(res.session);
   };
 
-  const signOut = async () => {
-    try {
-      localStorage.removeItem('nexus-live-tabs-v1');
-      localStorage.removeItem('nexus-live-tabs-v2');
-      localStorage.removeItem('nexus-live-tabs-v3');
-      localStorage.removeItem('nexus-last-tab-close-v1');
-      localStorage.removeItem('nexus-auth-closed-v1');
-      localStorage.removeItem('nexus-auth-last-beat-v1');
-      localStorage.removeItem('nexus-demo-session');
-      sessionStorage.removeItem('nexus-auth-live-v2');
-      sessionStorage.removeItem('nexus-auth-live-v3');
-    } catch {
-      /* ignore */
-    }
-    try {
-      await forceAgentOffline();
-    } catch {
-      /* ignore */
-    }
-    clearSupabaseAuthStorage();
-    try {
-      const kill: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (!k) continue;
-        if (k.startsWith('sb-') || k.toLowerCase().includes('supabase')) kill.push(k);
-      }
-      kill.forEach((k) => localStorage.removeItem(k));
-    } catch {
-      /* ignore */
-    }
-    setSession(null);
-    setUser(null);
-    setAccountRole('agent');
-    if (supabase) {
-      try {
-        await withTimeout(supabase.auth.signOut({ scope: 'local' }), 1500);
-      } catch {
-        /* ignore */
-      }
-      try {
-        await withTimeout(supabase.auth.signOut({ scope: 'global' }), 1500);
-      } catch {
-        /* ignore */
-      }
-    }
-    if (typeof window !== 'undefined') {
-      const portal = /portal/i.test(window.location.hash || '');
-      window.location.hash = portal ? 'portal' : '';
-      window.location.reload();
-    }
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        session,
-        user,
-        loading,
-        authBusy,
-        requiresAuth: isSupabaseConfigured,
-        configError,
-        accountRole,
-        signIn,
-        signUp,
-        signOut,
-        resetPassword,
-        updateProfile,
-        updatePassword,
-        updateEmail,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      session,
+      user,
+      loading,
+      authBusy,
+      accountRole,
+      configError,
+      signIn,
+      signUp,
+      signOut,
+      resetPassword,
+      updateProfile,
+      updatePassword,
+      updateEmail,
+    }),
+    [session, user, loading, authBusy, accountRole, configError]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
