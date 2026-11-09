@@ -1,4 +1,4 @@
-/* error-boundary-404-only-v2 */
+/* error-boundary-unlock-v3 */
 import { Component, type ReactNode } from 'react';
 import NotFoundScreen from './components/NotFoundScreen';
 
@@ -8,6 +8,13 @@ interface Props {
 
 interface State {
   error: Error | null;
+}
+
+function clear404Lock() {
+  try {
+    localStorage.setItem('nexus-site-404-on', '0');
+    localStorage.removeItem('nexus-site-404-on');
+  } catch { /* ignore */ }
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -20,13 +27,14 @@ export default class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error) {
     try {
       console.error('[NexusOps]', error);
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   private goLogin = () => {
     this.setState({ error: null });
+    clear404Lock();
     try {
-      window.location.hash = '#/';
+      window.location.hash = '';
       window.location.reload();
     } catch {
       window.location.href = '/';
@@ -35,7 +43,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
-      return <NotFoundScreen onGoHome={this.goLogin} />;
+      return <NotFoundScreen onGoHome={this.goLogin} onAdminSignIn={this.goLogin} />;
     }
     return this.props.children;
   }
