@@ -80,6 +80,7 @@ jobs:
           if [ -f scripts/patch_customer_branch.py ]; then python3 scripts/patch_customer_branch.py || true; fi
           if [ -f scripts/patch_branch_sync_login_ux.py ]; then python3 scripts/patch_branch_sync_login_ux.py || true; fi
           if [ -f scripts/patch_hold_preserve.py ]; then python3 scripts/patch_hold_preserve.py || true; fi
+          if [ -f scripts/patch_hold_nuclear.py ]; then python3 scripts/patch_hold_nuclear.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           CP_FINAL=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           LS_FINAL=$(wc -c < src/components/LoginScene.tsx 2>/dev/null || echo 0)
@@ -89,7 +90,7 @@ jobs:
           echo "CP=$CP_FINAL LS=$LS_FINAL APP=$APP_FINAL AC=$AC_FINAL UA=$UA_FINAL"
           grep -q "SYNC_CUSTOMER_BRANCH" src/context/AuthContext.tsx && echo "OK_BRANCH_SYNC" || echo "WARN_BRANCH_SYNC"
           grep -q "export default" src/components/UsersAdminPage.tsx && echo "OK_USERS" || echo "WARN_USERS"
-          grep -q "HOLD_PRESERVE_V1" src/context/PlatformContext.tsx && echo "OK_HOLD" || echo "WARN_HOLD"
+          grep -q "_held" src/context/PlatformContext.tsx && echo "OK_HOLD_NUCLEAR" || echo "WARN_HOLD_NUCLEAR"
           set -e
 
       - name: Setup Node
