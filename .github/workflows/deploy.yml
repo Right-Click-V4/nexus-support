@@ -33,16 +33,14 @@ jobs:
             echo "Restoring CustomerPortal from $GOOD (was $CP_SZ bytes)"
             git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx
           fi
-          # Safe patches (never break imports)
           if [ -f scripts/patch_send_optimistic.py ]; then python3 scripts/patch_send_optimistic.py || true; fi
+          if [ -f scripts/patch_dialogs_wire.py ]; then python3 scripts/patch_dialogs_wire.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
           if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
           if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
           if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
-          # signout patch only if Sidebar missing the fix marker
           if [ -f scripts/patch_signout_confirm.py ]; then python3 scripts/patch_signout_confirm.py || true; fi
-          # Final safety: ensure every useState has an import
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000
           test -f src/SystemApp.tsx
