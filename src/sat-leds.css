@@ -1,5 +1,12 @@
+/* no glow/shadow on satellite flybys */
+.login-flyby-craft:has(.login-sat-svg) {
+  filter: none !important;
+}
+.login-sat-svg {
+  filter: none !important;
+}
+
 /* Satellite status LEDs — staggered blink like real spacecraft */
-.login-sat-svg { filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.35)); }
 .login-sat-led { transform-box: fill-box; transform-origin: center; }
 .login-sat-led-green { animation: login-sat-blink-green 1.4s ease-in-out infinite; }
 .login-sat-led-amber { animation: login-sat-blink-amber 1.8s ease-in-out infinite 0.35s; }

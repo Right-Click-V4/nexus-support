@@ -31,10 +31,9 @@ function LetterX({ size, color }: { size: number; color: string }) {
       aria-hidden
       style={{
         display: 'inline-block',
-        // Optical center with capital letters (slight lift, not drop)
-        verticalAlign: 'middle',
+        verticalAlign: '-0.05em',
         position: 'relative',
-        top: '-0.02em',
+        top: '0.06em',
         margin: '0 -0.02em',
       }}
     >
