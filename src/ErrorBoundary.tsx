@@ -1,4 +1,4 @@
-/* error-boundary-unlock-v3 */
+/* error-boundary-unlock-v4 */
 import { Component, type ReactNode } from 'react';
 import NotFoundScreen from './components/NotFoundScreen';
 
@@ -44,7 +44,15 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
-      return <NotFoundScreen onGoHome={this.goLogin} onAdminSignIn={this.goLogin} />;
+      const msg = this.state.error?.message || String(this.state.error);
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#0a0618] px-4">
+          <NotFoundScreen onGoHome={this.goLogin} onAdminSignIn={this.goLogin} />
+          <pre className="max-w-xl w-full text-left text-[11px] text-rose-300/90 bg-black/40 border border-rose-500/30 rounded-xl p-3 overflow-auto whitespace-pre-wrap">
+            {msg}
+          </pre>
+        </div>
+      );
     }
     return this.props.children;
   }
