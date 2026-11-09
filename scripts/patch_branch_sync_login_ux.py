@@ -1,6 +1,5 @@
 """Sync customer branch to customers table; calm flybys; better hero escort; login card polish."""
 from pathlib import Path
-import re
 
 auth = Path('src/context/AuthContext.tsx')
 if auth.exists():
@@ -106,44 +105,45 @@ else:
 fly = Path('src/components/LoginFlybys.tsx')
 if fly.exists():
     s = fly.read_text()
+    broken = """      timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);"""
+    fixed = """      timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);
+    };
+
+    timer = setTimeout(schedule, 3500 + Math.random() * 2500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);"""
+    if broken in s:
+        s = s.replace(broken, fixed, 1)
+        print('repaired broken schedule')
     if 'FLYBY_CALM_V2' not in s:
-        s2 = re.sub(
-            r'const schedule = \(\) => \{.*?\n    timer = setTimeout\(schedule, [^\n]+\);',
-            '''const schedule = () => {
-      // FLYBY_CALM_V2 — one craft at a time, sparse
-      if (cancelled) return;
-      const id = ++idRef.current;
-      const roll = Math.random();
-      const kind = (roll < 0.2 ? 'satellite' : roll < 0.48 ? 'ufo' : 'rocket') as FlybyKind;
-      const variant =
-        kind === 'ufo' ? (Math.random() < 0.55 ? 0 : 1)
-        : kind === 'satellite' ? 0
-        : Math.floor(Math.random() * ROCKETS.length);
-      const top = 12 + Math.random() * 28;
-      const duration = kind === 'satellite' ? 28 + Math.random() * 8 : 20 + Math.random() * 8;
-      const dir: 'ltr' | 'rtl' = Math.random() < 0.5 ? 'ltr' : 'rtl';
-      const chat =
-        kind !== 'satellite' && Math.random() < 0.15
-          ? CHATS[Math.floor(Math.random() * CHATS.length)]
-          : undefined;
-      setFlybys([{ id, kind, variant, top, duration, dir, chat }]);
-      const gaps = [16, 20, 24, 28, 34];
-      timer = setTimeout(schedule, gaps[Math.floor(Math.random() * gaps.length)] * 1000);''',
-            s,
-            count=1,
-            flags=re.S,
+        s = s.replace('setFlybys((prev) => [...prev.slice(-2),', 'setFlybys((prev) => [ /* FLYBY_CALM_V2 */ ')
+        s = s.replace('setFlybys((prev) => [...prev.slice(-1),', 'setFlybys((prev) => [ /* FLYBY_CALM_V2 */ ')
+        for old_g, new_g in [
+            ('const gaps = [12, 16, 20, 26, 32];', 'const gaps = [18, 22, 28, 34, 40]; // FLYBY_CALM_V2'),
+            ('const gaps = [10,11,12,13,14,15];', 'const gaps = [18, 22, 28, 34, 40]; // FLYBY_CALM_V2'),
+            ('const gaps = [16, 22, 28, 34, 42];', 'const gaps = [18, 22, 28, 34, 40]; // FLYBY_CALM_V2'),
+        ]:
+            if old_g in s:
+                s = s.replace(old_g, new_g, 1)
+                break
+        s = s.replace(
+            'timer = setTimeout(schedule, 1200 + Math.random() * 1000);',
+            'timer = setTimeout(schedule, 3500 + Math.random() * 2500);',
         )
-        if s2 != s:
-            s = s2
-            print('flyby schedule calm')
-        else:
-            s = s.replace('setFlybys((prev) => [...prev.slice(-2),', 'setFlybys((prev) => [')
-            s = s.replace('const gaps = [12, 16, 20, 26, 32];', 'const gaps = [18, 22, 28, 34, 40]; // FLYBY_CALM_V2')
-            s = s.replace('timer = setTimeout(schedule, 1200 + Math.random() * 1000);', 'timer = setTimeout(schedule, 3500 + Math.random() * 2500);')
-            print('flyby gaps soft')
-        fly.write_text(s)
-    else:
-        print('fly already')
+        s = s.replace(
+            'timer = setTimeout(schedule, 2200 + Math.random() * 1800);',
+            'timer = setTimeout(schedule, 3500 + Math.random() * 2500);',
+        )
+        print('flyby calm soft')
+    fly.write_text(s)
 else:
     print('fly missing')
 
