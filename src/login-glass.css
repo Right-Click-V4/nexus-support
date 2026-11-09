@@ -1,4 +1,4 @@
-/* login-glass-v5: subtler trail, transparent card, tabs, full-pass flybys, pilot chat, screen-fit */
+/* login-glass-v6: richer card, submit shine, denser polish */
 .login-cosmos-sky {
   background:
     radial-gradient(ellipse 120% 80% at 50% -10%, rgba(139, 92, 246, 0.35) 0%, transparent 55%),
@@ -191,11 +191,15 @@
 
 .login-glass-card {
   position: relative; z-index: 30 !important;
-  background: linear-gradient(160deg, rgba(28, 14, 55, 0.28) 0%, rgba(18, 8, 40, 0.32) 100%) !important;
-  border: 1px solid rgba(196, 181, 253, 0.22) !important;
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.08), 0 20px 40px -14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(18px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.2) !important;
+  background: linear-gradient(165deg, rgba(36, 18, 72, 0.62) 0%, rgba(22, 10, 48, 0.72) 55%, rgba(16, 8, 36, 0.78) 100%) !important;
+  border: 1px solid rgba(196, 181, 253, 0.32) !important;
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.14),
+    0 28px 56px -14px rgba(0, 0, 0, 0.55),
+    0 0 40px -10px rgba(139, 92, 246, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(22px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.35) !important;
   animation: login-card-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -238,7 +242,15 @@
   border: 1px solid rgba(233, 213, 255, 0.5);
   box-shadow: 0 0 18px rgba(139, 92, 246, 0.55), inset 0 0 10px rgba(255,255,255,0.08);
 }
-.login-hero-title { background: linear-gradient(180deg, #ffffff 30%, #e9d5ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.login-hero-title {
+  /* login-hero-title-restored */
+  background: linear-gradient(180deg, #ffffff 20%, #f5e9ff 55%, #d8b4fe 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.02em;
+  font-weight: 650;
+}
 
 .login-flybys {
   position: absolute !important;
@@ -369,6 +381,65 @@
   .login-screen-fit .login-status-pill { display: none; }
 }
 
+/* Sign-in shine (restored) */
+.login-submit-btn {
+  position: relative !important;
+  overflow: hidden !important;
+  background-image: linear-gradient(90deg, #7c3aed 0%, #c026d3 40%, #a855f7 60%, #7c3aed 100%) !important;
+  background-size: 200% 100% !important;
+  background-position: 0% 50% !important;
+  border: none !important;
+  box-shadow: 0 8px 28px -6px rgba(168, 85, 247, 0.55), 0 0 0 1px rgba(233, 213, 255, 0.12) inset !important;
+  transition: filter 0.2s, transform 0.15s, box-shadow 0.2s !important;
+  animation: login-submit-shine 2.8s ease-in-out infinite !important;
+}
+.login-submit-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-18deg);
+  animation: login-submit-sheen 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.login-submit-btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px -6px rgba(192, 38, 211, 0.6), 0 0 0 1px rgba(233, 213, 255, 0.18) inset !important;
+}
+.login-submit-btn:disabled {
+  animation: none !important;
+  opacity: 0.6;
+}
+@keyframes login-submit-shine {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes login-submit-sheen {
+  0% { left: -40%; opacity: 0; }
+  15% { opacity: 1; }
+  45% { left: 110%; opacity: 0.9; }
+  100% { left: 110%; opacity: 0; }
+}
+
+.login-glass-input {
+  background: rgba(12, 6, 28, 0.72) !important;
+  border: 1px solid rgba(139, 92, 246, 0.32) !important;
+  color: #f5f3ff !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.login-glass-input::placeholder {
+  color: rgba(196, 181, 253, 0.45) !important;
+}
+.login-glass-input:focus {
+  border-color: rgba(192, 132, 252, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.22) !important;
+  outline: none !important;
+}
+
 /* UFO animations */
 .login-ufo-eye { transform-box: fill-box; transform-origin: center; animation: login-ufo-blink 3.8s ease-in-out infinite; }
 .login-ufo-pupil { transform-box: fill-box; transform-origin: center; animation: login-ufo-pupil-shift 4.2s ease-in-out infinite; }
@@ -395,4 +466,5 @@
   .login-space-portal-ring-b,
   .login-space-portal-core { animation: none !important; }
   .login-ship-flame-core, .login-ship-flame-mid, .login-ship-flame-hot { animation: none !important; }
+  .login-submit-btn, .login-submit-btn::after { animation: none !important; }
 }
