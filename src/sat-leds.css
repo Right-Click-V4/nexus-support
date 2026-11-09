@@ -1,0 +1,16 @@
+/* Satellite status LEDs — staggered blink like real spacecraft */
+.login-sat-svg { filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.35)); }
+.login-sat-led { transform-box: fill-box; transform-origin: center; }
+.login-sat-led-green { animation: login-sat-blink-green 1.4s ease-in-out infinite; }
+.login-sat-led-amber { animation: login-sat-blink-amber 1.8s ease-in-out infinite 0.35s; }
+.login-sat-led-red { animation: login-sat-blink-red 2.2s ease-in-out infinite 0.7s; }
+.login-sat-led-cyan { animation: login-sat-blink-cyan 1.1s ease-in-out infinite 0.15s; }
+@keyframes login-sat-blink-green { 0%, 100% { opacity: 0.35; } 40%, 55% { opacity: 1; } }
+@keyframes login-sat-blink-amber { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes login-sat-blink-red { 0%, 70%, 100% { opacity: 0.2; } 75%, 85% { opacity: 1; } }
+@keyframes login-sat-blink-cyan { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .login-sat-led-green, .login-sat-led-amber, .login-sat-led-red, .login-sat-led-cyan {
+    animation: none !important; opacity: 0.85;
+  }
+}
