@@ -75,7 +75,6 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
       .maybeSingle();
     if (prof?.is_admin || prof?.role === 'admin') return 'admin';
 
-    // Presence in agents table wins over a mistaken profiles.customer flag
     try {
       const { data: agentRow } = await supabase
         .from('agents')
@@ -110,7 +109,6 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
     }
 
     if (prof?.role === 'agent' || prof?.role === 'customer') {
-      // Only override stale profiles.customer when metadata EXPLICITLY says agent/admin
       if (
         expectedRole === 'agent' &&
         prof.role === 'customer' &&
@@ -130,7 +128,7 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
 }
 
 async function assertApproved(user: User, role: AccountRole): Promise<void> {
-  if (!supabase || role === 'customer') return return;
+  if (!supabase || role === 'customer') return;
   try {
     const { data } = await supabase
       .from('profiles')
@@ -248,7 +246,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           /* non-fatal */
         }
       }
-      // Heal stale profiles.customer when this is clearly an agent/admin sign-in
       if (expectedRole === 'agent' && (role === 'agent' || role === 'admin')) {
         try {
           await supabase.from('profiles').upsert({
