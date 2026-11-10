@@ -66,8 +66,8 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
   return (
     <div className="login-screen-fit relative min-h-screen w-full overflow-hidden text-violet-50">
       <CosmicFallBackground />
-      <div className="relative z-10 flex min-h-[100dvh] w-full items-center justify-between gap-8 px-8 sm:px-10 xl:px-14 2xl:px-20">
-        <div className="hidden lg:flex flex-col justify-center shrink-0 py-10 max-w-[340px] xl:max-w-[380px]">
+      <div className="relative z-10 flex min-h-[100dvh] w-full items-center justify-between gap-10 px-12 sm:px-16 xl:px-24 2xl:px-32">
+        <div className="hidden lg:flex flex-col justify-center shrink-0 py-10 pl-2 xl:pl-4 max-w-[340px] xl:max-w-[380px]">
           <div className="flex items-center gap-2.5 mb-5">
             <div className="login-brand-badge">
               <NexusLogoMark size={22} />
@@ -123,7 +123,7 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center lg:justify-end py-8 min-w-0">
+        <div className="flex flex-1 items-center justify-center lg:justify-end py-8 min-w-0 pr-2 xl:pr-6">
           {mode === 'signin' ? (
             <form
               onSubmit={onSubmit}
