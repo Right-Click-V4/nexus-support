@@ -75,38 +75,49 @@ jobs:
             echo "AnnouncementsPage after restore bytes=$(wc -c < src/components/AnnouncementsPage.tsx)"
           fi
 
+          if [ -f scripts/patch_chat_customer_rt.py ]; then python3 scripts/patch_chat_customer_rt.py || true; fi
+          if [ -f scripts/patch_customer_chat_identity.py ]; then python3 scripts/patch_customer_chat_identity.py || true; fi
+          if [ -f scripts/patch_customer_branch.py ]; then python3 scripts/patch_customer_branch.py || true; fi
+          if [ -f scripts/patch_branch_sync_login_ux.py ]; then python3 scripts/patch_branch_sync_login_ux.py || true; fi
+          if [ -f scripts/patch_hold_preserve.py ]; then python3 scripts/patch_hold_preserve.py || true; fi
+          if [ -f scripts/patch_hold_nuclear.py ]; then python3 scripts/patch_hold_nuclear.py || true; fi
+          if [ -f scripts/patch_portal_chat_ui.py ]; then python3 scripts/patch_portal_chat_ui.py || true; fi
+          if [ -f scripts/patch_claim_chat.py ]; then python3 scripts/patch_claim_chat.py || true; fi
+          if [ -f scripts/patch_claim_forgot_customers.py ]; then python3 scripts/patch_claim_forgot_customers.py || true; fi
+          if [ -f scripts/patch_forgot_password.py ]; then python3 scripts/patch_forgot_password.py || true; fi
+          if [ -f scripts/patch_customer_route.py ]; then python3 scripts/patch_customer_route.py || true; fi
+          if [ -f scripts/patch_assist_chat.py ]; then python3 scripts/patch_assist_chat.py || true; fi
+          if [ -f scripts/patch_assist_dedupe.py ]; then python3 scripts/patch_assist_dedupe.py || true; fi
           if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
           if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
           if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
           if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
-          if [ -f scripts/patch_chat_sync.py ]; then python3 scripts/patch_chat_sync.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py || true; fi
           if [ -f scripts/densify_stars.py ]; then python3 scripts/densify_stars.py || true; fi
-          if [ -f scripts/patch_livechat_assist.py ]; then python3 scripts/patch_livechat_assist.py || true; fi
-          if [ -f scripts/dedupe_claim_chat.py ]; then python3 scripts/dedupe_claim_chat.py || true; fi
+          grep -q "requestAssist\|Request to Assist" src/context/PlatformContext.tsx src/components/LiveChatPage.tsx && echo "OK_ASSIST" || echo "WARN_ASSIST"
+          grep -q "claimChat" src/context/PlatformContext.tsx && echo "OK_CLAIM" || echo "WARN_CLAIM"
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo "OK_PORTAL" || echo "WARN_PORTAL"
+          set -e
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: 20
-          cache: npm
+          node-version: '20'
 
-      - name: Install
-        run: npm ci
+      - name: Install dependencies
+        run: npm install
 
       - name: Build
         run: npm run build
         env:
+          GITHUB_ACTIONS: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
