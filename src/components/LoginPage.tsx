@@ -1,4 +1,4 @@
-/* login layout: spread columns for LogoPilot roaming space */
+/* login: autofill off, forgot password, signup placeholders */
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { markJustLoggedIn } from './PostLoginLoader';
@@ -24,8 +24,9 @@ const CUSTOMER_CAPS = [
 ];
 
 export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenAgent }: Props) {
-  const { signIn, signUp, loading, error, clearError } = useAuth();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const { signIn, signUp, loading, error, clearError, resetPassword } = useAuth();
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [forgotSent, setForgotSent] = useState(false);
   const [role, setRole] = useState<'customer' | 'agent'>(audience === 'agent' ? 'agent' : 'customer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -174,7 +175,13 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="username"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  name="nexus-email"
+                  readOnly
+                  onFocus={(e) => e.currentTarget.removeAttribute('readOnly')}
                 />
               </div>
               <div>
@@ -185,9 +192,13 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                     required
                     minLength={6}
                     className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none pr-14"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
+                    autoComplete="new-password"
+                    name="nexus-password"
+                    readOnly
+                    onFocus={(e) => e.currentTarget.removeAttribute('readOnly')}
                   />
                   <button
                     type="button"
@@ -216,6 +227,9 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   className="text-white font-semibold hover:underline"
                   onClick={() => {
                     setMode('signup');
+                    setPassword('');
+                    setConfirm('');
+                    setName('');
                     setLocalError(null);
                     clearError?.();
                   }}
@@ -223,7 +237,86 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   Create a customer account
                 </button>
               </p>
-              <p className="text-center text-xs text-violet-300/50">Forgot Password?</p>
+              <p className="text-center text-xs text-violet-300/50">
+                <button
+                  type="button"
+                  className="hover:text-violet-100 hover:underline"
+                  onClick={() => {
+                    setMode('forgot');
+                    setForgotSent(false);
+                    setLocalError(null);
+                    clearError?.();
+                  }}
+                >
+                  Forgot Password?
+                </button>
+              </p>
+            </form>
+          ) : mode === 'forgot' ? (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setLocalError(null);
+                clearError?.();
+                if (!email.trim()) {
+                  setLocalError('Enter your email to reset password');
+                  return;
+                }
+                try {
+                  await resetPassword?.(email.trim());
+                  setForgotSent(true);
+                } catch (err: any) {
+                  setLocalError(err?.message || 'Could not send reset email');
+                }
+              }}
+              className="login-glass-card w-full max-w-[360px] sm:max-w-[380px] rounded-[22px] px-6 py-7 space-y-4"
+              autoComplete="off"
+            >
+              <div className="flex flex-col items-center gap-2 mb-1">
+                <div className="login-card-logo">
+                  <NexusLogoMark size={28} />
+                </div>
+                <div className="text-center">
+                  <NexusWordmark className="text-xl font-semibold text-white" />
+                  <p className="text-xs text-violet-200/70 mt-0.5">Reset your password</p>
+                </div>
+              </div>
+              {forgotSent ? (
+                <p className="text-sm text-emerald-300/90 text-center leading-relaxed">
+                  If an account exists for that email, a reset link has been sent. Check your inbox.
+                </p>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-fuchsia-100/90 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                      placeholder="you@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="off"
+                      name="nexus-forgot-email"
+                      readOnly
+                      onFocus={(e) => e.currentTarget.removeAttribute('readOnly')}
+                    />
+                  </div>
+                  {err && <p className="text-sm text-rose-300">{err}</p>}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="login-submit-btn w-full rounded-xl text-white font-semibold text-sm py-2.5 disabled:opacity-60"
+                  >
+                    {loading ? 'Sending…' : 'Send reset link'}
+                  </button>
+                </>
+              )}
+              <p className="text-center text-xs text-violet-200/70 pt-1">
+                <button type="button" onClick={() => { setMode('signin'); setForgotSent(false); }} className="text-white font-semibold hover:underline">
+                  Back to sign in
+                </button>
+              </p>
             </form>
           ) : (
             <form
@@ -245,8 +338,13 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                 <input
                   required
                   className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                  placeholder="Your full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete="off"
+                  name="nexus-fullname"
+                  readOnly
+                  onFocus={(e) => e.currentTarget.removeAttribute('readOnly')}
                 />
               </div>
               <div>
@@ -255,9 +353,16 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   type="email"
                   required
                   className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                  placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="username"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  name="nexus-signup-email"
+                  readOnly
+                  onFocus={(e) => e.currentTarget.removeAttribute('readOnly')}
                 />
               </div>
               <div>
@@ -267,9 +372,13 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   required
                   minLength={6}
                   className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                  placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
+                  name="nexus-signup-password"
+                  readOnly
+                  onFocus={(e) => e.currentTarget.removeAttribute('readOnly')}
                 />
               </div>
               <div>
@@ -279,9 +388,13 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
                   required
                   minLength={6}
                   className="login-glass-input w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+                  placeholder="Re-enter password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   autoComplete="new-password"
+                  name="nexus-signup-confirm"
+                  readOnly
+                  onFocus={(e) => e.currentTarget.removeAttribute('readOnly')}
                 />
               </div>
               {err && <p className="text-sm text-rose-300">{err}</p>}
