@@ -85,6 +85,7 @@ jobs:
           if [ -f scripts/patch_forgot_password.py ]; then python3 scripts/patch_forgot_password.py || true; fi
           if [ -f scripts/patch_customer_route.py ]; then python3 scripts/patch_customer_route.py || true; fi
           if [ -f scripts/patch_assist_chat.py ]; then python3 scripts/patch_assist_chat.py || true; fi
+          if [ -f scripts/patch_assist_dedupe.py ]; then python3 scripts/patch_assist_dedupe.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           grep -q "requestAssist\|Request to Assist" src/context/PlatformContext.tsx src/components/LiveChatPage.tsx && echo "OK_ASSIST" || echo "WARN_ASSIST"
           grep -q "claimChat" src/context/PlatformContext.tsx && echo "OK_CLAIM" || echo "WARN_CLAIM"
