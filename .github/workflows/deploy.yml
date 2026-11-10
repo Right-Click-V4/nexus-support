@@ -73,9 +73,11 @@ jobs:
           if [ -f scripts/patch_hold_nuclear.py ]; then python3 scripts/patch_hold_nuclear.py || true; fi
           if [ -f scripts/patch_portal_chat_ui.py ]; then python3 scripts/patch_portal_chat_ui.py || true; fi
           if [ -f scripts/patch_claim_chat.py ]; then python3 scripts/patch_claim_chat.py || true; fi
+          if [ -f scripts/patch_claim_forgot_customers.py ]; then python3 scripts/patch_claim_forgot_customers.py || true; fi
+          if [ -f scripts/patch_forgot_password.py ]; then python3 scripts/patch_forgot_password.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           grep -q "claimChat" src/context/PlatformContext.tsx && echo "OK_CLAIM" || echo "WARN_CLAIM"
-          grep -q "_held" src/context/PlatformContext.tsx && echo "OK_HOLD_NUCLEAR" || echo "WARN_HOLD_NUCLEAR"
+          grep -q "Forgot Password" src/components/LoginPage.tsx && echo "OK_FORGOT" || echo "WARN_FORGOT"
           set -e
 
       - name: Setup Node
