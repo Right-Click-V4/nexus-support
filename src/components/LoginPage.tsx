@@ -1,4 +1,4 @@
-/* login-customer-first-v1 + screen-fit + type polish (restored 2f2219) */
+/* login layout: centered columns, smaller type, credit under caps */
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { markJustLoggedIn } from './PostLoginLoader';
@@ -66,34 +66,34 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
   return (
     <div className="login-screen-fit relative min-h-screen w-full overflow-hidden text-violet-50">
       <CosmicFallBackground />
-      <div className="relative z-10 flex min-h-[100dvh] w-full">
-        <div className="hidden lg:flex flex-1 flex-col justify-center px-10 xl:px-16 py-10 max-w-lg xl:max-w-xl">
-          <div className="flex items-center gap-3 mb-6">
+      <div className="relative z-10 flex min-h-[100dvh] w-full max-w-[1280px] mx-auto items-center">
+        <div className="hidden lg:flex flex-1 flex-col justify-center pl-16 xl:pl-24 pr-6 py-10 max-w-md xl:max-w-lg">
+          <div className="flex items-center gap-2.5 mb-5">
             <div className="login-brand-badge">
               <NexusLogoMark size={22} />
             </div>
             <div>
-              <NexusWordmark className="text-lg font-semibold tracking-tight text-white" />
-              <div className="text-[11px] text-violet-300/70">
+              <NexusWordmark className="text-base font-semibold tracking-tight text-white" />
+              <div className="text-[10px] text-violet-300/70">
                 {isAgent ? 'Support operations platform' : 'Customer support portal'}
               </div>
             </div>
           </div>
 
-          <p className="login-eyebrow text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-300/90 mb-3">
+          <p className="login-eyebrow text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-300/85 mb-2.5">
             {isAgent ? 'Built for agent teams' : 'Built for customers'}
           </p>
-          <h1 className="login-hero-title text-[1.85rem] sm:text-[2.35rem] xl:text-[2.85rem] font-semibold leading-[1.12] tracking-[-0.03em]">
+          <h1 className="login-hero-title text-[1.55rem] sm:text-[1.85rem] xl:text-[2.15rem] font-semibold leading-[1.15] tracking-[-0.025em]">
             {leftTitle}
-            <span className="login-hero-sub block font-medium mt-1.5">
+            <span className="login-hero-sub block font-medium mt-1">
               {leftSub}
             </span>
           </h1>
-          <p className="login-hero-blurb mt-4 text-[13px] sm:text-[15px] text-violet-100/70 leading-[1.65] max-w-md">
+          <p className="login-hero-blurb mt-3 text-[12px] sm:text-[13px] text-violet-100/65 leading-[1.6] max-w-sm">
             {leftBlurb}
           </p>
 
-          <div className="login-hero-chips mt-5 flex flex-wrap gap-2">
+          <div className="login-hero-chips mt-4 flex flex-wrap gap-1.5">
             {(isAgent
               ? ['Omnichannel inbox', 'SLA tracking', 'Branch routing']
               : ['Live status', 'Secure portal', '24/7 desk']
@@ -104,26 +104,26 @@ export default function LoginPage({ audience = 'customer', onOpenPortal, onOpenA
             ))}
           </div>
 
-          <ul className="mt-6 space-y-2.5 max-w-md">
+          <ul className="mt-5 space-y-2 max-w-sm">
             {caps.map((c, i) => (
               <li key={c.title} className="login-cap group">
                 <span className="login-cap-index">{String(i + 1).padStart(2, '0')}</span>
                 <div>
-                  <div className="text-[13px] sm:text-sm font-semibold text-violet-50 tracking-tight">{c.title}</div>
-                  <div className="text-[12px] text-violet-200/55 mt-0.5 leading-snug">{c.blurb}</div>
+                  <div className="text-[12px] sm:text-[13px] font-semibold text-violet-50 tracking-tight">{c.title}</div>
+                  <div className="text-[11px] text-violet-200/50 mt-0.5 leading-snug">{c.blurb}</div>
                 </div>
               </li>
             ))}
           </ul>
 
-          <div className="login-left-footer mt-auto pt-8 text-[11px] text-violet-300/35 tracking-wide">
+          <div className="login-left-footer mt-5 pt-1 text-[10px] text-violet-300/40 tracking-wide">
             {isAgent
               ? 'NexusOps Agent Workspace · © 2026 Lizer & Kirzhian'
               : 'NexusOps Customer Portal · © 2026 Lizer & Kirzhian'}
           </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-8">
+        <div className="flex-1 flex items-center justify-center lg:justify-start px-4 sm:px-8 lg:pl-8 lg:pr-12 xl:pl-12 py-8">
           {mode === 'signin' ? (
             <form
               onSubmit={onSubmit}
