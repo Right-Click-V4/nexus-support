@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -31,35 +31,15 @@ jobs:
           echo "CustomerPortal bytes=$CP_SZ"
           if [ "$CP_SZ" -lt 50000 ] || grep -q "Loading portal update" src/components/CustomerPortal.tsx 2>/dev/null || ! grep -q "PortalLiveChat\|Live Chat\|My tickets\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
             GOOD=c3edde907e5e5be48439b7fea0df6dbe3dca6611
-            echo "Restoring CustomerPortal from $GOOD (was $CP_SZ bytes)"
+            echo "Restoring CustomerPortal from $GOOD"
             git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx 2>/dev/null || true
             CP_SZ2=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-            echo "CustomerPortal after restore bytes=$CP_SZ2"
             if [ "$CP_SZ2" -lt 50000 ]; then
-              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/c3edde907e5e5be48439b7fea0df6dbe3dca6611/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx || true
+              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx || true
             fi
+            echo "CustomerPortal after restore=$(wc -c < src/components/CustomerPortal.tsx)"
           fi
-          if [ -f scripts/patch_customer_route.py ]; then python3 scripts/patch_customer_route.py || true; fi
-          UA_SZ=$(wc -c < src/components/UsersAdminPage.tsx 2>/dev/null || echo 0)
-          if [ "$UA_SZ" -lt 5000 ]; then
-            git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/UsersAdminPage.tsx > src/components/UsersAdminPage.tsx 2>/dev/null || true
-          fi
-          APP_SZ=$(wc -c < src/components/AccountProfilePanel.tsx 2>/dev/null || echo 0)
-          if [ "$APP_SZ" -lt 5000 ] || ! grep -q "saveProfile\|updateProfile" src/components/AccountProfilePanel.tsx 2>/dev/null; then
-            git show 5c66d77e570a692458f687b232763a609ae2e435:src/components/AccountProfilePanel.tsx > src/components/AccountProfilePanel.tsx 2>/dev/null || true
-          fi
-          LS_SZ=$(wc -c < src/components/LoginScene.tsx 2>/dev/null || echo 0)
-          if [ "$LS_SZ" -lt 18000 ] || ! grep -q "login-trail-spark\|LogoHeroStage" src/components/LoginScene.tsx 2>/dev/null; then
-            git show 3e5d6e35245ff6aef5e0f49e7c06ee7e24183f61:src/components/LoginScene.tsx > src/components/LoginScene.tsx 2>/dev/null || true
-          fi
-          LF_SZ=$(wc -c < src/components/LoginFlybys.tsx 2>/dev/null || echo 0)
-          if [ "$LF_SZ" -lt 5000 ] || ! grep -q "SpaceFlybys" src/components/LoginFlybys.tsx 2>/dev/null; then
-            git show 3e5d6e35245ff6aef5e0f49e7c06ee7e24183f61:src/components/LoginFlybys.tsx > src/components/LoginFlybys.tsx 2>/dev/null || true
-          fi
-          AC_SZ=$(wc -c < src/context/AuthContext.tsx 2>/dev/null || echo 0)
-          if [ "$AC_SZ" -lt 5000 ] || ! grep -q "updateProfile" src/context/AuthContext.tsx 2>/dev/null; then
-            git show 8d96841be7ce561fcd2ccf6604cf766ba59db8e0:src/context/AuthContext.tsx > src/context/AuthContext.tsx 2>/dev/null || true
-          fi
+
           AN_SZ=$(wc -c < src/components/AnnouncementsPage.tsx 2>/dev/null || echo 0)
           if [ "$AN_SZ" -lt 5000 ]; then
             GOOD_AN=6a15e5bbd61dead1452de6571ce7eda6292323aa
@@ -67,38 +47,23 @@ jobs:
               curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_AN/src/components/AnnouncementsPage.tsx" -o src/components/AnnouncementsPage.tsx || true
             python3 scripts/patch_announcements_replace_publish.py || true
           fi
-          if [ -f scripts/patch_chat_customer_rt.py ]; then python3 scripts/patch_chat_customer_rt.py || true; fi
-          if [ -f scripts/patch_customer_chat_identity.py ]; then python3 scripts/patch_customer_chat_identity.py || true; fi
-          if [ -f scripts/patch_customer_branch.py ]; then python3 scripts/patch_customer_branch.py || true; fi
-          if [ -f scripts/patch_branch_sync_login_ux.py ]; then python3 scripts/patch_branch_sync_login_ux.py || true; fi
-          if [ -f scripts/patch_hold_preserve.py ]; then python3 scripts/patch_hold_preserve.py || true; fi
-          if [ -f scripts/patch_hold_nuclear.py ]; then python3 scripts/patch_hold_nuclear.py || true; fi
-          if [ -f scripts/patch_portal_chat_ui.py ]; then python3 scripts/patch_portal_chat_ui.py || true; fi
-          if [ -f scripts/patch_claim_chat.py ]; then python3 scripts/patch_claim_chat.py || true; fi
-          if [ -f scripts/patch_claim_forgot_customers.py ]; then python3 scripts/patch_claim_forgot_customers.py || true; fi
-          if [ -f scripts/patch_forgot_password.py ]; then python3 scripts/patch_forgot_password.py || true; fi
-          if [ -f scripts/patch_customer_route.py ]; then python3 scripts/patch_customer_route.py || true; fi
-          if [ -f scripts/patch_assist_chat.py ]; then python3 scripts/patch_assist_chat.py || true; fi
-          if [ -f scripts/patch_assist_dedupe.py ]; then python3 scripts/patch_assist_dedupe.py || true; fi
-          if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
-          if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
-          if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
-          if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
-          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
-          if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py || true; fi
-          if [ -f scripts/densify_stars.py ]; then python3 scripts/densify_stars.py || true; fi
-          test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo "OK_PORTAL" || echo "WARN_PORTAL"
-          set -e
+
+          for s in patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks slow_polls densify_stars patch_portal_chat_ui patch_claim_chat patch_forgot_password; do
+            if [ -f "scripts/${s}.py" ]; then python3 "scripts/${s}.py" || true; fi
+          done
+
+          test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
 
       - name: Generate git changelog draft
         run: |
           python3 scripts/generate_git_changelog.py || true
-          test -f public/git-changelog-draft.json && echo "OK_CHANGELOG" || echo "WARN_CHANGELOG"
+          ls -la public/git-changelog-draft.json || echo WARN_CHANGELOG
 
       - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
+          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -106,12 +71,12 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          GITHUB_ACTIONS: 'true'
+          GITHUB_ACTIONS: "true"
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
