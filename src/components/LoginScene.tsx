@@ -407,13 +407,15 @@ function LogoPilotStage() {
 }
 
 export function CosmicFallBackground() {
-  const stars = useFallingStars(180);
+  const stars = useFallingStars(280);
   return (
     <div className="login-cosmos absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       <div className="login-cosmos-sky absolute inset-0" />
       <div className="login-galaxy-band" />
       <div className="login-nebula login-nebula-a" />
+      <div className="login-nebula login-nebula-b" />
       <div className="login-dust" />
+      <div className="login-dust login-dust-fine" />
       {stars.map((s) => (
         <span
           key={s.id}
