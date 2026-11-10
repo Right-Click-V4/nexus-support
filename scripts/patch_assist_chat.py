@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Multi-agent assist: claim exclusivity + Request to Assist."""
+"""Multi-agent assist: claim exclusivity + Request to Assist (no duplicate claimChat)."""
 from pathlib import Path
+import re
 
 tp = Path('src/types.ts')
 if tp.exists():
@@ -17,19 +18,58 @@ if tp.exists():
 pc = Path('src/context/PlatformContext.tsx')
 if pc.exists():
     s = pc.read_text()
-    if 'requestAssist' not in s:
-        for old in [
-            "sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer') => Promise<void>;",
-            "sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer', opts?: { agentId?: string; agentName?: string }) => Promise<void>;",
-        ]:
-            if old in s:
-                s = s.replace(
-                    old,
-                    old.rstrip(';')
-                    + ";\n  claimChat: (conversationId: string, agentId: string) => Promise<boolean>;\n  requestAssist: (conversationId: string, agentId: string) => Promise<void>;\n  respondAssist: (conversationId: string, agentId: string, accept: boolean) => Promise<void>;",
-                    1,
-                )
-                break
+
+    if s.count('claimChat:') > 1:
+        lines = s.splitlines(keepends=True)
+        seen_claim_type = False
+        out = []
+        for line in lines:
+            if 'claimChat:' in line and 'conversationId' in line:
+                if seen_claim_type:
+                    continue
+                seen_claim_type = True
+            out.append(line)
+        s = ''.join(out)
+        print('deduped claimChat type')
+
+    if 'requestAssist:' not in s:
+        m = re.search(r'claimChat: \(conversationId: string, agentId: string\) => Promise<(?:boolean|void)>;', s)
+        if m:
+            s = s.replace(
+                m.group(0),
+                m.group(0)
+                + "\n  requestAssist: (conversationId: string, agentId: string) => Promise<void>;"
+                + "\n  respondAssist: (conversationId: string, agentId: string, accept: boolean) => Promise<void>;",
+                1,
+            )
+        else:
+            for old in [
+                "sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer') => Promise<void>;",
+                "sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer', opts?: { agentId?: string; agentName?: string }) => Promise<void>;",
+            ]:
+                if old in s:
+                    s = s.replace(
+                        old,
+                        old.rstrip(';')
+                        + ";\n  claimChat: (conversationId: string, agentId: string) => Promise<boolean>;"
+                        + "\n  requestAssist: (conversationId: string, agentId: string) => Promise<void>;"
+                        + "\n  respondAssist: (conversationId: string, agentId: string, accept: boolean) => Promise<void>;",
+                        1,
+                    )
+                    break
+        print('types requestAssist')
+
+    if s.count('const claimChat = async') > 1:
+        parts = s.split('  const claimChat = async')
+        rebuilt = parts[0] + '  const claimChat = async' + parts[1]
+        for extra in parts[2:]:
+            idx = extra.find('\n  const ')
+            if idx >= 0:
+                rebuilt += extra[idx+1:]
+            else:
+                rebuilt += extra
+        s = rebuilt
+        print('deduped claimChat fn', s.count('const claimChat = async'))
 
     if 'const requestAssist' not in s:
         helpers = r'''
@@ -44,41 +84,6 @@ if pc.exists():
     try {
       localStorage.setItem('nexus-chat-assist-' + id, JSON.stringify({ assistants, requests }));
     } catch {}
-  };
-
-  const claimChat = async (conversationId: string, agentId: string): Promise<boolean> => {
-    if (!conversationId || !agentId) return false;
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id !== conversationId) return c;
-        if (c.agent_id && c.agent_id !== agentId) return c;
-        return {
-          ...c,
-          agent_id: agentId,
-          status: (c.status === 'waiting' || c.status === 'on_hold' ? 'active' : c.status) as ChatConversation['status'],
-        };
-      }),
-    );
-    if (!supabase) return true;
-    try {
-      let { error } = await supabase
-        .from('chat_conversations')
-        .update({ agent_id: agentId, status: 'active', updated_at: new Date().toISOString() })
-        .eq('id', conversationId)
-        .is('agent_id', null);
-      if (error) {
-        const r2 = await supabase
-          .from('chat_conversations')
-          .update({ agent_id: agentId, updated_at: new Date().toISOString() })
-          .eq('id', conversationId);
-        error = r2.error;
-      }
-      if (error) console.warn('claimChat', error.message);
-      return true;
-    } catch (e) {
-      console.warn('claimChat', e);
-      return true;
-    }
   };
 
   const requestAssist = async (conversationId: string, agentId: string) => {
@@ -147,17 +152,41 @@ if pc.exists():
   };
 
 '''
-        if 'const claimChat' not in s:
-            if '  const archiveChat = async' in s:
-                s = s.replace('  const archiveChat = async', helpers + '  const archiveChat = async', 1)
-            elif '  const setChatStatus = async' in s:
-                s = s.replace('  const setChatStatus = async', helpers + '  const setChatStatus = async', 1)
-            print('inserted assist helpers')
-        elif 'const requestAssist' not in s:
-            # claim exists from older patch — still need request/respond
-            if '  const archiveChat = async' in s:
-                s = s.replace('  const archiveChat = async', helpers + '  const archiveChat = async', 1)
-            print('inserted assist (claim existed)')
+        claim_block = r'''
+  const claimChat = async (conversationId: string, agentId: string): Promise<boolean> => {
+    if (!conversationId || !agentId) return false;
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id !== conversationId) return c;
+        if (c.agent_id && c.agent_id !== agentId) return c;
+        return {
+          ...c,
+          agent_id: agentId,
+          status: (c.status === 'waiting' || c.status === 'on_hold' ? 'active' : c.status) as ChatConversation['status'],
+        };
+      }),
+    );
+    if (!supabase) return true;
+    try {
+      let { error } = await supabase
+        .from('chat_conversations')
+        .update({ agent_id: agentId, status: 'active', updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
+      if (error) console.warn('claimChat', error.message);
+      return true;
+    } catch (e) {
+      console.warn('claimChat', e);
+      return true;
+    }
+  };
+
+'''
+        block = (claim_block if 'const claimChat' not in s else '') + helpers
+        if '  const archiveChat = async' in s:
+            s = s.replace('  const archiveChat = async', block + '  const archiveChat = async', 1)
+        elif '  const setChatStatus = async' in s:
+            s = s.replace('  const setChatStatus = async', block + '  const setChatStatus = async', 1)
+        print('inserted requestAssist helpers')
 
     if 'ASSIST_SEND_GUARD_V1' not in s:
         marker2 = 'const sendChatMessage = async'
@@ -198,12 +227,6 @@ if pc.exists():
                 'createChat, sendChatMessage,\n    claimChat,\n    requestAssist,\n    respondAssist,',
                 1,
             )
-        elif 'sendChatMessage, setChatStatus' in s:
-            s = s.replace(
-                'sendChatMessage, setChatStatus',
-                'sendChatMessage, claimChat, requestAssist, respondAssist, setChatStatus',
-                1,
-            )
         print('exports')
 
     pc.write_text(s)
@@ -212,7 +235,7 @@ if pc.exists():
 lp = Path('src/components/LiveChatPage.tsx')
 if lp.exists():
     t = lp.read_text()
-    if 'requestAssist' not in t.split('usePlatform')[1][:800]:
+    if 'requestAssist' not in t.split('usePlatform')[1][:900]:
         if 'refreshPlatform,' in t and 'requestAssist,' not in t:
             t = t.replace(
                 'refreshPlatform,',
@@ -311,12 +334,17 @@ if lp.exists():
             "value={draft}\n                    disabled={as === 'agent' && !canSendAsAgent}",
             1,
         )
-    if 'canSendAsAgent' in t and 'Only the claiming agent' not in t and 'Request to Assist</strong>' not in t:
+    if 'canSendAsAgent' in t and 'Request to Assist</strong>' not in t:
         banner_marker = '<div className="flex-1 overflow-y-auto p-4 space-y-3">'
         if banner_marker in t:
             t = t.replace(
                 banner_marker,
-                "{!canSendAsAgent && as === 'agent' ? (\n                <div className=\"mx-4 mt-2 mb-0 text-xs text-amber-100 bg-amber-500/15 border border-amber-400/30 rounded-xl px-3 py-2\">\n                  This chat is claimed by another agent. You can read messages but cannot reply until they accept your <strong>Request to Assist</strong>.\n                </div>\n              ) : null}\n              <div className=\"flex-1 overflow-y-auto p-4 space-y-3\">",
+                "{!canSendAsAgent && as === 'agent' ? (\n"
+                '                <div className="mx-4 mt-2 mb-0 text-xs text-amber-100 bg-amber-500/15 border border-amber-400/30 rounded-xl px-3 py-2">\n'
+                '                  This chat is claimed by another agent. You can read messages but cannot reply until they accept your <strong>Request to Assist</strong>.\n'
+                '                </div>\n'
+                '              ) : null}\n'
+                '              <div className="flex-1 overflow-y-auto p-4 space-y-3">',
                 1,
             )
 
