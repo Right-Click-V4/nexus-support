@@ -2,33 +2,27 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-deploy
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
         with:
           fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install
-        run: npm ci
 
       - name: Restore + patch portal
         run: |
@@ -46,7 +40,27 @@ jobs:
               curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/c3edde907e5e5be48439b7fea0df6dbe3dca6611/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx || true
               echo "CustomerPortal curl bytes=$(wc -c < src/components/CustomerPortal.tsx)"
             fi
+          fi
+          if [ -f scripts/patch_customer_route.py ]; then python3 scripts/patch_customer_route.py || true; fi
+          UA_SZ=$(wc -c < src/components/UsersAdminPage.tsx 2>/dev/null || echo 0)
+          if [ "$UA_SZ" -lt 5000 ]; then
             git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/UsersAdminPage.tsx > src/components/UsersAdminPage.tsx 2>/dev/null || true
+          fi
+          APP_SZ=$(wc -c < src/components/AccountProfilePanel.tsx 2>/dev/null || echo 0)
+          if [ "$APP_SZ" -lt 5000 ] || ! grep -q "saveProfile\|updateProfile" src/components/AccountProfilePanel.tsx 2>/dev/null; then
+            git show 5c66d77e570a692458f687b232763a609ae2e435:src/components/AccountProfilePanel.tsx > src/components/AccountProfilePanel.tsx 2>/dev/null || true
+          fi
+          LS_SZ=$(wc -c < src/components/LoginScene.tsx 2>/dev/null || echo 0)
+          if [ "$LS_SZ" -lt 18000 ] || ! grep -q "login-trail-spark\|LogoHeroStage" src/components/LoginScene.tsx 2>/dev/null; then
+            git show 3e5d6e35245ff6aef5e0f49e7c06ee7e24183f61:src/components/LoginScene.tsx > src/components/LoginScene.tsx 2>/dev/null || true
+          fi
+          LF_SZ=$(wc -c < src/components/LoginFlybys.tsx 2>/dev/null || echo 0)
+          if [ "$LF_SZ" -lt 5000 ] || ! grep -q "SpaceFlybys" src/components/LoginFlybys.tsx 2>/dev/null; then
+            git show 3e5d6e35245ff6aef5e0f49e7c06ee7e24183f61:src/components/LoginFlybys.tsx > src/components/LoginFlybys.tsx 2>/dev/null || true
+          fi
+          AC_SZ=$(wc -c < src/context/AuthContext.tsx 2>/dev/null || echo 0)
+          if [ "$AC_SZ" -lt 5000 ] || ! grep -q "updateProfile" src/context/AuthContext.tsx 2>/dev/null; then
+            git show 8d96841be7ce561fcd2ccf6604cf766ba59db8e0:src/context/AuthContext.tsx > src/context/AuthContext.tsx 2>/dev/null || true
           fi
 
           # Guard: AnnouncementsPage must not be empty
@@ -62,9 +76,25 @@ jobs:
           fi
 
           if [ -f scripts/patch_portal_logo.py ]; then python3 scripts/patch_portal_logo.py || true; fi
+          if [ -f scripts/wire_account_panel.py ]; then python3 scripts/wire_account_panel.py || true; fi
           if [ -f scripts/patch_portal_sidebar_agent_style.py ]; then python3 scripts/patch_portal_sidebar_agent_style.py || true; fi
-          if [ -f scripts/patch_portal_chat_ui.py ]; then python3 scripts/patch_portal_chat_ui.py || true; fi
+          if [ -f scripts/patch_unlock_404.py ]; then python3 scripts/patch_unlock_404.py || true; fi
+          if [ -f scripts/patch_chat_sync.py ]; then python3 scripts/patch_chat_sync.py || true; fi
+          if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
+          if [ -f scripts/slow_polls.py ]; then python3 scripts/slow_polls.py || true; fi
+          if [ -f scripts/densify_stars.py ]; then python3 scripts/densify_stars.py || true; fi
+          if [ -f scripts/patch_livechat_assist.py ]; then python3 scripts/patch_livechat_assist.py || true; fi
+          if [ -f scripts/dedupe_claim_chat.py ]; then python3 scripts/dedupe_claim_chat.py || true; fi
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo "OK_PORTAL" || echo "WARN_PORTAL"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
 
       - name: Build
         run: npm run build
@@ -77,13 +107,6 @@ jobs:
         with:
           path: dist
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
