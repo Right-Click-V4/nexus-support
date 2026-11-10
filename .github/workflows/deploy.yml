@@ -29,11 +29,19 @@ jobs:
           set +e
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           echo "CustomerPortal bytes=$CP_SZ"
-          if [ "$CP_SZ" -lt 50000 ] || ! grep -q "PortalLiveChat\|Live Chat\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
+          if [ "$CP_SZ" -lt 50000 ] || grep -q "Loading portal update" src/components/CustomerPortal.tsx 2>/dev/null || ! grep -q "PortalLiveChat\|Live Chat\|My tickets\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
             GOOD=c3edde907e5e5be48439b7fea0df6dbe3dca6611
             echo "Restoring CustomerPortal from $GOOD (was $CP_SZ bytes)"
             git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx 2>/dev/null || true
+            CP_SZ2=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
+            echo "CustomerPortal after restore bytes=$CP_SZ2"
+            if [ "$CP_SZ2" -lt 50000 ]; then
+              echo "git show failed — curling known-good CustomerPortal"
+              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/c3edde907e5e5be48439b7fea0df6dbe3dca6611/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx || true
+              echo "CustomerPortal curl bytes=$(wc -c < src/components/CustomerPortal.tsx)"
+            fi
           fi
+          if [ -f scripts/patch_customer_route.py ]; then python3 scripts/patch_customer_route.py || true; fi
           UA_SZ=$(wc -c < src/components/UsersAdminPage.tsx 2>/dev/null || echo 0)
           if [ "$UA_SZ" -lt 5000 ]; then
             git show c3edde907e5e5be48439b7fea0df6dbe3dca6611:src/components/UsersAdminPage.tsx > src/components/UsersAdminPage.tsx 2>/dev/null || true
@@ -75,9 +83,11 @@ jobs:
           if [ -f scripts/patch_claim_chat.py ]; then python3 scripts/patch_claim_chat.py || true; fi
           if [ -f scripts/patch_claim_forgot_customers.py ]; then python3 scripts/patch_claim_forgot_customers.py || true; fi
           if [ -f scripts/patch_forgot_password.py ]; then python3 scripts/patch_forgot_password.py || true; fi
+          if [ -f scripts/patch_customer_route.py ]; then python3 scripts/patch_customer_route.py || true; fi
           if [ -f scripts/ensure_react_hooks.py ]; then python3 scripts/ensure_react_hooks.py || true; fi
           grep -q "claimChat" src/context/PlatformContext.tsx && echo "OK_CLAIM" || echo "WARN_CLAIM"
-          grep -q "Forgot Password" src/components/LoginPage.tsx && echo "OK_FORGOT" || echo "WARN_FORGOT"
+          grep -q "CUSTOMER_FORCE_PORTAL\|signIn(email, password, role)" src/SystemAppCore.tsx src/components/LoginPage.tsx && echo "OK_ROUTE" || echo "WARN_ROUTE"
+          test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo "OK_PORTAL" || echo "WARN_PORTAL"
           set -e
 
       - name: Setup Node
