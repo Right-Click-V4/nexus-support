@@ -1,4 +1,4 @@
-/* login-glass-v6 restored: richer card, submit shine, type polish */
+/* login-glass-v6 + denser galaxy layers */
 .login-cosmos-sky {
   background:
     radial-gradient(ellipse 120% 80% at 50% -10%, rgba(139, 92, 246, 0.35) 0%, transparent 55%),
@@ -18,6 +18,12 @@
   background: radial-gradient(circle, rgba(139, 92, 246, 0.35), transparent 70%);
   animation: login-nebula-drift 28s ease-in-out infinite alternate;
 }
+.login-nebula-b {
+  width: 45%; height: 40%; right: 5%; bottom: 10%; left: auto; top: auto;
+  background: radial-gradient(circle, rgba(192, 38, 211, 0.28), transparent 70%);
+  animation: login-nebula-drift 34s ease-in-out infinite alternate-reverse;
+  opacity: 0.5;
+}
 .login-dust {
   position: absolute; inset: 0;
   background-image: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.35), transparent),
@@ -25,6 +31,20 @@
     radial-gradient(1px 1px at 40% 80%, rgba(167, 139, 250, 0.25), transparent);
   background-size: 100% 100%;
   opacity: 0.5; pointer-events: none;
+}
+.login-dust-fine {
+  opacity: 0.35;
+  background-image:
+    radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 55% 15%, rgba(233, 213, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 85% 55%, rgba(167, 139, 250, 0.35), transparent),
+    radial-gradient(1px 1px at 30% 70%, rgba(103, 232, 249, 0.3), transparent),
+    radial-gradient(1px 1px at 70% 85%, rgba(244, 114, 182, 0.25), transparent);
+  animation: login-dust-drift 40s linear infinite;
+}
+@keyframes login-dust-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3%); }
 }
 .login-star {
   animation-name: login-star-fall;
@@ -245,7 +265,6 @@
   .login-screen-fit .login-status-pill { display: none; }
 }
 
-/* Sign-in shine */
 .login-submit-btn {
   position: relative !important; overflow: hidden !important;
   background-image: linear-gradient(90deg, #7c3aed 0%, #c026d3 40%, #a855f7 60%, #7c3aed 100%) !important;
@@ -283,7 +302,6 @@
   outline: none !important;
 }
 
-/* Left panel type */
 .login-status-pill { display: none !important; }
 .login-eyebrow { text-shadow: 0 0 24px rgba(167, 139, 250, 0.35); }
 .login-hero-sub {
@@ -323,4 +341,5 @@
   .login-card-logo .login-logo-arcs, .login-brand-badge .login-logo-arcs, .login-pilot-orbit, .login-star { animation: none !important; }
   .login-pilot-spin { animation: none !important; }
   .login-submit-btn, .login-submit-btn::after { animation: none !important; }
+  .login-dust-fine { animation: none !important; }
 }
