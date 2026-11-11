@@ -1,1 +1,68 @@
-[]
+{
+  "generated_at": "2026-11-11T06:43:59.749989+00:00",
+  "branch": "main",
+  "head": "2954f9f",
+  "suggested": {
+    "version": "2026.11.11",
+    "title": "Portal stability, schema-safe queries, and live chat claim",
+    "notes": "• Fixed: Minimal automations select to stop 400 errors\n• Fixed: Ship git-changelog-draft.json (stop portal 404)\n• Fixed: Schema-safe selects (no missing columns)\n• Fixed: Official Pages deploy + pinned Actions SHAs\n• Fixed: Restore TicketContext useTickets so production build succeeds\n• Fixed: Sticky live-chat claim (Yours persists after refresh)\n• Fixed: Hold status no longer unlocks customer input after agent messages"
+  },
+  "history": [
+    {
+      "id": "draft-2026-11-11",
+      "version": "2026.11.11",
+      "title": "Portal stability, schema-safe queries, and live chat claim",
+      "notes": "• Fixed: Minimal automations select to stop 400 errors\n• Fixed: Ship git-changelog-draft.json (stop portal 404)\n• Fixed: Schema-safe selects (no missing columns)\n• Fixed: Official Pages deploy + pinned Actions SHAs\n• Fixed: Restore TicketContext useTickets so production build succeeds\n• Fixed: Sticky live-chat claim (Yours persists after refresh)\n• Fixed: Hold status no longer unlocks customer input after agent messages",
+      "customer_lines": [
+        "Fixed: Minimal automations select to stop 400 errors",
+        "Fixed: Ship git-changelog-draft.json (stop portal 404)",
+        "Fixed: Schema-safe selects (no missing columns)",
+        "Fixed: Official Pages deploy + pinned Actions SHAs",
+        "Fixed: Restore TicketContext useTickets so production build succeeds",
+        "Fixed: Sticky live-chat claim (Yours persists after refresh)",
+        "Fixed: Hold status no longer unlocks customer input after agent messages"
+      ],
+      "date": "2026-11-11",
+      "head": "2954f9f",
+      "commit_count": 14
+    },
+    {
+      "id": "draft-2026-11-10",
+      "version": "2026.11.10",
+      "title": "Request to Assist multi-agent access (Live Chat)",
+      "notes": "• Fixed: Multi-agent Request to Assist on live chat\n• Fixed: Dedupe claimChat after assist patch (build fix)\n• Maintenance: Run assist dedupe on deploy",
+      "customer_lines": [
+        "Fixed: Multi-agent Request to Assist on live chat",
+        "Fixed: Dedupe claimChat after assist patch (build fix)",
+        "Maintenance: Run assist dedupe on deploy"
+      ],
+      "date": "2026-11-10",
+      "head": "assist",
+      "commit_count": 6
+    },
+    {
+      "id": "draft-2026-11-09",
+      "version": "2026.11.09",
+      "title": "Claim live chat, accurate agent name, customer avatars",
+      "notes": "• New: Claim live chat so the correct agent is shown\n• Fixed: Accurate agent name on customer side\n• Fixed: Customer avatars on agent live chat\n• Fixed: Wider chat panel; show agent name instead of Waiting",
+      "customer_lines": [
+        "New: Claim live chat so the correct agent is shown",
+        "Fixed: Accurate agent name on customer side",
+        "Fixed: Customer avatars on agent live chat",
+        "Fixed: Wider chat panel; show agent name instead of Waiting"
+      ],
+      "date": "2026-11-09",
+      "head": "claim",
+      "commit_count": 8
+    }
+  ],
+  "customer_lines": [
+    "Fixed: Minimal automations select to stop 400 errors",
+    "Fixed: Ship git-changelog-draft.json (stop portal 404)",
+    "Fixed: Schema-safe selects (no missing columns)",
+    "Fixed: Official Pages deploy + pinned Actions SHAs",
+    "Fixed: Restore TicketContext useTickets so production build succeeds",
+    "Fixed: Sticky live-chat claim (Yours persists after refresh)",
+    "Fixed: Hold status no longer unlocks customer input after agent messages"
+  ]
+}
