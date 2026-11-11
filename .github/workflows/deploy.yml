@@ -53,9 +53,11 @@ jobs:
           PC_SZ=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
           echo "PlatformContext bytes=$PC_SZ"
           if [ "$PC_SZ" -lt 5000 ]; then
-            GOOD_PC=9da2fccde137836cea2c0651da8f808d1051f67e
-            echo "Restoring PlatformContext from blob or $GOOD_PC"
-            python3 scripts/restore_platform_blob.py || git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || true
+            GOOD_PC=c3edde907e5e5be48439b7fea0df6dbe3dca6611
+            echo "Restoring PlatformContext from $GOOD_PC"
+            git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || \
+              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_PC/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
+            python3 scripts/restore_platform_blob.py || true
             echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
           fi
 
@@ -63,17 +65,22 @@ jobs:
             if [ -f "scripts/${s}.py" ]; then python3 "scripts/${s}.py" || true; fi
           done
 
-          # Force known-good claim/send platform + livechat last
           python3 scripts/restore_platform_blob.py || true
           python3 scripts/restore_livechat_blob.py || true
           python3 scripts/ensure_resolve_chat.py || true
           python3 scripts/fix_send_chat_message.py || true
           python3 scripts/fix_claim_and_send.py || true
 
+          if [ -f scripts/patch_livechat_master_v1.py ]; then python3 scripts/patch_livechat_master_v1.py || true; fi
+
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || echo WARN_PLATFORM
-          grep -q "function resolveChatAgent" src/components/LiveChatPage.tsx && echo OK_RESOLVE_CHAT || echo WARN_RESOLVE_CHAT
+          grep -q "LIVECHAT_MASTER_CLAIM_UI" src/components/LiveChatPage.tsx && echo OK_CLAIM_UI || echo WARN_CLAIM_UI
           grep -q "claimChat" src/context/PlatformContext.tsx && echo OK_CLAIM || echo WARN_CLAIM
+          grep -q "CUSTOMER_CHAT_IDENTITY_V1\|CHAT_POLL_FAST" src/components/PortalLiveChatView.tsx && echo OK_PORTAL_CHAT || echo WARN_PORTAL_CHAT
+          YOURS=$(grep -c ">Yours</span>" src/components/LiveChatPage.tsx || echo 0)
+          echo "Yours_count=$YOURS"
+          set -e
 
       - name: Generate git changelog draft
         run: |
