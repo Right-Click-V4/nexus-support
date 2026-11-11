@@ -119,13 +119,29 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
     [announcements],
   );
 
-  const recentReleases = useMemo(
-    () =>
-      [...(releases || [])]
-        .sort((a, b) => (b.released_at || '').localeCompare(a.released_at || ''))
-        .slice(0, 2),
-    [releases],
-  );
+  const recentReleases = useMemo(() => {
+    let backup: { version?: string; title?: string; notes?: string } | null = null;
+    try {
+      const raw = localStorage.getItem('nexus-last-patch-notes');
+      if (raw) backup = JSON.parse(raw);
+    } catch {
+      backup = null;
+    }
+    return [...(releases || [])]
+      .sort((a, b) => (b.released_at || '').localeCompare(a.released_at || ''))
+      .slice(0, 2)
+      .map((r) => {
+        if (r.notes && String(r.notes).trim()) return r;
+        if (backup?.notes) {
+          return {
+            ...r,
+            notes: backup.notes,
+            title: r.title || backup.title || r.title,
+          };
+        }
+        return r;
+      });
+  }, [releases]);
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5 pb-2">
