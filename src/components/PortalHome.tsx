@@ -80,7 +80,6 @@ function recoverNotes(
   } catch {
     /* ignore */
   }
-  // Public draft history (works for every visitor, not only the publisher)
   const ver = (r.version || '').trim();
   const title = (r.title || '').trim().toLowerCase();
   for (const h of draftHints) {
@@ -88,7 +87,6 @@ function recoverNotes(
     if (ver && h.version && h.version.trim() === ver) return h.notes;
     if (title && h.title && h.title.trim().toLowerCase() === title) return h.notes;
   }
-  // Soft title match: first 40 chars
   if (title.length >= 12) {
     const head = title.slice(0, 40);
     for (const h of draftHints) {
@@ -113,7 +111,7 @@ const PROCESS = [
   {
     step: '2',
     title: 'We route it',
-    body: 'Your ticket is assigned using branch and priority so the right queue picks it up.',
+    body: 'Your ticket is assigned using branch and priority so the right team picks it up.',
     icon: Ticket,
   },
   {
@@ -268,7 +266,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
                 className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-4 py-3.5"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{a.title}</div>
+                  <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 break-words">{a.title}</div>
                   {a.severity && a.severity !== 'info' && (
                     <span
                       className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${
@@ -321,7 +319,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
                 return (
                   <div
                     key={r.id || `${r.version}-${r.title}`}
-                    className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-4 py-3.5 flex flex-col"
+                    className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-4 py-3.5 flex flex-col min-w-0"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
                       {ver ? (
@@ -335,7 +333,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 leading-snug">
+                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 leading-snug break-words whitespace-normal">
                       {r.title}
                     </div>
                     {lines.length > 0 ? (
@@ -346,12 +344,12 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
                             className="flex gap-2 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 leading-relaxed"
                           >
                             <span className="text-violet-500 dark:text-violet-300 shrink-0 mt-0.5">•</span>
-                            <span>{line}</span>
+                            <span className="break-words">{line}</span>
                           </li>
                         ))}
                       </ul>
                     ) : notesText ? (
-                      <p className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 mt-2 leading-relaxed whitespace-pre-wrap">
+                      <p className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 mt-2 leading-relaxed whitespace-pre-wrap break-words">
                         {notesText}
                       </p>
                     ) : null}
