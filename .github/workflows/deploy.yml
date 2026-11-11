@@ -48,9 +48,8 @@ jobs:
             python3 scripts/patch_announcements_replace_publish.py || true
           fi
 
-          if [ -f scripts/patch_release_notes_persist.py ]; then python3 scripts/patch_release_notes_persist.py || true; fi
-
           # Restore PlatformContext if wiped (common bad push left 11-byte stub)
+          # MUST run BEFORE patch_release_notes_persist.py so the patch targets real code.
           PC_SZ=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
           echo "PlatformContext bytes=$PC_SZ"
           if [ "$PC_SZ" -lt 5000 ]; then
@@ -59,6 +58,12 @@ jobs:
             git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || \
               curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_PC/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
             echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
+          fi
+
+          # Persist release notes through cloud refresh (needs restored PlatformContext)
+          if [ -f scripts/patch_release_notes_persist.py ]; then
+            python3 scripts/patch_release_notes_persist.py || true
+            grep -q "mergeReleaseNotes" src/context/PlatformContext.tsx && echo OK_NOTES_MERGE || echo WARN_NOTES_MERGE
           fi
 
           for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message; do
