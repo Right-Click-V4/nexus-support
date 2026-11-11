@@ -320,40 +320,9 @@ function LogoPilotStage() {
             <feGaussianBlur stdDeviation="2.2" />
           </filter>
         </defs>
-        <path
-          ref={pathGlowRef}
-          d=""
-          fill="none"
-          stroke="url(#loginWakeSoft)"
-          strokeWidth="7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter="url(#loginTrailBlur)"
-          opacity="0.55"
-          className="login-light-trail"
-        />
-        <path
-          ref={pathSoftRef}
-          d=""
-          fill="none"
-          stroke="url(#loginWakeSoft)"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.7"
-          className="login-light-trail"
-        />
-        <path
-          ref={pathMainRef}
-          d=""
-          fill="none"
-          stroke="url(#loginWakeMain)"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.95"
-          className="login-light-trail"
-        />
+        <path ref={pathGlowRef} d="" fill="none" stroke="url(#loginWakeSoft)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" filter="url(#loginTrailBlur)" opacity="0.55" className="login-light-trail" />
+        <path ref={pathSoftRef} d="" fill="none" stroke="url(#loginWakeSoft)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" className="login-light-trail" />
+        <path ref={pathMainRef} d="" fill="none" stroke="url(#loginWakeMain)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" className="login-light-trail" />
       </svg>
 
       <div ref={enterPortalRef} className="login-space-portal" aria-hidden>
@@ -366,11 +335,7 @@ function LogoPilotStage() {
         <div className="login-space-portal-ring login-space-portal-ring-b" />
         <div className="login-space-portal-core" />
       </div>
-      <div
-        ref={pilotRef}
-        className="login-pilot login-pilot-js"
-        style={{ left: 0, top: 0, transform: 'translate(-50%, -50%) scale(0.92)' }}
-      >
+      <div ref={pilotRef} className="login-pilot login-pilot-js" style={{ left: 0, top: 0, transform: 'translate(-50%, -50%) scale(0.92)' }}>
         {heroChat ? <span className="login-pilot-chat">{heroChat}</span> : null}
         <div className="login-pilot-halo" />
         <div className="login-pilot-orbit" />
@@ -382,18 +347,114 @@ function LogoPilotStage() {
   );
 }
 
-function DistantPlanet({
-  className,
-  style,
-}: {
-  className: string;
-  style?: CSSProperties;
-}) {
+function DistantPlanet({ className, style }: { className: string; style?: CSSProperties }) {
   return <div className={className} style={style} aria-hidden />;
 }
 
+/** Single canvas starfield — 320 stars without 320 DOM nodes (much smoother FPS). */
+function StarCanvas({ count = 320 }: { count?: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return;
+
+    let raf = 0;
+    let w = 0;
+    let h = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    type Star = {
+      x: number;
+      y: number;
+      r: number;
+      base: number;
+      tw: number;
+      phase: number;
+      speed: number;
+      color: string;
+    };
+
+    const palette = ['#a78bfa', '#c4b5fd', '#67e8f9', '#e9d5ff', '#f9a8d4', '#ffffff', '#f0abfc', '#a5f3fc'];
+    let stars: Star[] = [];
+
+    const resize = () => {
+      const parent = canvas.parentElement;
+      w = parent?.clientWidth || window.innerWidth;
+      h = parent?.clientHeight || window.innerHeight;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      stars = Array.from({ length: count }, (_, i) => {
+        const layer = i % 5;
+        const r =
+          layer === 0
+            ? 0.5 + (i % 3) * 0.12
+            : layer === 1
+              ? 0.75 + (i % 3) * 0.15
+              : layer === 2
+                ? 1.1 + (i % 4) * 0.2
+                : layer === 3
+                  ? 1.5 + (i % 3) * 0.25
+                  : 2.0 + (i % 4) * 0.3;
+        return {
+          x: (((i * 41 + 9 + layer * 13) % 1000) / 1000) * w,
+          y: (((i * 59 + 7 + layer * 19) % 1000) / 1000) * h,
+          r,
+          base: 0.15 + layer * 0.12 + (i % 4) * 0.04,
+          tw: 2.4 + (i % 7) * 0.55,
+          phase: (i * 0.41) % (Math.PI * 2),\n          speed: layer <= 1 ? 0.012 : layer === 2 ? 0.02 : 0.035,
+          color: palette[i % palette.length],
+        };
+      });
+    };
+
+    resize();
+    const onResize = () => resize();
+    window.addEventListener('resize', onResize);
+
+    let last = performance.now();
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      if (document.visibilityState === 'hidden') return;
+      const dt = Math.min(40, now - last);
+      last = now;
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        s.y += s.speed * dt * 0.06;
+        if (s.y > h + 4) s.y = -4;
+        const pulse = 0.55 + 0.45 * Math.sin(now * 0.001 * (1 / s.tw) * 6 + s.phase);
+        const alpha = Math.max(0.08, Math.min(1, s.base * pulse));
+        ctx.beginPath();
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = alpha;
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [count]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      aria-hidden
+    />
+  );
+}
+
 export function CosmicFallBackground() {
-  const stars = useStarField(90);
   return (
     <div className="login-cosmos absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       <div className="login-cosmos-sky absolute inset-0" />
@@ -408,23 +469,7 @@ export function CosmicFallBackground() {
       <DistantPlanet className="login-planet login-planet-a" />
       <DistantPlanet className="login-planet login-planet-b" />
       <DistantPlanet className="login-planet login-planet-c" />
-      {stars.map((s) => (
-        <span
-          key={s.id}
-          className="login-star absolute rounded-full"
-          style={{
-            left: s.left,
-            top: s.top,
-            width: s.size,
-            height: s.size,
-            background: s.color,
-            opacity: s.opacity,
-            animationDuration: `${s.duration}s, ${s.twinkle}s`,
-            animationDelay: `${s.delay}s, ${(s.id % 9) * 0.35}s`,
-            boxShadow: s.size > 1.8 ? `0 0 ${s.size * 1.4}px ${s.color}` : undefined,
-          }}
-        />
-      ))}
+      <StarCanvas count={320} />
       <LogoPilotStage />
       <SpaceFlybys />
     </div>
