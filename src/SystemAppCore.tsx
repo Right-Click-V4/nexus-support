@@ -1,4 +1,5 @@
 /* SystemAppCore - presence + safe login entry */
+/* postlogin-agent-v1 */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -22,7 +23,7 @@ import AdminFeaturesPage from './components/AdminFeaturesPage';
 import CustomerPortal from './components/CustomerPortal';
 import PortalAuthGate from './components/PortalAuthGate';
 import NotFoundScreen from './components/NotFoundScreen';
-import { BootLoader } from './components/PostLoginLoader';
+import { BootLoader, PostLoginShell } from './components/PostLoginLoader';
 import LoginPage from './components/LoginPage';
 import { TicketProvider, useTickets } from './context/TicketContext';
 import { PlatformProvider, usePlatform } from './context/PlatformContext';
@@ -264,7 +265,11 @@ function AgentOrLogin() {
   if (!user) {
     return <LoginPage />;
   }
-  return <AgentShell />;
+  return (
+    <PostLoginShell ready={!!user} label="Opening agent workspace…" variant="agent">
+      <AgentShell />
+    </PostLoginShell>
+  );
 }
 
 export function Root() {
