@@ -2,6 +2,7 @@
 /* postlogin-force-exit-v1 */
 /* postlogin-auto-clear-v1 */
 /* postlogin-timing-v2 */
+/* postlogin-no-boot-flash-v1 */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 const MIN_MS = 1600;
@@ -184,7 +185,7 @@ export default function PostLoginLoader({
       window.setTimeout(() => setStepIdx(1), 280),
       window.setTimeout(() => setStepIdx(2), 620),
       window.setTimeout(() => setStepIdx(3), 980),
-      window.setTimeout(() => clearJustLoggedIn(), 2800),
+      // do NOT clear post-login flag here — PostLoginShell clears after ceremony
     ];
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, []);
@@ -270,6 +271,12 @@ export function PostLoginShell({
         setMode('done');
         return;
       }
+      // sticky flag so BootLoader paths never win mid-ceremony
+      try {
+        sessionStorage.setItem(POST_LOGIN_KEY, String(Date.now()));
+      } catch {
+        /* ignore */
+      }
       setMode('ceremony');
       const t = window.setTimeout(() => setMode('fading'), MIN_MS);
       return () => window.clearTimeout(t);
@@ -307,6 +314,7 @@ export function PostLoginShell({
   }, [ready]);
 
   if (!ready || mode === 'wait') {
+    // Login path: only Post-Login UI. BootLoader is for refresh/session restore.
     if (hasJustLoggedIn() || wantCeremony.current) {
       return <PostLoginLoader label={label} fading={false} variant={variant} />;
     }
