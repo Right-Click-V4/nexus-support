@@ -1,4 +1,5 @@
 /* agent-portal-preview-v1 */
+/* no-login-flash-v1 */
 import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 import LoginPage from './LoginPage';
@@ -15,7 +16,8 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
   const { user, loading, authBusy, requiresAuth, accountRole, configError } = useAuth();
   const goAgent = onOpenAgent || onBackToAgent;
 
-  if (requiresAuth && loading && !authBusy) {
+  // Session still resolving — never flash LoginPage
+  if (loading || authBusy) {
     if (hasJustLoggedIn()) {
       return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;
     }
@@ -35,8 +37,8 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
     );
   }
 
-  // Always show login when there is no session (agent + customer)
-  if (!user || authBusy) {
+  // Only show login once we know there is no session
+  if (!user) {
     return <LoginPage audience="customer" onOpenAgent={goAgent} />;
   }
 
