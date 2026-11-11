@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 SAFE_CHAT = "id,customer_name,customer_email,status,preview,unread,updated_at,created_at,agent_id,ticket_id,branch"
-SAFE_AUTO = "id, name, enabled, active, trigger, condition_field, condition_op, condition_value, action, action_value, description"
+SAFE_AUTO = "id, name, enabled, action, action_value"
 
 def scrub(path: Path) -> None:
     if not path.exists():
@@ -24,15 +24,17 @@ def scrub(path: Path) -> None:
         s2,
     )
     s2 = re.sub(
-        r"\.from\(['\"]automations['\"]\)\.select\(['\"]\*['\"]\)",
-        f".from('automations').select('{SAFE_AUTO}')",
-        s2,
-    )
-    s2 = re.sub(
         r"\.from\(['\"]automations['\"]\)\.select\(\s*['\"][^'\"]*['\"]\s*\)",
         f".from('automations').select('{SAFE_AUTO}')",
         s2,
     )
+    s2 = re.sub(
+        r"\.from\(['\"]automations['\"]\)\s*\n\s*\.select\(\s*\n\s*['\"][^'\"]*['\"]\s*,?\s*\n\s*\)",
+        f".from('automations').select('{SAFE_AUTO}')",
+        s2,
+    )
+    s2 = s2.replace('.select("description, active")', '.select("id, name")')
+    s2 = s2.replace(".select('description, active')", ".select('id, name')")
     s2 = s2.replace(".select('role, is_admin')", ".select('role')")
     s2 = s2.replace('.select("role, is_admin")', '.select("role")')
     s2 = s2.replace(
@@ -49,10 +51,11 @@ def scrub(path: Path) -> None:
     else:
         print("unchanged", path)
 
-for p in [
-    Path("src/context/TicketContext.tsx"),
-    Path("src/context/PlatformContext.tsx"),
-    Path("src/context/AuthContext.tsx"),
-]:
-    scrub(p)
+for p in Path("src").rglob("*.tsx"):
+    try:
+        t = p.read_text(errors="replace")
+    except Exception:
+        continue
+    if any(x in t for x in ("automations", "chat_conversations", "CUSTOMER_COLS", "profiles", "description, active")):
+        scrub(p)
 print("force_schema_safe_cols done")
