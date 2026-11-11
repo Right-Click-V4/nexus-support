@@ -1,0 +1,23 @@
+/* login-perf-v1 */
+.login-cosmos {
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+.login-star {
+  will-change: opacity;
+}
+.login-nebula,
+.login-galaxy-band,
+.login-dust {
+  will-change: auto;
+  contain: layout style;
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-star,
+  .login-nebula,
+  .login-galaxy-band,
+  .login-dust,
+  .login-planet {
+    animation: none !important;
+  }
+}
