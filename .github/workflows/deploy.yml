@@ -18,105 +18,77 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
         with:
           fetch-depth: 0
 
       - name: Restore + patch portal
-        timeout-minutes: 8
         run: |
           set +e
-          run_py() {
-            local f="$1"
-            if [ -f "$f" ]; then
-              echo ">> $f"
-              timeout 45s python3 "$f" || echo "WARN timeout/fail $f"
-            fi
-          }
+          run_py() { echo "RUN $1"; timeout 45s python3 "$1" || echo "WARN $1 exit $?"; }
 
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           echo "CustomerPortal bytes=$CP_SZ"
-          if [ "$CP_SZ" -lt 50000 ] || grep -q "Loading portal update" src/components/CustomerPortal.tsx 2>/dev/null || ! grep -q "PortalLiveChat\|Live Chat\|My tickets\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
+          if [ "$CP_SZ" -lt 50000 ] || grep -q "Loading portal update\|PLACEHOLDER" src/components/CustomerPortal.tsx 2>/dev/null || ! grep -q "PortalLiveChat\|Live Chat\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
             GOOD=c3edde907e5e5be48439b7fea0df6dbe3dca6611
             echo "Restoring CustomerPortal from $GOOD"
             git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx 2>/dev/null || true
-            CP_SZ2=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
-            if [ "$CP_SZ2" -lt 50000 ]; then
+            if [ "$(wc -c < src/components/CustomerPortal.tsx)" -lt 50000 ]; then
               curl -fsSL --max-time 20 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx || true
             fi
-            echo "CustomerPortal after restore=$(wc -c < src/components/CustomerPortal.tsx)"
-          fi
-
-          TC_SZ=$(wc -c < src/context/TicketContext.tsx 2>/dev/null || echo 0)
-          if [ "$TC_SZ" -lt 20000 ] || ! grep -q "export function useTickets" src/context/TicketContext.tsx 2>/dev/null; then
-            echo "Restoring TicketContext from c3b543f (was $TC_SZ bytes)"
-            git show c3b543f:src/context/TicketContext.tsx > src/context/TicketContext.tsx 2>/dev/null || true
           fi
 
           PC_SZ=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
           echo "PlatformContext bytes=$PC_SZ"
-          if [ "$PC_SZ" -lt 5000 ] || ! grep -q "export function usePlatform" src/context/PlatformContext.tsx 2>/dev/null; then
-            echo "Restoring PlatformContext from e3a5fd3 (was $PC_SZ bytes)"
-            git show e3a5fd3:src/context/PlatformContext.tsx > src/context/PlatformContext.tsx 2>/dev/null || \
-              curl -fsSL --max-time 20 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/e3a5fd3/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
-            echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
+          if [ "$PC_SZ" -lt 5000 ] || grep -q "PLACEHOLDER" src/context/PlatformContext.tsx 2>/dev/null || ! grep -q "export function usePlatform" src/context/PlatformContext.tsx 2>/dev/null; then
+            GOOD=e3a5fd3
+            echo "Restoring PlatformContext from $GOOD"
+            git show "$GOOD:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || true
+            if [ "$(wc -c < src/context/PlatformContext.tsx)" -lt 5000 ]; then
+              curl -fsSL --max-time 20 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
+            fi
           fi
 
           run_py scripts/restore_platform_blob.py
+          run_py scripts/restore_cp_blob.py
           run_py scripts/restore_ticket_blob.py
-          run_py scripts/patch_release_notes_persist.py
+          run_py scripts/restore_livechat_blob.py
 
-          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send; do
-            run_py "scripts/${s}.py"
+          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_hold_nuclear; do
+            if [ -f "scripts/${s}.py" ]; then run_py "scripts/${s}.py"; fi
           done
 
-          run_py scripts/restore_livechat_blob.py
-          run_py scripts/ensure_resolve_chat.py
-          run_py scripts/fix_send_chat_message.py
-          run_py scripts/fix_claim_and_send.py
           run_py scripts/patch_livechat_master_v1.py
           run_py scripts/patch_hotfix_v2.py
 
+          # schema-safe customers (never select missing avatar_url)
           python3 - <<'PY'
 from pathlib import Path
-import re
 p = Path("src/context/TicketContext.tsx")
 if p.exists():
     s = p.read_text()
-    s2 = re.sub(
-        r"const CUSTOMER_COLS = '[^']*';[^\n]*",
-        "const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at'; // SCHEMA_SAFE_NO_AVATAR",
-        s,
-        count=1,
+    s2 = s.replace(
+        "const CUSTOMER_COLS = 'id, name, email, company, role, branch, status, created_at, avatar_url';",
+        "const CUSTOMER_COLS = 'id, name, email, company, role, branch, status, created_at';",
     )
     if s2 != s:
         p.write_text(s2)
-        print("CUSTOMER_COLS forced schema-safe")
+        print("CUSTOMER_COLS schema-safe")
     else:
-        print("CUSTOMER_COLS already safe or missing")
-    cols = next((ln for ln in s2.splitlines() if "CUSTOMER_COLS" in ln), "")
-    print("FINAL", cols)
-    if "avatar_url" in cols:
-        raise SystemExit("CUSTOMER_COLS still has avatar_url")
+        print("CUSTOMER_COLS already safe or pattern differed")
 PY
 
-          test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
-          test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || echo WARN_PLATFORM
-          grep -q "export function useTickets" src/context/TicketContext.tsx && echo OK_TICKETS || echo WARN_TICKETS
-          true
-
-      - name: Generate git changelog draft
-        run: |
-          python3 scripts/generate_git_changelog.py || true
-          ls -la public/git-changelog-draft.json || echo WARN_CHANGELOG
+          test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || { echo FAIL_PORTAL; exit 1; }
+          test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || { echo FAIL_PLATFORM; exit 1; }
+          grep -q "usePlatform" src/context/PlatformContext.tsx && echo OK_USE_PLATFORM || { echo FAIL_USE_PLATFORM; exit 1; }
+          set -e
 
       - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: "22"
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
@@ -124,12 +96,18 @@ PY
       - name: Build
         run: npm run build
         env:
-          GITHUB_ACTIONS: "true"
+          GITHUB_ACTIONS: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      - name: Verify dist index
+        run: |
+          test -f dist/index.html
+          grep -q 'assets/' dist/index.html && echo OK_DIST_ASSETS || { echo FAIL_DIST_STILL_DEV_ENTRY; cat dist/index.html; exit 1; }
+          ! grep -q '/src/main.tsx' dist/index.html && echo OK_NO_DEV_ENTRY || { echo FAIL_DEV_ENTRY_IN_DIST; exit 1; }
+
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist

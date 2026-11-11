@@ -1,20 +1,50 @@
 #!/usr/bin/env python3
-import base64, zlib, sys
+"""Restore PlatformContext from blob or known-good GitHub raw if truncated."""
+import base64, zlib, urllib.request
 from pathlib import Path
-blob = Path(__file__).resolve().parent.joinpath("blobs/pc.b64")
+
 target = Path("src/context/PlatformContext.tsx")
-if not blob.exists():
-    print("skip: no blobs/pc.b64")
-    sys.exit(0)
+blob = Path("scripts/blobs/pc.b64")
+GOOD = "e3a5fd3"
+
+def healthy(text: str) -> bool:
+    return (
+        bool(text)
+        and "PLACEHOLDER" not in text
+        and len(text) > 5000
+        and "export function usePlatform" in text
+        and "sendChatMessage" in text
+    )
+
+def write(data: bytes, source: str):
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+    print(f"PlatformContext restored from {source}: {len(data)} bytes")
+
+cur = target.read_text() if target.exists() else ""
+if healthy(cur):
+    print("PlatformContext already healthy", len(cur))
+    raise SystemExit(0)
+
+if blob.exists() and blob.stat().st_size > 1000:
+    try:
+        data = zlib.decompress(base64.b64decode(blob.read_text().strip()))
+        if healthy(data.decode("utf-8", "replace")):
+            write(data, "pc.b64")
+            raise SystemExit(0)
+    except SystemExit:
+        raise
+    except Exception as e:
+        print("blob failed:", e)
+
+url = f"https://raw.githubusercontent.com/Right-Click-V4/nexus-support/{GOOD}/src/context/PlatformContext.tsx"
 try:
-    data = zlib.decompress(base64.b64decode(blob.read_text().strip()))
-    cur = target.read_text() if target.exists() else ""
-    if "PLACEHOLDER" in cur or len(cur) < 5000 or "export function usePlatform" not in cur:
-        Path("src/context").mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        print("PlatformContext restored", len(data))
-    else:
-        print("PlatformContext already healthy", len(cur))
+    data = urllib.request.urlopen(url, timeout=25).read()
+    if healthy(data.decode("utf-8", "replace")):
+        write(data, GOOD)
+        raise SystemExit(0)
+    print("remote not healthy", len(data))
 except Exception as e:
-    print("restore platform skip:", e)
-    sys.exit(0)
+    print("remote restore failed:", e)
+
+print("WARN: PlatformContext still truncated")
