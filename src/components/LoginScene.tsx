@@ -40,7 +40,7 @@ function useStarField(count: number) {
 
 type TrailPoint = { x: number; y: number };
 const TRAIL_MAX_DIST = 220;
-const SAMPLE_MS = 16;
+const SAMPLE_MS = 32;
 const BASE_SPEED = 0.26;
 const TURN_RATE = 0.0048;
 const PORTAL_EVERY_MS = 20000;
@@ -285,8 +285,21 @@ function LogoPilotStage() {
       }
     };
 
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      } else if (!raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, []);
 
   return (
@@ -380,7 +393,7 @@ function DistantPlanet({
 }
 
 export function CosmicFallBackground() {
-  const stars = useStarField(320);
+  const stars = useStarField(90);
   return (
     <div className="login-cosmos absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       <div className="login-cosmos-sky absolute inset-0" />
@@ -408,7 +421,7 @@ export function CosmicFallBackground() {
             opacity: s.opacity,
             animationDuration: `${s.duration}s, ${s.twinkle}s`,
             animationDelay: `${s.delay}s, ${(s.id % 9) * 0.35}s`,
-            boxShadow: `0 0 ${s.size * 2.4}px ${s.color}`,
+            boxShadow: s.size > 1.8 ? `0 0 ${s.size * 1.4}px ${s.color}` : undefined,
           }}
         />
       ))}
