@@ -1,10 +1,11 @@
 /* login-speed-v1 */
 /* postlogin-force-exit-v1 */
 /* postlogin-auto-clear-v1 */
+/* postlogin-timing-v2 */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-const MIN_MS = 900;
-const FADE_MS = 400;
+const MIN_MS = 1600;
+const FADE_MS = 500;
 const POST_LOGIN_KEY = 'nexus_post_login';
 
 export function markJustLoggedIn() {
@@ -180,10 +181,10 @@ export default function PostLoginLoader({
 
   useEffect(() => {
     const timers = [
-      window.setTimeout(() => setStepIdx(1), 200),
-      window.setTimeout(() => setStepIdx(2), 450),
-      window.setTimeout(() => setStepIdx(3), 700),
-      window.setTimeout(() => clearJustLoggedIn(), 1200),
+      window.setTimeout(() => setStepIdx(1), 280),
+      window.setTimeout(() => setStepIdx(2), 620),
+      window.setTimeout(() => setStepIdx(3), 980),
+      window.setTimeout(() => clearJustLoggedIn(), 2800),
     ];
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, []);
@@ -295,13 +296,13 @@ export function PostLoginShell({
     return () => window.clearTimeout(t);
   }, [ready, mode]);
 
-  // Safety: never stay on wait longer than 2s when ready is true
+  // Safety: force-complete if stuck (allow full ceremony + fade)
   useEffect(() => {
     if (!ready) return;
     const t = window.setTimeout(() => {
       setMode((m) => (m === 'wait' || m === 'ceremony' || m === 'fading' ? 'done' : m));
       clearJustLoggedIn();
-    }, 2000);
+    }, 4500);
     return () => window.clearTimeout(t);
   }, [ready]);
 
