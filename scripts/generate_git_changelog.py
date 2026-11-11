@@ -1,15 +1,37 @@
 #!/usr/bin/env python3
-"""Write public/git-changelog-draft.json from recent git commits (build-time)."""
+"""Write public/git-changelog-draft.json — customer-readable draft from recent commits."""
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "public" / "git-changelog-draft.json"
-N = 20
+N = 25
+
+TYPE_LABELS = {
+    "feat": "New",
+    "feature": "New",
+    "fix": "Fixed",
+    "bugfix": "Fixed",
+    "ui": "Updated look",
+    "style": "Updated look",
+    "perf": "Faster",
+    "refactor": "Improved",
+    "docs": "Docs",
+    "chore": "Maintenance",
+    "ci": "Maintenance",
+    "build": "Maintenance",
+    "test": "Maintenance",
+    "security": "Security",
+}
+
+SKIP_TYPES = {"ci", "build", "test", "chore"}
+
+NOISE = re.compile(r"\b(wip|tmp|temp|debug|log|logs|typo|nit|misc)\b", re.I)
 
 
 def run(cmd: list[str]) -> str:
@@ -17,6 +39,106 @@ def run(cmd: list[str]) -> str:
         return subprocess.check_output(cmd, cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
     except Exception:
         return ""
+
+
+def parse_subject(subject: str) -> tuple[str, str, str]:
+    m = re.match(
+        r"^(?P<type>[a-zA-Z]+)(?:\((?P<scope>[^)]+)\))?!?:\s*(?P<rest>.+)$",
+        subject.strip(),
+    )
+    if m:
+        return (
+            (m.group("type") or "").lower(),
+            (m.group("scope") or "").strip(),
+            (m.group("rest") or "").strip(),
+        )
+    return "", "", subject.strip()
+
+
+def humanize(subject: str) -> str | None:
+    typ, scope, rest = parse_subject(subject)
+    if not rest:
+        rest = subject.strip()
+    if not rest:
+        return None
+
+    if typ in SKIP_TYPES:
+        low = rest.lower()
+        if not any(
+            k in low
+            for k in (
+                "portal",
+                "login",
+                "chat",
+                "ticket",
+                "account",
+                "profile",
+                "avatar",
+                "password",
+                "overview",
+                "help",
+                "community",
+                "sign out",
+            )
+        ):
+            return None
+
+    rest = NOISE.sub("", rest)
+    rest = re.sub(r"\s+", " ", rest).strip(" -–—:")
+    if not rest:
+        return None
+    rest = rest[0].upper() + rest[1:]
+
+    replacements = [
+        (r"\bdeploy\.yml\b", "deployment setup"),
+        (r"\bnpm cache\b", "install speed"),
+        (r"\blockfile\b", "dependency list"),
+        (r"\bSHA(s)?\b", "security pin"),
+        (r"\bCI\b", "build"),
+        (r"\bUI\b", "screen"),
+        (r"\bautofill\b", "saved passwords on login"),
+        (r"\bCustomerPortal\b", "Customer Portal"),
+        (r"\bLiveChat\b", "Live Chat"),
+        (r"\bAnnouncementsPage\b", "announcements"),
+        (r"\bPortalHome\b", "Overview"),
+    ]
+    for pat, rep in replacements:
+        rest = re.sub(pat, rep, rest, flags=re.I)
+
+    label = TYPE_LABELS.get(typ, "Updated")
+    scope_map = {
+        "portal": "Customer Portal",
+        "login": "Login",
+        "chat": "Live Chat",
+        "livechat": "Live Chat",
+        "agent": "Agent Workspace",
+        "account": "Account",
+        "releases": "Updates",
+    }
+    scope_hint = scope_map.get(scope.lower(), "") if scope else ""
+    if scope_hint and scope_hint.lower() not in rest.lower():
+        line = f"{label}: {rest} ({scope_hint})"
+    else:
+        line = f"{label}: {rest}"
+    if len(line) > 120:
+        line = line[:117].rstrip() + "…"
+    return line
+
+
+def pick_title(lines: list[str], date_str: str) -> str:
+    if not lines:
+        return f"System update — {date_str}"
+    for pref in ("New:", "Fixed:", "Updated look:", "Security:", "Improved:", "Faster:"):
+        for ln in lines:
+            if ln.startswith(pref):
+                body = ln.split(":", 1)[-1].strip()
+                if len(body) > 72:
+                    body = body[:69].rstrip() + "…"
+                return body
+    body = lines[0].split(":", 1)[-1].strip() if ":" in lines[0] else lines[0]
+    if len(body) > 72:
+        body = body[:69].rstrip() + "…"
+    return body or f"System update — {date_str}"
 
 
 def main() -> None:
@@ -46,33 +168,41 @@ def main() -> None:
 
     head = run(["git", "rev-parse", "--short", "HEAD"]) or (commits[0]["sha"] if commits else "")
     branch = run(["git", "rev-parse", "--abbrev-ref", "HEAD"]) or "main"
-
     now = datetime.now(timezone.utc)
     version = now.strftime("%Y.%m.%d")
-    title = f"Build {head}" if head else "Latest build"
-    notes_lines = []
-    for c in commits[:12]:
-        line = f"• {c['subject']}"
-        if c.get("sha"):
-            line += f" ({c['sha']})"
-        notes_lines.append(line)
-    notes = "\n".join(notes_lines) if notes_lines else "No recent commits found."
+    date_str = now.strftime("%b %d, %Y")
+
+    customer_lines: list[str] = []
+    seen = set()
+    for c in commits:
+        line = humanize(c["subject"])
+        if not line:
+            continue
+        key = line.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        customer_lines.append(line)
+        if len(customer_lines) >= 8:
+            break
+
+    if not customer_lines:
+        customer_lines = ["Improved: General stability and performance of the support portal."]
+
+    title = pick_title(customer_lines, date_str)
+    notes = "\n".join(f"• {ln}" for ln in customer_lines)
 
     payload = {
         "generated_at": now.isoformat(),
         "branch": branch,
         "head": head,
-        "suggested": {
-            "version": version,
-            "title": title,
-            "notes": notes,
-        },
+        "suggested": {"version": version, "title": title, "notes": notes},
         "commits": commits,
+        "customer_lines": customer_lines,
     }
-
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {OUT} ({len(commits)} commits, head={head})")
+    print(f"wrote {OUT} ({len(commits)} commits, {len(customer_lines)} customer lines, head={head})")
 
 
 if __name__ == "__main__":
