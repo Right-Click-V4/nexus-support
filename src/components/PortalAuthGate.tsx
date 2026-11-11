@@ -1,5 +1,6 @@
 /* agent-portal-preview-v1 */
 /* no-login-flash-v1 */
+/* postlogin-only-on-signin-v1 */
 import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 import LoginPage from './LoginPage';
@@ -15,10 +16,11 @@ interface Props {
 export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }: Props) {
   const { user, loading, authBusy, requiresAuth, accountRole, configError } = useAuth();
   const goAgent = onOpenAgent || onBackToAgent;
+  const justIn = hasJustLoggedIn();
 
-  // Session still resolving — never flash LoginPage
+  // Session resolving: post-login UI after sign-in; BootLoader only on refresh
   if (loading || authBusy) {
-    if (hasJustLoggedIn()) {
+    if (justIn) {
       return <PostLoginLoader label="Opening customer portal…" fading={false} variant="customer" />;
     }
     return <BootLoader label="Loading portal…" />;
@@ -42,6 +44,8 @@ export default function PortalAuthGate({ children, onOpenAgent, onBackToAgent }:
     return <LoginPage audience="customer" onOpenAgent={goAgent} />;
   }
 
+  // Authenticated: PostLoginShell runs ceremony only when just logged in;
+  // refresh skips straight to portal (BootLoader already handled above).
   return (
     <PostLoginShell
       ready={!!user}
