@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ensure LoginScene StarCanvas has fall/drift/sparkle motion."""
+"""Ensure LoginScene StarCanvas has fall/drift/sparkle motion + scattered positions."""
 from pathlib import Path
 import re
 
@@ -7,8 +7,8 @@ p = Path("src/components/LoginScene.tsx")
 if not p.exists():
     raise SystemExit(0)
 s = p.read_text()
-if "mode === 'fall'" in s and "pickMode" in s and "StarCanvas" in s:
-    print("star motion already present")
+if "mode === 'fall'" in s and "43758.5453" in s and "StarCanvas" in s:
+    print("star motion+scatter already present")
     raise SystemExit(0)
 
 new_star = r'''/** Single canvas starfield — 320 stars, mixed fall / drift / sparkle (GPU-friendly). */
@@ -89,9 +89,14 @@ function StarCanvas({ count = 320 }: { count?: number }) {
           vy = 0.008 + (i % 4) * 0.003;
         }
 
+        // Scrambled positions — avoid visible diagonal/grid bands
+        const hx = Math.sin(i * 127.1 + layer * 311.7) * 43758.5453;
+        const hy = Math.sin(i * 269.5 + layer * 183.3) * 23421.6312;
+        const rx = hx - Math.floor(hx);
+        const ry = hy - Math.floor(hy);
         return {
-          x: (((i * 41 + 9 + layer * 13) % 1000) / 1000) * w,
-          y: (((i * 59 + 7 + layer * 19) % 1000) / 1000) * h,
+          x: rx * w,
+          y: ry * h,
           r,
           base: 0.18 + layer * 0.11 + (i % 4) * 0.04,
           tw: 1.8 + (i % 9) * 0.45,
@@ -197,4 +202,4 @@ if not m:
     raise SystemExit(0)
 s = s[: m.start()] + new_star + s[m.end() :]
 p.write_text(s)
-print("star motion patched", p.stat().st_size)
+print("star motion+scatter patched", p.stat().st_size)
