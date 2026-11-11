@@ -1,76 +1,49 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { SpaceFlybys } from './LoginFlybys';
 import { subscribeSkyCraft, type SkyCraft } from '../lib/skyTraffic';
 import { NexusLogoMark, NexusWordmark } from './NexusBrand';
 export { NexusLogoMark, NexusWordmark };
 
-function useFallingStars(count: number) {
+function useStarField(count: number) {
   return useMemo(
     () =>
       Array.from({ length: count }, (_, i) => {
-        // 4 depth layers: far dust, mid haze, near spark, bright foreground
-        const layer = i % 4;
+        const layer = i % 5;
         const size =
           layer === 0
-            ? 0.7 + (i % 3) * 0.2
+            ? 0.6 + (i % 3) * 0.15
             : layer === 1
-              ? 1.1 + (i % 4) * 0.25
+              ? 0.9 + (i % 3) * 0.2
               : layer === 2
-                ? 1.6 + (i % 3) * 0.35
-                : 2.2 + (i % 5) * 0.45;
+                ? 1.3 + (i % 4) * 0.25
+                : layer === 3
+                  ? 1.8 + (i % 3) * 0.3
+                  : 2.4 + (i % 4) * 0.4;
         const duration =
-          layer === 0
-            ? 22 + (i % 9) * 2.4
-            : layer === 1
-              ? 16 + (i % 8) * 1.8
-              : layer === 2
-                ? 12 + (i % 7) * 1.5
-                : 9 + (i % 6) * 1.2;
-        const color =
-          layer === 0
-            ? i % 2 === 0
-              ? '#a78bfa'
-              : '#c4b5fd'
-            : layer === 1
-              ? i % 3 === 0
-                ? '#67e8f9'
-                : '#ddd6fe'
-              : layer === 2
-                ? i % 4 === 0
-                  ? '#f9a8d4'
-                  : '#e9d5ff'
-                : i % 5 === 0
-                  ? '#ffffff'
-                  : i % 3 === 0
-                    ? '#f0abfc'
-                    : '#a5f3fc';
+          layer <= 1 ? 28 + (i % 10) * 2.5 : layer === 2 ? 18 + (i % 8) * 1.8 : 11 + (i % 7) * 1.4;
+        const palette = ['#a78bfa', '#c4b5fd', '#67e8f9', '#e9d5ff', '#f9a8d4', '#ffffff', '#f0abfc', '#a5f3fc'];
         return {
           id: i,
-          left: `${(i * 37 + 7 + layer * 11) % 100}%`,
-          top: `${(i * 53 + 11 + layer * 17) % 100}%`,
+          left: `${(i * 41 + 9 + layer * 13) % 100}%`,
+          top: `${(i * 59 + 7 + layer * 19) % 100}%`,
           size,
-          delay: -((i * 0.37 + layer * 1.1) % 22),
+          delay: -((i * 0.41 + layer * 1.3) % 26),
           duration,
-          color,
-          opacity:
-            layer === 0
-              ? 0.18 + (i % 4) * 0.04
-              : layer === 1
-                ? 0.28 + (i % 4) * 0.05
-                : layer === 2
-                  ? 0.4 + (i % 3) * 0.08
-                  : 0.55 + (i % 4) * 0.1,
+          color: palette[i % palette.length],
+          opacity: 0.15 + layer * 0.12 + (i % 4) * 0.04,
+          twinkle: 2.4 + (i % 7) * 0.55,
         };
       }),
     [count],
   );
 }
 
-type TrailPoint = { x: number; y: number; t: number };
-const TRAIL_MAX_DIST = 160;
-const SAMPLE_MS = 14;
-const BASE_SPEED = 0.24;
-const TURN_RATE = 0.0045;
+type TrailPoint = { x: number; y: number };
+const TRAIL_MAX_DIST = 220;
+const SAMPLE_MS = 16;
+const BASE_SPEED = 0.26;
+const TURN_RATE = 0.0048;
+const PORTAL_EVERY_MS = 20000;
 
 type PilotMode = 'cruise' | 'pause' | 'dash' | 'bob_v' | 'bob_h' | 'portal' | 'curious';
 
@@ -78,31 +51,13 @@ function randomIn(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 
-function trailPath(points: TrailPoint[], amp = 0, phase = 0, freq = 0.22): string {
+function trailPathD(points: TrailPoint[]): string {
   if (points.length < 2) return '';
   const pts = [...points].reverse();
-  const out: { x: number; y: number }[] = [];
-  let dist = 0;
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i];
-    if (i === 0) {
-      out.push({ x: p.x, y: p.y });
-      continue;
-    }
-    const prev = pts[i - 1];
-    const dx = p.x - prev.x;
-    const dy = p.y - prev.y;
-    const len = Math.hypot(dx, dy) || 1;
-    dist += len;
-    const nx = -dy / len;
-    const ny = dx / len;
-    const wave = amp === 0 ? 0 : Math.sin(dist * freq + phase) * amp * (i / pts.length);
-    out.push({ x: p.x + nx * wave, y: p.y + ny * wave });
-  }
-  let d = `M ${out[0].x.toFixed(1)} ${out[0].y.toFixed(1)}`;
-  for (let i = 1; i < out.length; i++) {
-    const a = out[i - 1];
-    const b = out[i];
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
     const mx = (a.x + b.x) / 2;
     const my = (a.y + b.y) / 2;
     d += ` Q ${a.x.toFixed(1)} ${a.y.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
@@ -123,26 +78,18 @@ function trimTrail(list: TrailPoint[], maxDist: number): TrailPoint[] {
   return kept;
 }
 
-const HERO_CHATS = [
-  'Hold my coffee',
-  'Copy that',
-  'Nice ship!',
-  'After you',
-  'Zoom!',
-  'I got this',
-];
-
-const PORTAL_EVERY_MS = 28000;
+const HERO_CHATS = ['Hold my coffee', 'Copy that', 'Nice ship!', 'After you', 'Zoom!', 'I got this'];
 
 function LogoPilotStage() {
   const stageRef = useRef<HTMLDivElement>(null);
   const pilotRef = useRef<HTMLDivElement>(null);
   const enterPortalRef = useRef<HTMLDivElement>(null);
   const exitPortalRef = useRef<HTMLDivElement>(null);
+  const pathMainRef = useRef<SVGPathElement>(null);
+  const pathSoftRef = useRef<SVGPathElement>(null);
+  const pathGlowRef = useRef<SVGPathElement>(null);
   const craftRef = useRef<SkyCraft | null>(null);
-  const [sparks, setSparks] = useState<TrailPoint[]>([]);
   const [heroChat, setHeroChat] = useState<string | null>(null);
-  const stageSizeRef = useRef({ w: 1200, h: 800 });
 
   useEffect(() => subscribeSkyCraft((c) => { craftRef.current = c; }), []);
 
@@ -152,141 +99,123 @@ function LogoPilotStage() {
     if (!stage || !pilot) return;
 
     let raf = 0;
-    let x = 120;
-    let y = 160;
-    let heading = 0.2;
-    let targetX = 400;
-    let targetY = 220;
+    let x = 140;
+    let y = 180;
+    let heading = 0.25;
+    let targetX = 420;
+    let targetY = 240;
     let mode: PilotMode = 'cruise';
     let modeUntil = 0;
     let modeSpeed = 1;
-    let scale = 0.95;
-    let scaleGoal = 0.95;
+    let scale = 0.92;
+    let scaleGoal = 0.92;
     let opacity = 1;
     let opacityGoal = 1;
-    let lastSample = 0;
-    let lastTick = performance.now();
     let trail: TrailPoint[] = [];
-    let lastCuriousAt = 0;
-    let curiousUntil = 0;
-    let lastPortalAt = performance.now() - PORTAL_EVERY_MS + 4000;
-    let lastChatCraftId: number | null = null;
-    let chatUntil = 0;
+    let lastSample = 0;
+    let last = performance.now();
+    let lastPortalAt = performance.now();
     let portalPhase: null | 'enter' | 'exit' = null;
+    let portalExit = { x: 400, y: 200 };
+    let breathT = 0;
+    let chatUntil = 0;
 
-    const pickTarget = (w: number, h: number, near = false) => {
-      if (near) {
-        targetX = Math.max(40, Math.min(w - 40, x + randomIn(-180, 180)));
-        targetY = Math.max(40, Math.min(h * 0.55, y + randomIn(-100, 100)));
-      } else {
-        targetX = randomIn(60, Math.max(120, w - 60));
-        targetY = randomIn(50, Math.max(100, h * 0.55));
-      }
+    const measure = () => {
+      const r = stage.getBoundingClientRect();
+      return { width: Math.max(320, r.width), height: Math.max(320, r.height) };
+    };
+
+    const pickTarget = (w: number, h: number) => {
+      targetX = randomIn(w * 0.12, w * 0.88);
+      targetY = randomIn(h * 0.12, h * 0.72);
     };
 
     const pickMode = (now: number) => {
       const roll = Math.random();
-      if (roll < 0.18) {
+      if (roll < 0.12) {
         mode = 'pause';
-        modeUntil = now + randomIn(600, 1400);
+        modeUntil = now + randomIn(700, 1400);
         modeSpeed = 0.15;
-      } else if (roll < 0.34) {
+        scaleGoal = randomIn(0.88, 1.02);
+      } else if (roll < 0.28) {
         mode = 'dash';
         modeUntil = now + randomIn(900, 1600);
-        modeSpeed = randomIn(1.8, 2.6);
-        pickTarget(stageSizeRef.current.w, stageSizeRef.current.h);
-      } else if (roll < 0.5) {
+        modeSpeed = randomIn(1.55, 2.1);
+        scaleGoal = randomIn(0.78, 0.9);
+        pickTarget(measure().width, measure().height);
+      } else if (roll < 0.42) {
         mode = 'bob_v';
         modeUntil = now + randomIn(1400, 2400);
-        modeSpeed = randomIn(0.7, 1.1);
-      } else if (roll < 0.66) {
+        modeSpeed = 0.55;
+        scaleGoal = randomIn(0.95, 1.12);
+      } else if (roll < 0.55) {
         mode = 'bob_h';
         modeUntil = now + randomIn(1400, 2400);
-        modeSpeed = randomIn(0.7, 1.1);
+        modeSpeed = 0.55;
+        scaleGoal = randomIn(0.95, 1.1);
+      } else if (roll < 0.68) {
+        mode = 'curious';
+        modeUntil = now + randomIn(1200, 2000);
+        modeSpeed = 0.7;
+        scaleGoal = randomIn(1.05, 1.22);
+        const craft = craftRef.current;
+        if (craft) {
+          targetX = craft.x;
+          targetY = craft.y;
+          if (Math.random() < 0.55) {
+            setHeroChat(HERO_CHATS[Math.floor(Math.random() * HERO_CHATS.length)]);
+            chatUntil = now + 2200;
+          }
+        } else {
+          pickTarget(measure().width, measure().height);
+        }
       } else {
         mode = 'cruise';
         modeUntil = now + randomIn(1800, 3200);
-        modeSpeed = randomIn(0.85, 1.35);
-        pickTarget(stageSizeRef.current.w, stageSizeRef.current.h);
+        modeSpeed = randomIn(0.85, 1.15);
+        scaleGoal = randomIn(0.72, 1.18);
+        pickTarget(measure().width, measure().height);
       }
     };
 
     const startPortal = (now: number, w: number, h: number) => {
       mode = 'portal';
       portalPhase = 'enter';
+      modeUntil = now + 700;
+      modeSpeed = 0.2;
+      opacityGoal = 0;
+      scaleGoal = 0.35;
       lastPortalAt = now;
-      const ex = randomIn(80, w - 80);
-      const ey = randomIn(60, h * 0.5);
       const entr = enterPortalRef.current;
-      const exit = exitPortalRef.current;
       if (entr) {
         entr.style.left = `${x}px`;
         entr.style.top = `${y}px`;
         entr.classList.add('is-active');
       }
-      if (exit) {
-        exit.style.left = `${ex}px`;
-        exit.style.top = `${ey}px`;
+      portalExit = {
+        x: randomIn(w * 0.15, w * 0.85),
+        y: randomIn(h * 0.15, h * 0.65),
+      };
+      const exitEl = exitPortalRef.current;
+      if (exitEl) {
+        exitEl.style.left = `${portalExit.x}px`;
+        exitEl.style.top = `${portalExit.y}px`;
       }
-      opacityGoal = 0;
-      scaleGoal = 0.55;
-      targetX = x;
-      targetY = y;
-      modeUntil = now + 700;
-      ;(window as any).__portalExit = { x: ex, y: ey };
     };
 
-    const sr0 = stage.getBoundingClientRect();
-    stageSizeRef.current = { w: sr0.width, h: sr0.height };
-    pickTarget(sr0.width, sr0.height);
-    modeUntil = performance.now() + 1200;
+    pickTarget(measure().width, measure().height);
+    modeUntil = performance.now() + 1800;
 
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
-      const sr = stage.getBoundingClientRect();
-      if (Math.abs(sr.width - stageSizeRef.current.w) > 12 || Math.abs(sr.height - stageSizeRef.current.h) > 12) {
-        stageSizeRef.current = { w: sr.width, h: sr.height };
-      }
-      const dt = Math.min(32, Math.max(0, now - lastTick));
-      lastTick = now;
+      const dt = Math.min(32, now - last);
+      last = now;
+      const sr = measure();
+      breathT += dt * 0.001;
 
-      const craft = craftRef.current;
-      if (
-        mode !== 'portal' &&
-        mode !== 'curious' &&
-        craft &&
-        craft.label &&
-        now - lastCuriousAt > 16000 &&
-        Math.random() < 0.004
-      ) {
-        mode = 'curious';
-        curiousUntil = now + randomIn(2800, 4800);
-        lastCuriousAt = now;
-        modeSpeed = randomIn(1.2, 1.8);
-        targetX = craft.x;
-        targetY = craft.y;
-        scaleGoal = randomIn(0.9, 1.08);
-        if (craft.id !== lastChatCraftId && Math.random() < 0.55) {
-          lastChatCraftId = craft.id;
-          setHeroChat(HERO_CHATS[Math.floor(Math.random() * HERO_CHATS.length)]);
-          chatUntil = now + 2000;
-        }
-      }
-      if (mode === 'curious') {
-        if (craft) {
-          targetX = craft.x + (craft.dir === 'ltr' ? 28 : -28);
-          targetY = craft.y + Math.sin(now * 0.004) * 10;
-        }
-        if (now >= curiousUntil || !craft) {
-          mode = 'cruise';
-          modeUntil = now + randomIn(1200, 2400);
-          modeSpeed = randomIn(0.9, 1.3);
-          pickTarget(sr.width, sr.height);
-        }
-      }
       if (chatUntil && now >= chatUntil) {
-        chatUntil = 0;
         setHeroChat(null);
+        chatUntil = 0;
       }
 
       if (mode !== 'portal' && now - lastPortalAt >= PORTAL_EVERY_MS) {
@@ -295,33 +224,34 @@ function LogoPilotStage() {
 
       if (mode === 'portal') {
         if (portalPhase === 'enter' && now >= modeUntil) {
-          const exit = (window as any).__portalExit as { x: number; y: number } | undefined;
-          x = exit?.x ?? randomIn(80, sr.width - 80);
-          y = exit?.y ?? randomIn(60, sr.height * 0.5);
+          x = portalExit.x;
+          y = portalExit.y;
           trail = [];
+          if (pathMainRef.current) pathMainRef.current.setAttribute('d', '');
+          if (pathSoftRef.current) pathSoftRef.current.setAttribute('d', '');
+          if (pathGlowRef.current) pathGlowRef.current.setAttribute('d', '');
           opacityGoal = 1;
           scaleGoal = 0.95;
           portalPhase = 'exit';
-          modeUntil = now + 650;
-          const entr = enterPortalRef.current;
-          const exitEl = exitPortalRef.current;
-          if (entr) entr.classList.remove('is-active');
-          if (exitEl) exitEl.classList.add('is-active');
+          modeUntil = now + 700;
+          enterPortalRef.current?.classList.remove('is-active');
+          exitPortalRef.current?.classList.add('is-active');
         } else if (portalPhase === 'exit' && now >= modeUntil) {
           portalPhase = null;
           mode = 'cruise';
           modeUntil = now + randomIn(1600, 2600);
           modeSpeed = 1;
           pickTarget(sr.width, sr.height);
-          const exitEl = exitPortalRef.current;
-          if (exitEl) exitEl.classList.remove('is-active');
+          exitPortalRef.current?.classList.remove('is-active');
         }
-      } else if (mode !== 'curious' && now >= modeUntil) {
+      } else if (now >= modeUntil) {
         pickMode(now);
       }
 
       if (mode === 'bob_v') targetY = y + Math.sin(now * 0.006) * 28;
       if (mode === 'bob_h') targetX = x + Math.sin(now * 0.005) * 40;
+
+      const breath = 1 + Math.sin(breathT * 0.9) * 0.04;
 
       const dx = targetX - x;
       const dy = targetY - y;
@@ -329,26 +259,29 @@ function LogoPilotStage() {
       let turn = desired - heading;
       while (turn > Math.PI) turn -= Math.PI * 2;
       while (turn < -Math.PI) turn += Math.PI * 2;
-      const turnBoost = mode === 'dash' || mode === 'curious' ? 1.8 : 1;
+      const turnBoost = mode === 'dash' || mode === 'curious' ? 1.85 : 1;
       const maxTurn = TURN_RATE * turnBoost * dt;
       heading += Math.max(-maxTurn, Math.min(maxTurn, turn));
 
-      const speed = BASE_SPEED * modeSpeed * (mode === 'pause' || mode === 'portal' ? 0.2 : 1);
+      const speed = BASE_SPEED * modeSpeed * (mode === 'pause' || mode === 'portal' ? 0.18 : 1);
       x += Math.cos(heading) * speed * dt;
       y += Math.sin(heading) * speed * dt;
-      x = Math.max(24, Math.min(sr.width - 24, x));
-      y = Math.max(24, Math.min(sr.height - 24, y));
+      x = Math.max(28, Math.min(sr.width - 28, x));
+      y = Math.max(28, Math.min(sr.height - 28, y));
 
-      scale += (scaleGoal - scale) * Math.min(1, dt * 0.006);
-      opacity += (opacityGoal - opacity) * Math.min(1, dt * 0.004);
+      scale += (scaleGoal - scale) * Math.min(1, dt * 0.008);
+      opacity += (opacityGoal - opacity) * Math.min(1, dt * 0.007);
 
-      pilot.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
+      pilot.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale * breath})`;
       pilot.style.opacity = String(Math.max(0, Math.min(1, opacity)));
 
-      if (now - lastSample >= SAMPLE_MS) {
+      if (now - lastSample >= SAMPLE_MS && mode !== 'portal') {
         lastSample = now;
-        trail = trimTrail([{ x, y, t: now }, ...trail], TRAIL_MAX_DIST);
-        if (trail.length % 3 === 0) setSparks(trail.slice(0, 12));
+        trail = trimTrail([{ x, y }, ...trail], TRAIL_MAX_DIST);
+        const d = trailPathD(trail);
+        if (pathMainRef.current) pathMainRef.current.setAttribute('d', d);
+        if (pathSoftRef.current) pathSoftRef.current.setAttribute('d', d);
+        if (pathGlowRef.current) pathGlowRef.current.setAttribute('d', d);
       }
     };
 
@@ -360,30 +293,56 @@ function LogoPilotStage() {
     <div ref={stageRef} className="login-pilot-stage absolute inset-0 pointer-events-none overflow-visible" aria-hidden>
       <svg className="absolute inset-0 w-full h-full overflow-visible" aria-hidden>
         <defs>
-          <linearGradient id="loginWake" x1="0" y1="0" x2="1" y2="0">
+          <linearGradient id="loginWakeMain" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#c4b5fd" stopOpacity="0" />
-            <stop offset="55%" stopColor="#a78bfa" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#f5d0fe" stopOpacity="0.85" />
+            <stop offset="40%" stopColor="#a78bfa" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#f5d0fe" stopOpacity="0.9" />
           </linearGradient>
+          <linearGradient id="loginWakeSoft" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#67e8f9" stopOpacity="0" />
+            <stop offset="55%" stopColor="#a5b4fc" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#e9d5ff" stopOpacity="0.45" />
+          </linearGradient>
+          <filter id="loginTrailBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.2" />
+          </filter>
         </defs>
+        <path
+          ref={pathGlowRef}
+          d=""
+          fill="none"
+          stroke="url(#loginWakeSoft)"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter="url(#loginTrailBlur)"
+          opacity="0.55"
+          className="login-light-trail"
+        />
+        <path
+          ref={pathSoftRef}
+          d=""
+          fill="none"
+          stroke="url(#loginWakeSoft)"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.7"
+          className="login-light-trail"
+        />
+        <path
+          ref={pathMainRef}
+          d=""
+          fill="none"
+          stroke="url(#loginWakeMain)"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.95"
+          className="login-light-trail"
+        />
       </svg>
-      {sparks.map((p, i) => {
-        const fade = 1 - i / 12;
-        return (
-          <span
-            key={`${p.t}-${i}`}
-            className={`login-trail-spark ${i % 3 === 1 ? 'login-trail-spark-1' : i % 3 === 2 ? 'login-trail-spark-2' : ''}`}
-            style={{
-              left: p.x,
-              top: p.y,
-              width: 1.4 + fade * 2.2,
-              height: 1.4 + fade * 2.2,
-              opacity: 0.12 + fade * 0.35,
-              transform: 'translate(-50%, -50%)',
-            }}
-          />
-        );
-      })}
+
       <div ref={enterPortalRef} className="login-space-portal" aria-hidden>
         <div className="login-space-portal-ring login-space-portal-ring-a" />
         <div className="login-space-portal-ring login-space-portal-ring-b" />
@@ -394,7 +353,11 @@ function LogoPilotStage() {
         <div className="login-space-portal-ring login-space-portal-ring-b" />
         <div className="login-space-portal-core" />
       </div>
-      <div ref={pilotRef} className="login-pilot login-pilot-js" style={{ left: 0, top: 0, transform: 'translate(-50%, -50%) scale(0.95)' }}>
+      <div
+        ref={pilotRef}
+        className="login-pilot login-pilot-js"
+        style={{ left: 0, top: 0, transform: 'translate(-50%, -50%) scale(0.92)' }}
+      >
         {heroChat ? <span className="login-pilot-chat">{heroChat}</span> : null}
         <div className="login-pilot-halo" />
         <div className="login-pilot-orbit" />
@@ -406,16 +369,32 @@ function LogoPilotStage() {
   );
 }
 
+function DistantPlanet({
+  className,
+  style,
+}: {
+  className: string;
+  style?: CSSProperties;
+}) {
+  return <div className={className} style={style} aria-hidden />;
+}
+
 export function CosmicFallBackground() {
-  const stars = useFallingStars(280);
+  const stars = useStarField(320);
   return (
     <div className="login-cosmos absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       <div className="login-cosmos-sky absolute inset-0" />
       <div className="login-galaxy-band" />
+      <div className="login-galaxy-band login-galaxy-band-2" />
       <div className="login-nebula login-nebula-a" />
       <div className="login-nebula login-nebula-b" />
+      <div className="login-nebula login-nebula-c" />
+      <div className="login-nebula login-nebula-d" />
       <div className="login-dust" />
       <div className="login-dust login-dust-fine" />
+      <DistantPlanet className="login-planet login-planet-a" />
+      <DistantPlanet className="login-planet login-planet-b" />
+      <DistantPlanet className="login-planet login-planet-c" />
       {stars.map((s) => (
         <span
           key={s.id}
@@ -427,9 +406,9 @@ export function CosmicFallBackground() {
             height: s.size,
             background: s.color,
             opacity: s.opacity,
-            animationDuration: `${s.duration}s`,
-            animationDelay: `${s.delay}s`,
-            boxShadow: `0 0 ${s.size * 2}px ${s.color}`,
+            animationDuration: `${s.duration}s, ${s.twinkle}s`,
+            animationDelay: `${s.delay}s, ${(s.id % 9) * 0.35}s`,
+            boxShadow: `0 0 ${s.size * 2.4}px ${s.color}`,
           }}
         />
       ))}
