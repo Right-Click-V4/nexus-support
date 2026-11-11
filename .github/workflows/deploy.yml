@@ -58,7 +58,7 @@ jobs:
           run_py scripts/restore_ticket_blob.py
           run_py scripts/restore_livechat_blob.py
 
-          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_hold_nuclear; do
+          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_hold_nuclear patch_portal_signout_dialog; do
             if [ -f "scripts/${s}.py" ]; then run_py "scripts/${s}.py"; fi
           done
 
