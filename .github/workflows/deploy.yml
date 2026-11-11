@@ -72,12 +72,13 @@ jobs:
           python3 scripts/fix_claim_and_send.py || true
 
           if [ -f scripts/patch_livechat_master_v1.py ]; then python3 scripts/patch_livechat_master_v1.py || true; fi
+          if [ -f scripts/patch_hotfix_v2.py ]; then python3 scripts/patch_hotfix_v2.py || true; fi
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || echo WARN_PLATFORM
-          grep -q "LIVECHAT_MASTER_CLAIM_UI" src/components/LiveChatPage.tsx && echo OK_CLAIM_UI || echo WARN_CLAIM_UI
+          grep -q "SAFE_IDENTITY_V2\|customerInitials" src/components/PortalLiveChatView.tsx && echo OK_IDENTITY || echo WARN_IDENTITY
           grep -q "claimChat" src/context/PlatformContext.tsx && echo OK_CLAIM || echo WARN_CLAIM
-          grep -q "CUSTOMER_CHAT_IDENTITY_V1\|CHAT_POLL_FAST" src/components/PortalLiveChatView.tsx && echo OK_PORTAL_CHAT || echo WARN_PORTAL_CHAT
+          grep -q "STATUS_AUTOSAVE" src/components/TicketDetail.tsx && echo OK_STATUS || echo WARN_STATUS
           YOURS=$(grep -c ">Yours</span>" src/components/LiveChatPage.tsx || echo 0)
           echo "Yours_count=$YOURS"
           set -e
