@@ -18,6 +18,7 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -25,8 +26,17 @@ jobs:
           fetch-depth: 0
 
       - name: Restore + patch portal
+        timeout-minutes: 5
         run: |
           set +e
+          run_py() {
+            local f="$1"
+            if [ -f "$f" ]; then
+              echo ">> $f"
+              timeout 40s python3 "$f" || echo "WARN timeout/fail $f"
+            fi
+          }
+
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           echo "CustomerPortal bytes=$CP_SZ"
           if [ "$CP_SZ" -lt 50000 ] || grep -q "Loading portal update" src/components/CustomerPortal.tsx 2>/dev/null || ! grep -q "PortalLiveChat\|Live Chat\|My tickets\|export default function CustomerPortal" src/components/CustomerPortal.tsx 2>/dev/null; then
@@ -35,20 +45,10 @@ jobs:
             git show "$GOOD:src/components/CustomerPortal.tsx" > src/components/CustomerPortal.tsx 2>/dev/null || true
             CP_SZ2=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
             if [ "$CP_SZ2" -lt 50000 ]; then
-              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx || true
+              curl -fsSL --max-time 20 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD/src/components/CustomerPortal.tsx" -o src/components/CustomerPortal.tsx || true
             fi
             echo "CustomerPortal after restore=$(wc -c < src/components/CustomerPortal.tsx)"
           fi
-
-          AN_SZ=$(wc -c < src/components/AnnouncementsPage.tsx 2>/dev/null || echo 0)
-          if [ "$AN_SZ" -lt 5000 ]; then
-            GOOD_AN=6a15e5bbd61dead1452de6571ce7eda6292323aa
-            git show "$GOOD_AN:src/components/AnnouncementsPage.tsx" > src/components/AnnouncementsPage.tsx 2>/dev/null || \
-              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_AN/src/components/AnnouncementsPage.tsx" -o src/components/AnnouncementsPage.tsx || true
-            python3 scripts/patch_announcements_replace_publish.py || true
-          fi
-
-          if [ -f scripts/patch_release_notes_persist.py ]; then python3 scripts/patch_release_notes_persist.py || true; fi
 
           PC_SZ=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
           echo "PlatformContext bytes=$PC_SZ"
@@ -56,37 +56,30 @@ jobs:
             GOOD_PC=c3edde907e5e5be48439b7fea0df6dbe3dca6611
             echo "Restoring PlatformContext from $GOOD_PC"
             git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || \
-              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_PC/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
-            python3 scripts/restore_platform_blob.py || true
+              curl -fsSL --max-time 20 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_PC/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
             echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
           fi
 
           for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send; do
-            if [ -f "scripts/${s}.py" ]; then python3 "scripts/${s}.py" || true; fi
+            run_py "scripts/${s}.py"
           done
 
-          python3 scripts/restore_platform_blob.py || true
-          python3 scripts/restore_livechat_blob.py || true
-          python3 scripts/ensure_resolve_chat.py || true
-          python3 scripts/fix_send_chat_message.py || true
-          python3 scripts/fix_claim_and_send.py || true
-
-          if [ -f scripts/patch_livechat_master_v1.py ]; then python3 scripts/patch_livechat_master_v1.py || true; fi
-          if [ -f scripts/patch_hotfix_v2.py ]; then python3 scripts/patch_hotfix_v2.py || true; fi
+          run_py scripts/restore_platform_blob.py
+          run_py scripts/restore_livechat_blob.py
+          run_py scripts/ensure_resolve_chat.py
+          run_py scripts/fix_send_chat_message.py
+          run_py scripts/fix_claim_and_send.py
+          run_py scripts/patch_livechat_master_v1.py
+          run_py scripts/patch_hotfix_v2.py
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || echo WARN_PLATFORM
           grep -q "SAFE_IDENTITY_V2\|customerInitials" src/components/PortalLiveChatView.tsx && echo OK_IDENTITY || echo WARN_IDENTITY
           grep -q "claimChat" src/context/PlatformContext.tsx && echo OK_CLAIM || echo WARN_CLAIM
-          grep -q "STATUS_AUTOSAVE" src/components/TicketDetail.tsx && echo OK_STATUS || echo WARN_STATUS
-          YOURS=$(grep -c ">Yours</span>" src/components/LiveChatPage.tsx || echo 0)
+          grep -q "STATUS_AUTOSAVE" src/components/TicketDetail.tsx 2>/dev/null && echo OK_STATUS || echo WARN_STATUS
+          YOURS=$(grep -c ">Yours</span>" src/components/LiveChatPage.tsx 2>/dev/null || echo 0)
           echo "Yours_count=$YOURS"
           set -e
-
-      - name: Generate git changelog draft
-        run: |
-          python3 scripts/generate_git_changelog.py || true
-          ls -la public/git-changelog-draft.json || echo WARN_CHANGELOG
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
