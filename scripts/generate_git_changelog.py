@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
-"""Write public/git-changelog-draft.json — customer-readable draft from recent commits."""
+"""Write public/git-changelog-draft.json — customer-readable drafts from recent commits.
+
+Emits:
+  - suggested: latest day (backward compatible)
+  - history: up to 12 day-grouped patches (newest first) so agents can publish any of them
+"""
 from __future__ import annotations
 
 import json
 import re
 import subprocess
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "public" / "git-changelog-draft.json"
-N = 25
+N = 80
+MAX_HISTORY = 12
+MAX_LINES_PER_PATCH = 8
 
 TYPE_LABELS = {
     "feat": "New",
@@ -79,6 +87,8 @@ def humanize(subject: str) -> str | None:
                 "help",
                 "community",
                 "sign out",
+                "release",
+                "patch",
             )
         ):
             return None
@@ -101,6 +111,8 @@ def humanize(subject: str) -> str | None:
         (r"\bLiveChat\b", "Live Chat"),
         (r"\bAnnouncementsPage\b", "announcements"),
         (r"\bPortalHome\b", "Overview"),
+        (r"\bReleasesPage\b", "Releases"),
+        (r"\bPlatformContext\b", "platform data"),
     ]
     for pat, rep in replacements:
         rest = re.sub(pat, rep, rest, flags=re.I)
@@ -141,6 +153,12 @@ def pick_title(lines: list[str], date_str: str) -> str:
     return body or f"System update — {date_str}"
 
 
+def day_key(iso: str) -> str:
+    if not iso:
+        return ""
+    return iso[:10]
+
+
 def main() -> None:
     fmt = "%s%x1f%h%x1f%an%x1f%cI%x1f%b%x1e"
     raw = run(["git", "log", f"-n{N}", f"--pretty=format:{fmt}"])
@@ -169,40 +187,95 @@ def main() -> None:
     head = run(["git", "rev-parse", "--short", "HEAD"]) or (commits[0]["sha"] if commits else "")
     branch = run(["git", "rev-parse", "--abbrev-ref", "HEAD"]) or "main"
     now = datetime.now(timezone.utc)
-    version = now.strftime("%Y.%m.%d")
-    date_str = now.strftime("%b %d, %Y")
 
-    customer_lines: list[str] = []
-    seen = set()
+    by_day: dict[str, list[dict]] = defaultdict(list)
     for c in commits:
-        line = humanize(c["subject"])
-        if not line:
+        dk = day_key(c.get("date") or "")
+        if not dk:
             continue
-        key = line.lower()
-        if key in seen:
+        by_day[dk].append(c)
+
+    day_keys = sorted(by_day.keys(), reverse=True)[:MAX_HISTORY]
+
+    history: list[dict] = []
+    for dk in day_keys:
+        day_commits = by_day[dk]
+        customer_lines: list[str] = []
+        seen = set()
+        for c in day_commits:
+            line = humanize(c["subject"])
+            if not line:
+                continue
+            key = line.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            customer_lines.append(line)
+            if len(customer_lines) >= MAX_LINES_PER_PATCH:
+                break
+        if not customer_lines:
             continue
-        seen.add(key)
-        customer_lines.append(line)
-        if len(customer_lines) >= 8:
-            break
 
-    if not customer_lines:
-        customer_lines = ["Improved: General stability and performance of the support portal."]
+        try:
+            dt = datetime.fromisoformat(dk)
+            date_str = dt.strftime("%b %d, %Y")
+            version = dt.strftime("%Y.%m.%d")
+        except Exception:
+            date_str = dk
+            version = dk.replace("-", ".")
 
-    title = pick_title(customer_lines, date_str)
-    notes = "\n".join(f"• {ln}" for ln in customer_lines)
+        title = pick_title(customer_lines, date_str)
+        notes = "\n".join(f"• {ln}" for ln in customer_lines)
+        top_sha = day_commits[0].get("sha") or ""
+        history.append(
+            {
+                "id": f"draft-{dk}-{top_sha}",
+                "version": version,
+                "title": title,
+                "notes": notes,
+                "customer_lines": customer_lines,
+                "date": dk,
+                "head": top_sha,
+                "commit_count": len(day_commits),
+            }
+        )
 
+    if not history:
+        version = now.strftime("%Y.%m.%d")
+        title = f"System update — {now.strftime('%b %d, %Y')}"
+        notes = "• Improved: General stability and performance of the support portal."
+        history = [
+            {
+                "id": f"draft-{version}",
+                "version": version,
+                "title": title,
+                "notes": notes,
+                "customer_lines": ["Improved: General stability and performance of the support portal."],
+                "date": now.strftime("%Y-%m-%d"),
+                "head": head,
+                "commit_count": 0,
+            }
+        ]
+
+    latest = history[0]
     payload = {
         "generated_at": now.isoformat(),
         "branch": branch,
         "head": head,
-        "suggested": {"version": version, "title": title, "notes": notes},
-        "commits": commits,
-        "customer_lines": customer_lines,
+        "suggested": {
+            "version": latest["version"],
+            "title": latest["title"],
+            "notes": latest["notes"],
+        },
+        "history": history,
+        "commits": commits[:25],
+        "customer_lines": latest.get("customer_lines") or [],
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {OUT} ({len(commits)} commits, {len(customer_lines)} customer lines, head={head})")
+    print(
+        f"wrote {OUT} ({len(commits)} commits, {len(history)} history patches, head={head})"
+    )
 
 
 if __name__ == "__main__":
