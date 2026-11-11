@@ -1,12 +1,24 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash2, GitBranch, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, Trash2, GitBranch, Sparkles, CheckCircle2 } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
+
+type GitDraftItem = {
+  id?: string;
+  version: string;
+  title: string;
+  notes: string;
+  customer_lines?: string[];
+  date?: string;
+  head?: string;
+  commit_count?: number;
+};
 
 type GitDraft = {
   generated_at?: string;
   branch?: string;
   head?: string;
   suggested?: { version: string; title: string; notes: string };
+  history?: GitDraftItem[];
   commits?: { subject: string; sha: string; author: string; date: string; body?: string }[];
   customer_lines?: string[];
 };
@@ -21,7 +33,9 @@ function rememberNotesBackup(r: { id?: string; version?: string; title?: string;
     if (r.version) map[`v:${r.version}`] = notes;
     if (r.version && r.title) map[`vt:${r.version}|${r.title}`] = notes;
     localStorage.setItem('nexus-release-notes-by-id-v1', JSON.stringify(map));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   try {
     localStorage.setItem(
       'nexus-last-patch-notes',
@@ -33,7 +47,9 @@ function rememberNotesBackup(r: { id?: string; version?: string; title?: string;
         at: new Date().toISOString(),
       }),
     );
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function recoverNotes(r: { id?: string; version?: string; title?: string; notes?: string }): string {
@@ -44,15 +60,31 @@ function recoverNotes(r: { id?: string; version?: string; title?: string; notes?
     if (r.id && map[r.id]) return map[r.id];
     if (r.version && map[`v:${r.version}`]) return map[`v:${r.version}`];
     if (r.version && r.title && map[`vt:${r.version}|${r.title}`]) return map[`vt:${r.version}|${r.title}`];
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   try {
     const raw = localStorage.getItem('nexus-last-patch-notes');
     if (raw) {
       const last = JSON.parse(raw) as { version?: string; notes?: string };
       if (last?.notes && (!r.version || last.version === r.version)) return last.notes;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return '';
+}
+
+function isPublished(item: GitDraftItem, releases: { version?: string; title?: string; notes?: string }[]) {
+  const v = (item.version || '').trim();
+  const t = (item.title || '').trim().toLowerCase();
+  return (releases || []).some((r) => {
+    const rv = (r.version || '').trim();
+    const rt = (r.title || '').trim().toLowerCase();
+    if (v && rv === v) return true;
+    if (t && rt === t) return true;
+    return false;
+  });
 }
 
 export default function ReleasesPage() {
@@ -60,10 +92,10 @@ export default function ReleasesPage() {
   const [version, setVersion] = useState('');
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
-  const [replacePortal, setReplacePortal] = useState(true);
+  const [replacePortal, setReplacePortal] = useState(false);
   const [draft, setDraft] = useState<GitDraft | null>(null);
-  const [draftStatus, setDraftStatus] = useState<string | null>(null);
-  const [publishingDraft, setPublishingDraft] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +116,23 @@ export default function ReleasesPage() {
     };
   }, []);
 
+  const patchList: GitDraftItem[] = useMemo(() => {
+    if (draft?.history && draft.history.length > 0) return draft.history;
+    if (draft?.suggested) {
+      return [
+        {
+          id: `draft-${draft.suggested.version}`,
+          version: draft.suggested.version,
+          title: draft.suggested.title,
+          notes: draft.suggested.notes,
+          customer_lines: draft.customer_lines,
+          head: draft.head,
+        },
+      ];
+    }
+    return [];
+  }, [draft]);
+
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (replacePortal && releases?.length) {
@@ -101,40 +150,27 @@ export default function ReleasesPage() {
     setVersion('');
     setTitle('');
     setNotes('');
+    setStatus('Published to Customer Portal Overview (Patch notes).');
   };
 
-  const loadDraftIntoForm = () => {
-    if (!draft?.suggested) return;
-    setVersion(draft.suggested.version || '');
-    setTitle(draft.suggested.title || '');
-    setNotes(draft.suggested.notes || '');
-    setDraftStatus('Draft loaded into the form — review, then Publish below.');
-  };
-
-  const publishDraftNow = async () => {
-    if (!draft?.suggested) return;
-    setPublishingDraft(true);
-    setDraftStatus(null);
+  const publishItem = async (item: GitDraftItem) => {
+    const key = item.id || item.version || item.title;
+    setPublishingId(key);
+    setStatus(null);
     try {
-      const { version: v, title: t, notes: n } = draft.suggested;
       const notesText =
-        (n || '').trim() || (draft.customer_lines || []).map((x) => `• ${x}`).join('\n');
+        (item.notes || '').trim() ||
+        (item.customer_lines || []).map((x) => `• ${x}`).join('\n');
       if (!notesText) {
-        setDraftStatus(
-          'Draft has no detail lines to publish. Wait for the next deploy to regenerate the draft.',
-        );
+        setStatus('This draft has no detail lines to publish.');
         return;
       }
-      await saveRelease({
-        version: (v || '').trim() || new Date().toISOString().slice(0, 10),
-        title: (t || '').trim() || 'Latest build',
-        notes: notesText,
-      });
+      const v = (item.version || '').trim() || new Date().toISOString().slice(0, 10);
+      const t = (item.title || '').trim() || 'Latest build';
+      await saveRelease({ version: v, title: t, notes: notesText });
       if (replacePortal && releases?.length) {
         for (const r of [...releases]) {
-          const same =
-            r.version === ((v || '').trim() || new Date().toISOString().slice(0, 10)) &&
-            r.title === ((t || '').trim() || 'Latest build');
+          const same = r.version === v && r.title === t;
           if (same) continue;
           try {
             await deleteRelease(r.id);
@@ -143,18 +179,12 @@ export default function ReleasesPage() {
           }
         }
       }
-      rememberNotesBackup({
-        version: (v || '').trim(),
-        title: (t || '').trim(),
-        notes: notesText,
-      });
-      setDraftStatus(
-        'Published to Customer Portal Overview (Patch notes). Hard-refresh Overview if needed.',
-      );
+      rememberNotesBackup({ version: v, title: t, notes: notesText });
+      setStatus(`Published “${t}” to Customer Portal Overview.`);
     } catch (err: any) {
-      setDraftStatus(err?.message || 'Could not publish draft.');
+      setStatus(err?.message || 'Could not publish.');
     } finally {
-      setPublishingDraft(false);
+      setPublishingId(null);
     }
   };
 
@@ -163,78 +193,104 @@ export default function ReleasesPage() {
       <p className="text-sm text-slate-500 dark:text-zinc-400">
         Publish product release notes for agents. Published notes appear under{' '}
         <span className="font-medium text-zinc-700 dark:text-zinc-200">Overview → Patch notes</span> in the Customer
-        Portal. Nothing is shown to customers until you publish.
+        Portal. Nothing is shown to customers until you publish. Overview shows up to 6 recent published patches.
       </p>
 
-      <section className="rounded-xl border border-violet-300/40 dark:border-violet-400/30 bg-violet-500/5 dark:bg-violet-500/10 p-5 space-y-3">
+      <section className="rounded-xl border border-violet-300/40 dark:border-violet-400/30 bg-violet-500/5 dark:bg-violet-500/10 p-5 space-y-4">
         <div className="flex items-start gap-2">
           <GitBranch size={18} className="text-violet-500 mt-0.5 shrink-0" />
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
-              Automatic draft from git
+              Deploy patches from git
               <Sparkles size={14} className="text-fuchsia-500" />
             </h2>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-              Generated on each deploy from recent commits. Review, then publish only when you want customers to see
-              it.
+              Updated on each deploy from recent commits (grouped by day). Publish any item you want customers to see.
+              Already-published items are tagged.
             </p>
           </div>
         </div>
 
-        {!draft?.suggested ? (
+        {draft && (
+          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex flex-wrap gap-x-3 gap-y-1">
+            {draft.branch && <span>branch: {draft.branch}</span>}
+            {draft.head && <span>head: {draft.head}</span>}
+            {draft.generated_at && (
+              <span>generated: {new Date(draft.generated_at).toLocaleString()}</span>
+            )}
+            <span>
+              {patchList.length} patch{patchList.length === 1 ? '' : 'es'}
+            </span>
+          </div>
+        )}
+
+        <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={replacePortal}
+            onChange={(e) => setReplacePortal(e.target.checked)}
+            className="rounded border-zinc-300"
+          />
+          When publishing, replace previous Overview notes (leave unchecked to keep history, up to 6)
+        </label>
+
+        {patchList.length === 0 ? (
           <p className="text-sm text-zinc-500">
-            No draft file yet. After the next successful deploy, recent commits will appear here.
+            No draft patches yet. After the next successful deploy, recent commit days will appear here.
           </p>
         ) : (
-          <>
-            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex flex-wrap gap-x-3 gap-y-1">
-              {draft.branch && <span>branch: {draft.branch}</span>}
-              {draft.head && <span>head: {draft.head}</span>}
-              {draft.generated_at && (
-                <span>generated: {new Date(draft.generated_at).toLocaleString()}</span>
-              )}
-            </div>
-            <div className="rounded-lg border border-zinc-200 dark:border-white/10 bg-white/70 dark:bg-zinc-950/50 px-3 py-2.5 space-y-1">
-              <div className="text-xs font-mono text-violet-700 dark:text-violet-300">
-                v{draft.suggested.version}
-              </div>
-              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{draft.suggested.title}</div>
-              <pre className="text-xs text-zinc-600 dark:text-zinc-300 whitespace-pre-wrap font-sans max-h-40 overflow-y-auto">
-                {draft.suggested.notes}
-              </pre>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={loadDraftIntoForm}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-zinc-300 dark:border-white/15 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/5"
-              >
-                Load into form
-              </button>
-              <button
-                type="button"
-                disabled={publishingDraft}
-                onClick={() => void publishDraftNow()}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-500 disabled:opacity-60"
-              >
-                <Plus size={16} />
-                {publishingDraft ? 'Publishing…' : 'Publish draft to portal'}
-              </button>
-              <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 px-1">
-                <input
-                  type="checkbox"
-                  checked={replacePortal}
-                  onChange={(e) => setReplacePortal(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                Replace previous Overview notes
-              </label>
-            </div>
-            {draftStatus && (
-              <p className="text-sm text-violet-700 dark:text-violet-200">{draftStatus}</p>
-            )}
-          </>
+          <ul className="space-y-3">
+            {patchList.map((item) => {
+              const published = isPublished(item, releases || []);
+              const key = item.id || item.version || item.title;
+              const busy = publishingId === key;
+              return (
+                <li
+                  key={key}
+                  className="rounded-lg border border-zinc-200 dark:border-white/10 bg-white/70 dark:bg-zinc-950/50 px-3.5 py-3 space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-mono font-bold text-violet-700 dark:text-violet-300">
+                          v{item.version}
+                        </span>
+                        {item.date && <span className="text-[11px] text-zinc-500">{item.date}</span>}
+                        {item.head && (
+                          <span className="text-[11px] text-zinc-500 font-mono">{item.head}</span>
+                        )}
+                        {published ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                            <CheckCircle2 size={12} /> Published
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:text-amber-200">
+                            Draft
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mt-1">{item.title}</div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={busy || published}
+                      onClick={() => void publishItem(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      <Plus size={14} />
+                      {busy ? 'Publishing…' : published ? 'Published' : 'Publish'}
+                    </button>
+                  </div>
+                  <pre className="text-xs text-zinc-600 dark:text-zinc-300 whitespace-pre-wrap font-sans max-h-36 overflow-y-auto">
+                    {item.notes}
+                  </pre>
+                </li>
+              );
+            })}
+          </ul>
         )}
+
+        {status && <p className="text-sm text-violet-700 dark:text-violet-200">{status}</p>}
       </section>
 
       <form
@@ -272,7 +328,7 @@ export default function ReleasesPage() {
             onChange={(e) => setReplacePortal(e.target.checked)}
             className="rounded border-zinc-300"
           />
-          Replace previous notes on Customer Portal Overview (recommended)
+          Replace previous notes on Customer Portal Overview
         </label>
         <button
           type="submit"
@@ -283,19 +339,28 @@ export default function ReleasesPage() {
       </form>
 
       <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Published on portal</h2>
+        {(releases || []).length === 0 && (
+          <p className="text-sm text-zinc-500">No published patch notes yet.</p>
+        )}
         {(releases || []).map((r) => (
           <div
             key={r.id}
             className="rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/60 p-5 shadow-sm flex justify-between gap-3"
           >
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-mono font-bold text-brand-700 bg-brand-50 dark:bg-brand-500/20 dark:text-brand-200 px-2 py-0.5 rounded">
                   {r.version}
                 </span>
                 <span className="font-semibold text-zinc-900 dark:text-zinc-50">{r.title}</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                  <CheckCircle2 size={12} /> Published
+                </span>
               </div>
-              <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-2 whitespace-pre-wrap">{recoverNotes(r) || r.notes}</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-2 whitespace-pre-wrap">
+                {recoverNotes(r) || r.notes}
+              </p>
               <div className="text-xs text-zinc-400 mt-2">
                 {r.released_at ? new Date(r.released_at).toLocaleString() : ''}
               </div>
@@ -304,6 +369,7 @@ export default function ReleasesPage() {
               type="button"
               onClick={() => deleteRelease(r.id)}
               className="text-zinc-400 hover:text-rose-600 shrink-0"
+              title="Unpublish / delete"
             >
               <Trash2 size={16} />
             </button>
