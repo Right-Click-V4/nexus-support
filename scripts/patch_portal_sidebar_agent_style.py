@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Align customer portal sidebar with agent desk layout. Keeps Sign out + confirm."""
+"""Align customer portal sidebar with agent desk layout. Keeps Sign out + styled confirm."""
 from pathlib import Path
 import re
 
@@ -13,7 +13,16 @@ SIGNOUT_BTN = """
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Sign out of the Customer Portal?')) void signOut();
+              void (async () => {
+                const ok = await appConfirm({
+                  title: 'Sign out',
+                  message: 'Sign out of the Customer Portal?',
+                  confirmLabel: 'Sign out',
+                  cancelLabel: 'Cancel',
+                  variant: 'danger',
+                });
+                if (ok) void signOut();
+              })();
             }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
           >
@@ -24,12 +33,29 @@ SIGNOUT_BTN = """
 
 def ensure_signout(text: str) -> str:
     if re.search(r'LogOut size=\{16\} /> Sign out', text):
-        return text
+        # still replace window.confirm if present
+        text2 = re.sub(
+            r"if\s*\(\s*window\.confirm\(\s*['\"]Sign out of the Customer Portal\?['\"]\s*\)\s*\)\s*void\s*signOut\(\)\s*;",
+            "void (async () => { const ok = await appConfirm({ title: 'Sign out', message: 'Sign out of the Customer Portal?', confirmLabel: 'Sign out', cancelLabel: 'Cancel', variant: 'danger' }); if (ok) void signOut(); })();",
+            text,
+        )
+        return text2
     matches = list(re.finditer(r'</div>\s*</aside>', text))
     if not matches:
         return text
     last = matches[-1]
     return text[: last.start()] + SIGNOUT_BTN + text[last.start() :]
+
+
+def ensure_appconfirm_import(text: str) -> str:
+    if 'appConfirm' in text:
+        return text
+    return re.sub(
+        r"(import .+ from 'react';\n)",
+        r"\1import { appConfirm } from '../lib/dialogs';\n",
+        text,
+        count=1,
+    )
 
 
 def ensure_logout_import(text: str) -> str:
@@ -46,10 +72,10 @@ def ensure_logout_import(text: str) -> str:
 
 
 if 'supportNav' in s and 'openTicketBadge' in s:
-    s2 = ensure_logout_import(ensure_signout(s))
+    s2 = ensure_appconfirm_import(ensure_logout_import(ensure_signout(s)))
     if s2 != s:
         p.write_text(s2)
-        print('sidebar already agent-style; restored Sign out')
+        print('sidebar already agent-style; restored Sign out dialog')
     else:
         print('sidebar already agent-style; Sign out ok')
     raise SystemExit(0)
@@ -181,6 +207,6 @@ else:
     s = s[: m2.start()] + new_aside + s[m2.end() :]
     print('aside ok')
 
-s = ensure_logout_import(ensure_signout(s))
+s = ensure_appconfirm_import(ensure_logout_import(ensure_signout(s)))
 p.write_text(s)
 print('done', p.stat().st_size)
