@@ -407,7 +407,8 @@ function StarCanvas({ count = 320 }: { count?: number }) {
           r,
           base: 0.15 + layer * 0.12 + (i % 4) * 0.04,
           tw: 2.4 + (i % 7) * 0.55,
-          phase: (i * 0.41) % (Math.PI * 2),\n          speed: layer <= 1 ? 0.012 : layer === 2 ? 0.02 : 0.035,
+          phase: (i * 0.41) % (Math.PI * 2),
+          speed: layer <= 1 ? 0.012 : layer === 2 ? 0.02 : 0.035,
           color: palette[i % palette.length],
         };
       });
