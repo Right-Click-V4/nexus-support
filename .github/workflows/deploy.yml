@@ -81,7 +81,10 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build
+        run: |
+          python3 scripts/generate_git_changelog.py || echo "WARN changelog generate failed"
+          test -f public/git-changelog-draft.json && echo OK_CHANGELOG || echo '[]' > public/git-changelog-draft.json
+          npm run build
         env:
           GITHUB_ACTIONS: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -92,6 +95,7 @@ jobs:
           test -f dist/index.html
           grep -q 'assets/' dist/index.html && echo OK_DIST_ASSETS || { echo FAIL_DIST_STILL_DEV_ENTRY; cat dist/index.html; exit 1; }
           ! grep -q '/src/main.tsx' dist/index.html && echo OK_NO_DEV_ENTRY || { echo FAIL_DEV_ENTRY_IN_DIST; exit 1; }
+          test -f dist/git-changelog-draft.json && echo OK_CHANGELOG_DIST || echo WARN_NO_CHANGELOG_IN_DIST
           ls -la dist/assets/ | head -20
 
       - name: Deploy to gh-pages
