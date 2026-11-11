@@ -8,6 +8,7 @@ type GitDraft = {
   head?: string;
   suggested?: { version: string; title: string; notes: string };
   commits?: { subject: string; sha: string; author: string; date: string; body?: string }[];
+  customer_lines?: string[];
 };
 
 export default function ReleasesPage() {
@@ -31,7 +32,7 @@ export default function ReleasesPage() {
         const data = (await res.json()) as GitDraft;
         if (!cancelled) setDraft(data);
       } catch {
-        /* no draft file in local dev without generate script */
+        /* no draft */
       }
     })();
     return () => {
@@ -50,7 +51,21 @@ export default function ReleasesPage() {
         }
       }
     }
-    await saveRelease({ version: version.trim(), title: title.trim(), notes: notes.trim() });
+    const notesText = notes.trim();
+    await saveRelease({ version: version.trim(), title: title.trim(), notes: notesText });
+    try {
+      localStorage.setItem(
+        'nexus-last-patch-notes',
+        JSON.stringify({
+          version: version.trim(),
+          title: title.trim(),
+          notes: notesText,
+          at: new Date().toISOString(),
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
     setVersion('');
     setTitle('');
     setNotes('');
@@ -70,8 +85,25 @@ export default function ReleasesPage() {
     setDraftStatus(null);
     try {
       const { version: v, title: t, notes: n } = draft.suggested;
+      const notesText =
+        (n || '').trim() || (draft.customer_lines || []).map((x) => `• ${x}`).join('\n');
+      if (!notesText) {
+        setDraftStatus(
+          'Draft has no detail lines to publish. Wait for the next deploy to regenerate the draft.',
+        );
+        return;
+      }
+      await saveRelease({
+        version: (v || '').trim() || new Date().toISOString().slice(0, 10),
+        title: (t || '').trim() || 'Latest build',
+        notes: notesText,
+      });
       if (replacePortal && releases?.length) {
         for (const r of [...releases]) {
+          const same =
+            r.version === ((v || '').trim() || new Date().toISOString().slice(0, 10)) &&
+            r.title === ((t || '').trim() || 'Latest build');
+          if (same) continue;
           try {
             await deleteRelease(r.id);
           } catch {
@@ -79,12 +111,22 @@ export default function ReleasesPage() {
           }
         }
       }
-      await saveRelease({
-        version: (v || '').trim() || new Date().toISOString().slice(0, 10),
-        title: (t || '').trim() || 'Latest build',
-        notes: (n || '').trim() || 'See git history.',
-      });
-      setDraftStatus('Published to Customer Portal Overview (Patch notes).');
+      try {
+        localStorage.setItem(
+          'nexus-last-patch-notes',
+          JSON.stringify({
+            version: (v || '').trim(),
+            title: (t || '').trim(),
+            notes: notesText,
+            at: new Date().toISOString(),
+          }),
+        );
+      } catch {
+        /* ignore */
+      }
+      setDraftStatus(
+        'Published to Customer Portal Overview (Patch notes). Hard-refresh Overview if needed.',
+      );
     } catch (err: any) {
       setDraftStatus(err?.message || 'Could not publish draft.');
     } finally {
@@ -137,20 +179,6 @@ export default function ReleasesPage() {
                 {draft.suggested.notes}
               </pre>
             </div>
-            {draft.commits && draft.commits.length > 0 && (
-              <details className="text-xs text-zinc-500">
-                <summary className="cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300">
-                  {draft.commits.length} commits in draft
-                </summary>
-                <ul className="mt-2 space-y-1 max-h-36 overflow-y-auto">
-                  {draft.commits.map((c) => (
-                    <li key={c.sha + c.subject} className="truncate">
-                      <span className="font-mono text-violet-600 dark:text-violet-300">{c.sha}</span> {c.subject}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -209,8 +237,8 @@ export default function ReleasesPage() {
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Release notes"
-          rows={3}
+          placeholder="Release notes (one bullet per line)"
+          rows={5}
           className="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-white/10 rounded-lg bg-white dark:bg-zinc-950"
         />
         <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
@@ -236,7 +264,7 @@ export default function ReleasesPage() {
             key={r.id}
             className="rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/60 p-5 shadow-sm flex justify-between gap-3"
           >
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold text-brand-700 bg-brand-50 dark:bg-brand-500/20 dark:text-brand-200 px-2 py-0.5 rounded">
                   {r.version}
