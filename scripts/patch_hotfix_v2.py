@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hotfix V2: customerInitials crash, schema columns, status autosave, claim UI."""
+"""Hotfix V2: customerInitials crash, schema columns, status autosave, claim UI + types."""
 from pathlib import Path
 import re
 
@@ -240,9 +240,41 @@ def restore_claim():
     print('Yours count', s.count('Yours</span>'))
 
 
+def fix_claim_type():
+    p = ROOT / 'src/context/PlatformContext.tsx'
+    if not p.exists() or p.stat().st_size < 5000:
+        return
+    s = p.read_text()
+    if 'claimChat: (conversationId: string, agentId: string) => Promise<void>;' in s:
+        while s.count('claimChat: (conversationId: string, agentId: string) => Promise<void>;') > 1:
+            s = s.replace(
+                'claimChat: (conversationId: string, agentId: string) => Promise<void>;\n  claimChat: (conversationId: string, agentId: string) => Promise<void>;',
+                'claimChat: (conversationId: string, agentId: string) => Promise<void>;',
+                1,
+            )
+        p.write_text(s)
+        print('claim type ok')
+        return
+    for old in [
+        "sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer') => Promise<void>;",
+        "sendChatMessage: (conversationId: string, text: string, sender: 'agent' | 'customer', opts?: { agentId?: string; agentName?: string }) => Promise<void>;",
+    ]:
+        if old in s:
+            s = s.replace(
+                old,
+                old + "\n  claimChat: (conversationId: string, agentId: string) => Promise<void>;",
+                1,
+            )
+            p.write_text(s)
+            print('claim type added')
+            return
+    print('claim type miss')
+
+
 if __name__ == '__main__':
     fix_portal_crash()
     fix_schema()
     fix_status()
     restore_claim()
+    fix_claim_type()
     print('HOTFIX V2 DONE')
