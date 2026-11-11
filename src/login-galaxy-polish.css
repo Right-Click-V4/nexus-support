@@ -1,0 +1,118 @@
+/* login-galaxy-polish-v1 — denser galaxy + smooth trail */
+.login-cosmos-sky {
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -5%, rgba(124, 58, 237, 0.42) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 40% at 85% 15%, rgba(217, 70, 239, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 45% at 10% 80%, rgba(14, 165, 233, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 70% 75%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 30% 40%, rgba(168, 85, 247, 0.08) 0%, transparent 35%),
+    linear-gradient(185deg, #030012 0%, #0a0520 28%, #12082a 55%, #080416 78%, #02000c 100%) !important;
+}
+.login-galaxy-band {
+  position: absolute; inset: -15% -25%;
+  background:
+    radial-gradient(ellipse 70% 28% at 50% 42%, rgba(196, 181, 253, 0.16), transparent 72%),
+    radial-gradient(ellipse 40% 18% at 35% 48%, rgba(244, 114, 182, 0.08), transparent 70%);
+  filter: blur(36px);
+  pointer-events: none;
+  transform: rotate(-18deg);
+  opacity: 0.9;
+}
+.login-galaxy-band-2 {
+  position: absolute; inset: -15% -25%;
+  transform: rotate(12deg) scale(1.05);
+  opacity: 0.55;
+  pointer-events: none;
+  filter: blur(36px);
+  background:
+    radial-gradient(ellipse 55% 22% at 55% 55%, rgba(103, 232, 249, 0.1), transparent 70%),
+    radial-gradient(ellipse 35% 16% at 70% 40%, rgba(167, 139, 250, 0.12), transparent 70%);
+  animation: login-galaxy-drift 48s ease-in-out infinite alternate;
+}
+@keyframes login-galaxy-drift {
+  from { transform: rotate(12deg) scale(1.05) translateX(-2%); }
+  to { transform: rotate(14deg) scale(1.08) translateX(2%); }
+}
+.login-nebula-c {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  width: 35%; height: 32%; left: 55%; top: 55%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent 70%);
+  animation: login-nebula-drift 40s ease-in-out infinite alternate;
+  opacity: 0.45;
+  filter: blur(50px);
+}
+.login-nebula-d {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  width: 28%; height: 26%; left: 8%; top: 18%;
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.22), transparent 70%);
+  animation: login-nebula-drift 32s ease-in-out infinite alternate-reverse;
+  opacity: 0.4;
+  filter: blur(48px);
+}
+.login-planet {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(0.3px);
+}
+.login-planet-a {
+  width: 56px; height: 56px; left: 12%; top: 22%;
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255,255,255,0.35), transparent 28%),
+    radial-gradient(circle at 50% 50%, #7c3aed 0%, #4c1d95 55%, #1e1b4b 100%);
+  box-shadow: 0 0 28px rgba(139, 92, 246, 0.45), inset -8px -6px 16px rgba(0,0,0,0.35);
+  opacity: 0.55;
+  animation: login-planet-float 22s ease-in-out infinite alternate;
+}
+.login-planet-b {
+  width: 36px; height: 36px; right: 14%; top: 30%; left: auto;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255,255,255,0.4), transparent 30%),
+    radial-gradient(circle at 50% 50%, #22d3ee 0%, #0e7490 60%, #164e63 100%);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.4), inset -5px -4px 12px rgba(0,0,0,0.35);
+  opacity: 0.45;
+  animation: login-planet-float 28s ease-in-out infinite alternate-reverse;
+}
+.login-planet-c {
+  width: 22px; height: 22px; left: 72%; bottom: 18%; top: auto;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.45), transparent 32%),
+    radial-gradient(circle at 50% 50%, #f472b6 0%, #9d174d 70%, #4c0519 100%);
+  box-shadow: 0 0 14px rgba(244, 114, 182, 0.45);
+  opacity: 0.4;
+  animation: login-planet-float 18s ease-in-out infinite alternate;
+}
+.login-planet-b::after {
+  content: '';
+  position: absolute;
+  left: -12px; right: -12px; top: 45%; height: 6px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(165, 243, 252, 0.35);
+  transform: rotate(-18deg);
+  box-shadow: 0 0 6px rgba(103, 232, 249, 0.25);
+}
+@keyframes login-planet-float {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(-10px) scale(1.04); }
+}
+.login-star {
+  animation-name: login-star-fall, login-star-twinkle !important;
+  animation-timing-function: linear, ease-in-out !important;
+  animation-iteration-count: infinite, infinite !important;
+  will-change: transform, opacity;
+}
+@keyframes login-star-fall {
+  from { transform: translateY(-12vh); }
+  to { transform: translateY(112vh); }
+}
+@keyframes login-star-twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.95; }
+}
+.login-light-trail {
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+.login-pilot-stage svg {
+  overflow: visible;
+}
