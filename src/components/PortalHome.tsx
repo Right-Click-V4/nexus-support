@@ -114,7 +114,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
     () =>
       [...(releases || [])]
         .sort((a, b) => (b.released_at || '').localeCompare(a.released_at || ''))
-        .slice(0, 1),
+        .slice(0, 2),
     [releases],
   );
 
@@ -144,7 +144,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
         </div>
       </section>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid lg:grid-cols-2 gap-4 items-start">
         <section className="portal-overview-glass rounded-2xl p-4 sm:p-5 flex flex-col min-h-[220px]">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-300 flex items-center justify-center">
@@ -191,39 +191,41 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
           </ul>
         </section>
 
-        <section className="portal-overview-glass rounded-2xl p-4 sm:p-5 flex flex-col min-h-[220px]">
+        <section className="portal-overview-glass rounded-2xl p-4 sm:p-5 flex flex-col">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-lg bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300 flex items-center justify-center">
               <Sparkles size={16} />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Patch notes</h2>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">Recent product releases</p>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">What&apos;s new in the portal</p>
             </div>
           </div>
-          <ul className="flex-1 space-y-2.5">
+          <ul className="space-y-3">
             {recentReleases.length === 0 && (
               <li className="text-sm text-zinc-600 dark:text-zinc-400 py-6 text-center">
-                No release notes published yet.
+                No updates published yet.
               </li>
             )}
             {recentReleases.map((r) => (
               <li
                 key={r.id || r.version}
-                className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-3.5 py-2.5"
+                className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-3.5 py-3"
               >
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-800 dark:text-violet-200">
                     v{r.version}
                   </span>
-                  <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{r.title}</div>
+                  {r.released_at && (
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      {formatDate(r.released_at)}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-zinc-700 dark:text-zinc-300 mt-0.5 leading-relaxed line-clamp-2">
+                <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">{r.title}</div>
+                <div className="text-xs text-zinc-700 dark:text-zinc-300 mt-1.5 leading-relaxed whitespace-pre-wrap">
                   {r.notes}
-                </p>
-                {r.released_at && (
-                  <div className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">{formatDate(r.released_at)}</div>
-                )}
+                </div>
               </li>
             ))}
           </ul>
