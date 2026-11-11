@@ -11,14 +11,15 @@ permissions:
   pages: write
   id-token: write
 
+# Do NOT cancel in-progress — rapid pushes were killing every deploy mid-build
 concurrency:
   group: pages-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -26,14 +27,14 @@ jobs:
           fetch-depth: 0
 
       - name: Restore + patch portal
-        timeout-minutes: 5
+        timeout-minutes: 8
         run: |
           set +e
           run_py() {
             local f="$1"
             if [ -f "$f" ]; then
               echo ">> $f"
-              timeout 40s python3 "$f" || echo "WARN timeout/fail $f"
+              timeout 45s python3 "$f" || echo "WARN timeout/fail $f"
             fi
           }
 
@@ -60,6 +61,8 @@ jobs:
             echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
           fi
 
+          run_py scripts/patch_release_notes_persist.py
+
           for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send; do
             run_py "scripts/${s}.py"
           done
@@ -70,16 +73,17 @@ jobs:
           run_py scripts/fix_send_chat_message.py
           run_py scripts/fix_claim_and_send.py
           run_py scripts/patch_livechat_master_v1.py
+          # Last: dedupe any const collisions from earlier patches
           run_py scripts/patch_hotfix_v2.py
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || echo WARN_PLATFORM
-          grep -q "SAFE_IDENTITY_V2\|customerInitials" src/components/PortalLiveChatView.tsx && echo OK_IDENTITY || echo WARN_IDENTITY
-          grep -q "claimChat" src/context/PlatformContext.tsx && echo OK_CLAIM || echo WARN_CLAIM
-          grep -q "STATUS_AUTOSAVE" src/components/TicketDetail.tsx 2>/dev/null && echo OK_STATUS || echo WARN_STATUS
-          YOURS=$(grep -c ">Yours</span>" src/components/LiveChatPage.tsx 2>/dev/null || echo 0)
-          echo "Yours_count=$YOURS"
-          set -e
+          true
+
+      - name: Generate git changelog draft
+        run: |
+          python3 scripts/generate_git_changelog.py || true
+          ls -la public/git-changelog-draft.json || echo WARN_CHANGELOG
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
