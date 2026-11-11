@@ -136,7 +136,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
     }
     return [...(releases || [])]
       .sort((a, b) => (b.released_at || '').localeCompare(a.released_at || ''))
-      .slice(0, 2)
+      .slice(0, 6)
       .map((r) => {
         if (r.notes && String(r.notes).trim()) return r;
         const recovered =
@@ -238,51 +238,53 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
             </div>
             <div>
               <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Patch notes</h2>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">What's new in the portal</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">What's new in the portal — up to 6 recent updates</p>
             </div>
           </div>
-          <ul className="space-y-4">
-            {recentReleases.length === 0 && (
-              <li className="text-sm text-zinc-600 dark:text-zinc-400 py-8 text-center">
-                No updates published yet.
-              </li>
-            )}
-            {recentReleases.map((r) => {
-              const lines = noteLines(r.notes);
-              return (
-                <li
-                  key={r.id || r.version}
-                  className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-4 py-4"
-                >
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-bold tracking-wide px-2 py-0.5 rounded bg-violet-500/20 text-violet-800 dark:text-violet-200">
-                      v{r.version}
-                    </span>
-                    {r.released_at && (
-                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        {formatDate(r.released_at)}
+          {recentReleases.length === 0 ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 py-8 text-center">No updates published yet.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {recentReleases.map((r) => {
+                const lines = noteLines(r.notes);
+                return (
+                  <div
+                    key={r.id || r.version}
+                    className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-4 py-3.5 flex flex-col min-h-[140px]"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-bold tracking-wide px-2 py-0.5 rounded bg-violet-500/20 text-violet-800 dark:text-violet-200">
+                        v{r.version}
                       </span>
-                    )}
+                      {r.released_at && (
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {formatDate(r.released_at)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 leading-snug">{r.title}</div>
+                    {lines.length > 0 ? (
+                      <ul className="mt-2 space-y-1 flex-1">
+                        {lines.slice(0, 5).map((line, i) => (
+                          <li key={i} className="flex gap-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                            <span className="text-violet-500 dark:text-violet-300 shrink-0 mt-0.5">•</span>
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                        {lines.length > 5 && (
+                          <li className="text-[11px] text-zinc-500 dark:text-zinc-400 pl-3.5">+{lines.length - 5} more</li>
+                        )}
+                      </ul>
+                    ) : r.notes ? (
+                      <p className="text-xs text-zinc-700 dark:text-zinc-300 mt-2 leading-relaxed whitespace-pre-wrap line-clamp-4">
+                        {r.notes}
+                      </p>
+                    ) : null}
                   </div>
-                  <div className="text-base font-semibold text-zinc-900 dark:text-zinc-50 mt-2">{r.title}</div>
-                  {lines.length > 0 ? (
-                    <ul className="mt-2.5 space-y-1.5">
-                      {lines.map((line, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                          <span className="text-violet-500 dark:text-violet-300 shrink-0 mt-0.5">•</span>
-                          <span>{line}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : r.notes ? (
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-2 leading-relaxed whitespace-pre-wrap">
-                      {r.notes}
-                    </p>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
 
