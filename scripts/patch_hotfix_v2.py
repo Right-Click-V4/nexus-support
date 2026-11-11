@@ -1,9 +1,25 @@
 #!/usr/bin/env python3
-"""Hotfix V2b: customerInitials after chatId state, schema, status, claim type."""
+"""Hotfix V2c: identity block without duplicate const declarations (fixes CI build)."""
 from pathlib import Path
 import re
 
 ROOT = Path('.')
+
+
+def _dedupe_const(s: str, name: str) -> str:
+    """Keep first `const name = ...;` (or useMemo block), remove later ones."""
+    pat = re.compile(
+        rf'(^\s*const {re.escape(name)}\s*=\s*(?:useMemo\(\(\)\s*=>\s*\{{[\s\S]*?\}}\s*,\s*\[[^\]]*\]\)|[^;]+);)',
+        re.M,
+    )
+    matches = list(pat.finditer(s))
+    if len(matches) <= 1:
+        return s
+    for m in reversed(matches[1:]):
+        s = s[: m.start()] + s[m.end() :]
+        print(f'dedupe {name}')
+    return s
+
 
 def fix_portal_crash():
     p = ROOT / 'src/components/PortalLiveChatView.tsx'
@@ -11,16 +27,33 @@ def fix_portal_crash():
         print('no portal')
         return
     s = p.read_text()
-    if 'SAFE_IDENTITY_V2' in s or 'SAFE_IDENTITY_V2B' in s:
+
+    if 'SAFE_IDENTITY_V2' in s or 'SAFE_IDENTITY_V2B' in s or 'SAFE_IDENTITY_V2C' in s:
         s = re.sub(
-            r'\n  // SAFE_IDENTITY_V2[B]?[\s\S]*?const isOnHold = \(conversation\?\.status \|\| \'\'\)\.toLowerCase\(\) === \'on_hold\';\n',
+            r'\n  // SAFE_IDENTITY_V2[BC]?[\s\S]*?(?=\n  // MULTI_CHAT|\n  useEffect|\n  const \[desk|\n  const onlineAgents|\n  const hasAgentOnline)',
             '\n',
             s,
-            count=2,
+            count=3,
         )
         print('cleared old SAFE blocks')
 
-    if 'SAFE_IDENTITY_V2B' not in s:
+    for name in (
+        'conversation',
+        'messages',
+        'isOnHold',
+        'customerName',
+        'customerInitials',
+        'assignedAgent',
+        'agentName',
+        'agentAvatar',
+        'agentInitials',
+        'linkedTicketId',
+        'linkedTicket',
+        'agentPresent',
+    ):
+        s = _dedupe_const(s, name)
+
+    if 'const conversation = useMemo' not in s:
         inject_after = None
         for m in [
             "const [chatId, setChatId] = useState<string | null>(null);",
@@ -29,28 +62,23 @@ def fix_portal_crash():
             if m in s:
                 inject_after = m
                 break
-        if not inject_after:
-            print('chatId state miss')
-            p.write_text(s)
-            return
-        block = inject_after + """
-  // SAFE_IDENTITY_V2B — after chatId state (avoids used-before-declaration)
+        if inject_after:
+            block = inject_after + """
+  // SAFE_IDENTITY_V2C
   const conversation = useMemo(
     () => (chatId ? (conversations || []).find((c) => c.id === chatId) : null),
     [conversations, chatId],
   );
   const messages = (conversation?.messages || []) as Array<{ id?: string; text?: string; body?: string; sender?: string; author?: string; created_at?: string }>;
-  const customerName =
-    conversation?.customer_name ||
-    (user?.user_metadata as { full_name?: string } | undefined)?.full_name ||
-    user?.email?.split('@')[0] ||
-    'You';
-  const customerInitials = String(customerName || 'Y')
-    .split(/\\s+/)
-    .map((x) => x[0] || '')
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'Y';
+  const isOnHold = (conversation?.status || '').toLowerCase() === 'on_hold';
+"""
+            s = s.replace(inject_after, block, 1)
+            print('SAFE_IDENTITY_V2C minimal')
+
+    if 'const assignedAgent = useMemo' not in s and 'const hasAgentOnline = onlineAgents.length > 0;' in s:
+        s = s.replace(
+            'const hasAgentOnline = onlineAgents.length > 0;',
+            """const hasAgentOnline = onlineAgents.length > 0;
   const assignedAgent = useMemo(() => {
     const aid = (conversation as { agent_id?: string } | null)?.agent_id;
     if (!aid) return null;
@@ -64,37 +92,10 @@ def fix_portal_crash():
     .join('')
     .slice(0, 2)
     .toUpperCase() || 'A';
-  const linkedTicketId = (conversation as { ticket_id?: string } | null)?.ticket_id || '';
-  const linkedTicket = null as { title?: string; subject?: string } | null;
-  const isOnHold = (conversation?.status || '').toLowerCase() === 'on_hold';
-"""
-        s = s.replace(inject_after, block, 1)
-        print('SAFE_IDENTITY_V2B')
-
-    while s.count('const conversation = useMemo') > 1:
-        first = s.find('const conversation = useMemo')
-        second = s.find('const conversation = useMemo', first + 1)
-        if second < 0:
-            break
-        end = s.find(');', second)
-        if end < 0:
-            break
-        s = s[:second] + s[end + 2:]
-        print('dedupe conversation')
-    while s.count('const isOnHold =') > 1:
-        first = s.find('const isOnHold =')
-        rest = s[first + 1:]
-        rest2 = re.sub(r'\n  const isOnHold = [^;]+;', '', rest, count=1)
-        s = s[: first + 1] + rest2
-        print('dedupe isOnHold')
-    while s.count('const customerInitials') > 1:
-        idx = s.find('const customerInitials')
-        idx2 = s.find('const customerInitials', idx + 1)
-        if idx2 < 0:
-            break
-        end = s.find(';', idx2)
-        s = s[:idx2] + s[end + 1:]
-        print('dedupe customerInitials')
+""",
+            1,
+        )
+        print('agent helpers added')
 
     if 'CHAT_POLL_FAST_V2' not in s:
         s = s.replace(
@@ -110,17 +111,34 @@ def fix_portal_crash():
             1,
         )
 
+    for name in (
+        'conversation',
+        'messages',
+        'isOnHold',
+        'assignedAgent',
+        'agentName',
+        'agentAvatar',
+        'agentInitials',
+        'customerInitials',
+    ):
+        s = _dedupe_const(s, name)
+
     p.write_text(s)
-    ci = s.find('const customerInitials')
-    ch = s.find('const [chatId')
-    print('portal order ok' if 0 <= ch < ci else 'ORDER BAD', 'chatId@', ch, 'initials@', ci)
+    print('messages count', s.count('const messages'))
+    print('assignedAgent count', s.count('const assignedAgent'))
+    print('portal ok' if s.count('const messages') <= 1 and s.count('const assignedAgent') <= 1 else 'STILL DUP')
 
 
 def fix_schema():
     p = ROOT / 'src/context/TicketContext.tsx'
     if p.exists():
         s = p.read_text()
-        s = re.sub(r"const CUSTOMER_COLS = '[^']*';[^\n]*", "const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at'; // SCHEMA_SAFE_V2", s, count=1)
+        s = re.sub(
+            r"const CUSTOMER_COLS = '[^']*';[^\n]*",
+            "const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at'; // SCHEMA_SAFE_V2",
+            s,
+            count=1,
+        )
         p.write_text(s)
         print('customers cols')
     p = ROOT / 'src/context/PlatformContext.tsx'
@@ -128,6 +146,10 @@ def fix_schema():
         s = p.read_text()
         s = s.replace(
             "supabase.from('automations').select('*')",
+            "supabase.from('automations').select('id, name, enabled, trigger, condition_field, condition_op, condition_value, action, action_value, created_at') // SCHEMA_SAFE_V2",
+        )
+        s = s.replace(
+            "supabase.from('automations').select('id, name, enabled, trigger, condition_field, condition_op, condition_value, action, action_value, actions, created_at')",
             "supabase.from('automations').select('id, name, enabled, trigger, condition_field, condition_op, condition_value, action, action_value, created_at') // SCHEMA_SAFE_V2",
         )
         p.write_text(s)
@@ -202,4 +224,4 @@ if __name__ == '__main__':
     fix_status()
     restore_claim()
     fix_claim_type()
-    print('HOTFIX V2B DONE')
+    print('HOTFIX V2C DONE')
