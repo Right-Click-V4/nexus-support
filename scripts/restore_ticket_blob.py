@@ -9,12 +9,19 @@ if not blob.exists():
 try:
     data = zlib.decompress(base64.b64decode(blob.read_text().strip()))
     cur = target.read_text() if target.exists() else ""
-    if len(cur) > 20000 and "export function useTickets" in cur and "SCHEMA_SAFE_NO_AVATAR" in cur:
+    cols = next((ln for ln in cur.splitlines() if "CUSTOMER_COLS" in ln), "")
+    bad = (
+        "return null as any" in cur
+        or len(cur) < 20000
+        or "export function useTickets" not in cur
+        or "avatar_url" in cols
+    )
+    if bad:
+        Path("src/context").mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        print("TicketContext restored", len(data))
+    else:
         print("TicketContext already healthy", len(cur))
-        sys.exit(0)
-    Path("src/context").mkdir(parents=True, exist_ok=True)
-    target.write_bytes(data)
-    print("TicketContext restored", len(data))
 except Exception as e:
     print("restore ticket skip:", e)
     sys.exit(0)
