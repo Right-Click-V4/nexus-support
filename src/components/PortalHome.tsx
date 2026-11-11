@@ -43,6 +43,46 @@ function noteLines(notes?: string): string[] {
     .filter(Boolean);
 }
 
+/** Recover notes the same way Releases tab does (id / version / title / last). */
+function recoverNotes(r: {
+  id?: string;
+  version?: string;
+  title?: string;
+  notes?: string;
+}): string {
+  if (r.notes && String(r.notes).trim()) return String(r.notes);
+  try {
+    const raw = localStorage.getItem('nexus-release-notes-by-id-v1');
+    const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    if (r.id && map[r.id]) return map[r.id];
+    if (r.version && map[`v:${r.version}`]) return map[`v:${r.version}`];
+    if (r.version && r.title && map[`vt:${r.version}|${r.title}`]) {
+      return map[`vt:${r.version}|${r.title}`];
+    }
+    // Title-only fallback (cloud sometimes drops version)
+    if (r.title) {
+      const t = r.title.trim().toLowerCase();
+      for (const [k, v] of Object.entries(map)) {
+        if (k.startsWith('vt:') && k.toLowerCase().endsWith(`|${t}`) && v) return v;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const raw = localStorage.getItem('nexus-last-patch-notes');
+    if (raw) {
+      const last = JSON.parse(raw) as { version?: string; title?: string; notes?: string };
+      if (!last?.notes) return '';
+      if (r.version && last.version === r.version) return last.notes;
+      if (r.title && last.title && r.title.trim() === last.title.trim()) return last.notes;
+    }
+  } catch {
+    /* ignore */
+  }
+  return '';
+}
+
 type Props = {
   displayName: string;
   onNavigate: (view: 'community' | 'help' | 'submit' | 'chat' | 'track' | 'mytickets') => void;
@@ -90,13 +130,15 @@ const TIPS = [
   },
 ];
 
-function formatDate(iso?: string) {
+function formatDateTime(iso?: string) {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleString(undefined, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
     });
   } catch {
     return '';
@@ -120,39 +162,12 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
   );
 
   const recentReleases = useMemo(() => {
-    let last: { id?: string; version?: string; title?: string; notes?: string } | null = null;
-    let byId: Record<string, string> = {};
-    try {
-      const raw = localStorage.getItem('nexus-last-patch-notes');
-      if (raw) last = JSON.parse(raw);
-    } catch {
-      last = null;
-    }
-    try {
-      const raw = localStorage.getItem('nexus-release-notes-by-id-v1');
-      if (raw) byId = JSON.parse(raw) || {};
-    } catch {
-      byId = {};
-    }
     return [...(releases || [])]
       .sort((a, b) => (b.released_at || '').localeCompare(a.released_at || ''))
       .slice(0, 6)
       .map((r) => {
-        if (r.notes && String(r.notes).trim()) return r;
-        const recovered =
-          (r.id && byId[r.id]) ||
-          (r.version && byId[`v:${r.version}`]) ||
-          (r.version && r.title && byId[`vt:${r.version}|${r.title}`]) ||
-          (last?.notes && (!r.version || last.version === r.version) ? last.notes : '') ||
-          '';
-        if (recovered) {
-          return {
-            ...r,
-            notes: recovered,
-            title: r.title || last?.title || r.title,
-          };
-        }
-        return r;
+        const notes = recoverNotes(r);
+        return notes && notes !== r.notes ? { ...r, notes } : r.notes ? r : { ...r, notes };
       });
   }, [releases]);
 
@@ -224,7 +239,9 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
                   </span>
                 </p>
                 {a.created_at && (
-                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-2">{formatDate(a.created_at)}</div>
+                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-2">
+                    {formatDateTime(a.created_at)}
+                  </div>
                 )}
               </li>
             ))}
@@ -238,46 +255,56 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
             </div>
             <div>
               <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Patch notes</h2>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">What's new in the portal — up to 6 recent updates</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                What's new in the portal — up to 6 recent updates
+              </p>
             </div>
           </div>
           {recentReleases.length === 0 ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 py-8 text-center">No updates published yet.</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 py-8 text-center">
+              No updates published yet.
+            </p>
           ) : (
             <div className="grid sm:grid-cols-2 gap-3">
               {recentReleases.map((r) => {
-                const lines = noteLines(r.notes);
+                const notesText = recoverNotes(r);
+                const lines = noteLines(notesText);
+                const ver = (r.version || '').trim();
                 return (
                   <div
-                    key={r.id || r.version}
-                    className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-4 py-3.5 flex flex-col min-h-[140px]"
+                    key={r.id || `${r.version}-${r.title}`}
+                    className="rounded-xl border border-white/25 dark:border-white/10 bg-white/25 dark:bg-black/20 px-4 py-3.5 flex flex-col"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-bold tracking-wide px-2 py-0.5 rounded bg-violet-500/20 text-violet-800 dark:text-violet-200">
-                        v{r.version}
-                      </span>
+                      {ver ? (
+                        <span className="text-[11px] font-mono font-bold tracking-wide px-2 py-0.5 rounded bg-violet-500/20 text-violet-800 dark:text-violet-200">
+                          v{ver}
+                        </span>
+                      ) : null}
                       {r.released_at && (
                         <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                          {formatDate(r.released_at)}
+                          {formatDateTime(r.released_at)}
                         </span>
                       )}
                     </div>
-                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 leading-snug">{r.title}</div>
+                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 leading-snug">
+                      {r.title}
+                    </div>
                     {lines.length > 0 ? (
-                      <ul className="mt-2 space-y-1 flex-1">
-                        {lines.slice(0, 5).map((line, i) => (
-                          <li key={i} className="flex gap-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      <ul className="mt-2.5 space-y-1.5">
+                        {lines.map((line, i) => (
+                          <li
+                            key={i}
+                            className="flex gap-2 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 leading-relaxed"
+                          >
                             <span className="text-violet-500 dark:text-violet-300 shrink-0 mt-0.5">•</span>
                             <span>{line}</span>
                           </li>
                         ))}
-                        {lines.length > 5 && (
-                          <li className="text-[11px] text-zinc-500 dark:text-zinc-400 pl-3.5">+{lines.length - 5} more</li>
-                        )}
                       </ul>
-                    ) : r.notes ? (
-                      <p className="text-xs text-zinc-700 dark:text-zinc-300 mt-2 leading-relaxed whitespace-pre-wrap line-clamp-4">
-                        {r.notes}
+                    ) : notesText ? (
+                      <p className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 mt-2 leading-relaxed whitespace-pre-wrap">
+                        {notesText}
                       </p>
                     ) : null}
                   </div>
