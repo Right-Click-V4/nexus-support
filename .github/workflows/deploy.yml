@@ -48,34 +48,32 @@ jobs:
             python3 scripts/patch_announcements_replace_publish.py || true
           fi
 
-          # Restore PlatformContext if wiped (common bad push left 11-byte stub)
-          # MUST run BEFORE patch_release_notes_persist.py so the patch targets real code.
+          if [ -f scripts/patch_release_notes_persist.py ]; then python3 scripts/patch_release_notes_persist.py || true; fi
+
           PC_SZ=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
           echo "PlatformContext bytes=$PC_SZ"
           if [ "$PC_SZ" -lt 5000 ]; then
             GOOD_PC=9da2fccde137836cea2c0651da8f808d1051f67e
-            echo "Restoring PlatformContext from $GOOD_PC"
-            git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || \
-              curl -fsSL "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_PC/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
+            echo "Restoring PlatformContext from blob or $GOOD_PC"
+            python3 scripts/restore_platform_blob.py || git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || true
             echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
           fi
 
-          # Persist release notes through cloud refresh (needs restored PlatformContext)
-          if [ -f scripts/patch_release_notes_persist.py ]; then
-            python3 scripts/patch_release_notes_persist.py || true
-            grep -q "mergeReleaseNotes" src/context/PlatformContext.tsx && echo OK_NOTES_MERGE || echo WARN_NOTES_MERGE
-          fi
-
-          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message; do
+          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send; do
             if [ -f "scripts/${s}.py" ]; then python3 "scripts/${s}.py" || true; fi
           done
-          # Always re-run critical repairs last
+
+          # Force known-good claim/send platform + livechat last
+          python3 scripts/restore_platform_blob.py || true
+          python3 scripts/restore_livechat_blob.py || true
           python3 scripts/ensure_resolve_chat.py || true
           python3 scripts/fix_send_chat_message.py || true
+          python3 scripts/fix_claim_and_send.py || true
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || echo WARN_PLATFORM
           grep -q "function resolveChatAgent" src/components/LiveChatPage.tsx && echo OK_RESOLVE_CHAT || echo WARN_RESOLVE_CHAT
+          grep -q "claimChat" src/context/PlatformContext.tsx && echo OK_CLAIM || echo WARN_CLAIM
 
       - name: Generate git changelog draft
         run: |
