@@ -64,21 +64,7 @@ jobs:
           run_py scripts/patch_hotfix_v2.py
 
           # schema-safe customers (never select missing avatar_url)
-          python3 - <<'PY'
-from pathlib import Path
-p = Path("src/context/TicketContext.tsx")
-if p.exists():
-    s = p.read_text()
-    s2 = s.replace(
-        "const CUSTOMER_COLS = 'id, name, email, company, role, branch, status, created_at, avatar_url';",
-        "const CUSTOMER_COLS = 'id, name, email, company, role, branch, status, created_at';",
-    )
-    if s2 != s:
-        p.write_text(s2)
-        print("CUSTOMER_COLS schema-safe")
-    else:
-        print("CUSTOMER_COLS already safe or pattern differed")
-PY
+          run_py scripts/force_schema_safe_cols.py
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || { echo FAIL_PORTAL; exit 1; }
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || { echo FAIL_PLATFORM; exit 1; }
