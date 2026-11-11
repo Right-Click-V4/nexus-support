@@ -11,7 +11,6 @@ permissions:
   pages: write
   id-token: write
 
-# Do NOT cancel in-progress — rapid pushes were killing every deploy mid-build
 concurrency:
   group: pages-deploy
   cancel-in-progress: false
@@ -51,33 +50,62 @@ jobs:
             echo "CustomerPortal after restore=$(wc -c < src/components/CustomerPortal.tsx)"
           fi
 
+          TC_SZ=$(wc -c < src/context/TicketContext.tsx 2>/dev/null || echo 0)
+          if [ "$TC_SZ" -lt 20000 ] || ! grep -q "export function useTickets" src/context/TicketContext.tsx 2>/dev/null; then
+            echo "Restoring TicketContext from c3b543f (was $TC_SZ bytes)"
+            git show c3b543f:src/context/TicketContext.tsx > src/context/TicketContext.tsx 2>/dev/null || true
+          fi
+
           PC_SZ=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
           echo "PlatformContext bytes=$PC_SZ"
-          if [ "$PC_SZ" -lt 5000 ]; then
-            GOOD_PC=c3edde907e5e5be48439b7fea0df6dbe3dca6611
-            echo "Restoring PlatformContext from $GOOD_PC"
-            git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || \
-              curl -fsSL --max-time 20 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_PC/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
+          if [ "$PC_SZ" -lt 5000 ] || ! grep -q "export function usePlatform" src/context/PlatformContext.tsx 2>/dev/null; then
+            echo "Restoring PlatformContext from e3a5fd3 (was $PC_SZ bytes)"
+            git show e3a5fd3:src/context/PlatformContext.tsx > src/context/PlatformContext.tsx 2>/dev/null || \
+              curl -fsSL --max-time 20 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/e3a5fd3/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
             echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
           fi
 
+          run_py scripts/restore_platform_blob.py
+          run_py scripts/restore_ticket_blob.py
           run_py scripts/patch_release_notes_persist.py
 
           for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send; do
             run_py "scripts/${s}.py"
           done
 
-          run_py scripts/restore_platform_blob.py
           run_py scripts/restore_livechat_blob.py
           run_py scripts/ensure_resolve_chat.py
           run_py scripts/fix_send_chat_message.py
           run_py scripts/fix_claim_and_send.py
           run_py scripts/patch_livechat_master_v1.py
-          # Last: dedupe any const collisions from earlier patches
           run_py scripts/patch_hotfix_v2.py
+
+          python3 - <<'PY'
+from pathlib import Path
+import re
+p = Path("src/context/TicketContext.tsx")
+if p.exists():
+    s = p.read_text()
+    s2 = re.sub(
+        r"const CUSTOMER_COLS = '[^']*';[^\n]*",
+        "const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at'; // SCHEMA_SAFE_NO_AVATAR",
+        s,
+        count=1,
+    )
+    if s2 != s:
+        p.write_text(s2)
+        print("CUSTOMER_COLS forced schema-safe")
+    else:
+        print("CUSTOMER_COLS already safe or missing")
+    cols = next((ln for ln in s2.splitlines() if "CUSTOMER_COLS" in ln), "")
+    print("FINAL", cols)
+    if "avatar_url" in cols:
+        raise SystemExit("CUSTOMER_COLS still has avatar_url")
+PY
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || echo WARN_PORTAL
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || echo WARN_PLATFORM
+          grep -q "export function useTickets" src/context/TicketContext.tsx && echo OK_TICKETS || echo WARN_TICKETS
           true
 
       - name: Generate git changelog draft
