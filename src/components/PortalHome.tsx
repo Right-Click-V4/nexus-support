@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   LifeBuoy,
   Ticket,
@@ -43,13 +43,13 @@ function noteLines(notes?: string): string[] {
     .filter(Boolean);
 }
 
-/** Recover notes the same way Releases tab does (id / version / title / last). */
-function recoverNotes(r: {
-  id?: string;
-  version?: string;
-  title?: string;
-  notes?: string;
-}): string {
+type DraftHint = { version?: string; title?: string; notes?: string };
+
+/** Recover notes: cloud → localStorage backup → git draft history (public). */
+function recoverNotes(
+  r: { id?: string; version?: string; title?: string; notes?: string },
+  draftHints: DraftHint[],
+): string {
   if (r.notes && String(r.notes).trim()) return String(r.notes);
   try {
     const raw = localStorage.getItem('nexus-release-notes-by-id-v1');
@@ -59,7 +59,6 @@ function recoverNotes(r: {
     if (r.version && r.title && map[`vt:${r.version}|${r.title}`]) {
       return map[`vt:${r.version}|${r.title}`];
     }
-    // Title-only fallback (cloud sometimes drops version)
     if (r.title) {
       const t = r.title.trim().toLowerCase();
       for (const [k, v] of Object.entries(map)) {
@@ -73,12 +72,28 @@ function recoverNotes(r: {
     const raw = localStorage.getItem('nexus-last-patch-notes');
     if (raw) {
       const last = JSON.parse(raw) as { version?: string; title?: string; notes?: string };
-      if (!last?.notes) return '';
-      if (r.version && last.version === r.version) return last.notes;
-      if (r.title && last.title && r.title.trim() === last.title.trim()) return last.notes;
+      if (last?.notes) {
+        if (r.version && last.version === r.version) return last.notes;
+        if (r.title && last.title && r.title.trim() === last.title.trim()) return last.notes;
+      }
     }
   } catch {
     /* ignore */
+  }
+  // Public draft history (works for every visitor, not only the publisher)
+  const ver = (r.version || '').trim();
+  const title = (r.title || '').trim().toLowerCase();
+  for (const h of draftHints) {
+    if (!h.notes) continue;
+    if (ver && h.version && h.version.trim() === ver) return h.notes;
+    if (title && h.title && h.title.trim().toLowerCase() === title) return h.notes;
+  }
+  // Soft title match: first 40 chars
+  if (title.length >= 12) {
+    const head = title.slice(0, 40);
+    for (const h of draftHints) {
+      if (h.notes && h.title && h.title.trim().toLowerCase().startsWith(head)) return h.notes;
+    }
   }
   return '';
 }
@@ -148,6 +163,39 @@ function formatDateTime(iso?: string) {
 export default function PortalHome({ displayName, onNavigate }: Props) {
   const { announcements, releases } = usePlatform();
   const first = displayName?.split(' ')[0] || 'there';
+  const [draftHints, setDraftHints] = useState<DraftHint[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const base = (import.meta as any).env?.BASE_URL || '/';
+        const url = `${base}git-changelog-draft.json`.replace(/\/{2,}/g, '/').replace(':/', '://');
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const hints: DraftHint[] = [];
+        if (Array.isArray(data?.history)) {
+          for (const h of data.history) {
+            if (h?.notes) hints.push({ version: h.version, title: h.title, notes: h.notes });
+          }
+        }
+        if (data?.suggested?.notes) {
+          hints.push({
+            version: data.suggested.version,
+            title: data.suggested.title,
+            notes: data.suggested.notes,
+          });
+        }
+        if (!cancelled) setDraftHints(hints);
+      } catch {
+        /* no draft */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeAnnouncements = useMemo(
     () =>
@@ -166,10 +214,10 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
       .sort((a, b) => (b.released_at || '').localeCompare(a.released_at || ''))
       .slice(0, 6)
       .map((r) => {
-        const notes = recoverNotes(r);
-        return notes && notes !== r.notes ? { ...r, notes } : r.notes ? r : { ...r, notes };
+        const notes = recoverNotes(r, draftHints);
+        return { ...r, notes: notes || r.notes || '' };
       });
-  }, [releases]);
+  }, [releases, draftHints]);
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-5 pb-2">
@@ -267,7 +315,7 @@ export default function PortalHome({ displayName, onNavigate }: Props) {
           ) : (
             <div className="grid sm:grid-cols-2 gap-3">
               {recentReleases.map((r) => {
-                const notesText = recoverNotes(r);
+                const notesText = recoverNotes(r, draftHints) || r.notes || '';
                 const lines = noteLines(notesText);
                 const ver = (r.version || '').trim();
                 return (
