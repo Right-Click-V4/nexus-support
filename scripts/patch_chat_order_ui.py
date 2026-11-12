@@ -12,31 +12,25 @@ def fix(path: str):
     if "Messenger-style" in t or ("sort((a" in t and "created_at" in t):
         print(path, "already sorted")
         return
-    patterns = [
-        (r"\{\(selected\.messages \|\| \[\]\)\.map\(",
-         "{([...(selected.messages || [])].sort((a: any, b: any) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())).map("),
-        (r"\{\(conversation\.messages \|\| \[\]\)\.map\(",
-         "{([...(conversation.messages || [])].sort((a: any, b: any) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())).map("),
-    ]
     changed = False
-    for old, new in patterns:
-        t2, n = re.subn(old, new, t, count=1)
-        if n:
-            t = t2
-            changed = True
-            print(path, "patched")
-            break
-    if not changed:
-        for old in ["(selected.messages || []).map", "(conversation?.messages || []).map", "(active?.messages || []).map"]:
-            if old in t:
-                t = t.replace(old, f"[...{old.replace('.map','')}].sort((a: any, b: any) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()).map", 1)
-                print(path, "patched alt")
-                changed = True
-                break
+    old1 = "const messages = conversation?.messages || [];"
+    new1 = "const messages = [...(conversation?.messages || [])].sort((a: any, b: any) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());"
+    if old1 in t:
+        t = t.replace(old1, new1)
+        changed = True
+        print(path, "patched const messages")
+    if "(selected.messages || []).map" in t and "sort((a" not in t:
+        t = t.replace(
+            "(selected.messages || []).map",
+            "[...(selected.messages || [])].sort((a: any, b: any) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()).map",
+            1,
+        )
+        changed = True
+        print(path, "patched selected.messages map")
     if changed:
         p.write_text(t)
     else:
-        print(path, "no pattern")
+        print(path, "no pattern matched")
 
 fix("src/components/LiveChatPage.tsx")
 fix("src/components/PortalLiveChatView.tsx")
