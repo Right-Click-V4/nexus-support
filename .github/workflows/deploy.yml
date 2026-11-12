@@ -85,6 +85,7 @@ jobs:
           run_py scripts/patch_chat_order_ui.py
           run_py scripts/patch_livechat_claim_ui_v2.py
           run_py scripts/patch_claim_owner_controls.py
+          run_py scripts/patch_assist_modal_v3.py
           run_py scripts/patch_assert_approved_v2.py
           run_py scripts/patch_approve_sync_profiles.py
 
