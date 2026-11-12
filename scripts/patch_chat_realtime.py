@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""Add chat realtime + ascending message order + light optimistic updates to PlatformContext.
-Runs AFTER slow_polls so it must fix any order/paren issues left by that script.
-"""
+"""Add chat realtime + ascending message order. Safe against slow_polls."""
 from pathlib import Path
 import re
 
@@ -11,33 +9,19 @@ if not p.exists() or p.stat().st_size < 5000:
     raise SystemExit(0)
 t = p.read_text()
 
-# Fix any broken paren from previous patches: )).limit -> ).limit
-t2, n = re.subn(r"\)\)\.limit\(", ").limit(", t)
-t = t2
-if n:
-    print("fixed extra paren", n)
-
-# Force chat_messages ascending (Messenger style) regardless of what slow_polls did
+# Normalize the chat_messages select in the Promise.all (the one with .order)
+# Match the full chain including any broken parens / repeated limits
 t2, n = re.subn(
-    r"from\('chat_messages'\)\.select\([^)]*\)\.order\('created_at',\s*\{\s*ascending:\s*(?:true|false)\s*\}",
-    "from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: true })",
+    r"supabase\.from\('chat_messages'\)\.select\([^)]*\)\.order\('created_at',\s*\{\s*ascending:\s*(?:true|false)\s*\}\)(?:\)\.limit\(\d+\))*(?:\.limit\(\d+\))*",
+    "supabase.from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: true }).limit(200)",
     t,
 )
 t = t2
-print("db order ascending", n)
+print("normalized chat_messages select", n)
 
-# Also ensure .limit(200) is present after order
-t = re.sub(
-    r"from\('chat_messages'\)\.select\('id,conversation_id,sender,text,body,created_at'\)\.order\('created_at', \{ ascending: true \}\)(?!\.limit)",
-    "from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: true }).limit(200)",
-    t,
-)
-
-# Strip non-existent automations.actions column
-t = t.replace(
-    "action,action_value,actions,description",
-    "action,action_value,description",
-)
+# Safety cleanup
+t = t.replace(")).limit(", ").limit(")
+t = t.replace("action,action_value,actions,description", "action,action_value,description")
 
 # Messenger-style sort in byConv
 if "Messenger-style" not in t:
@@ -116,17 +100,14 @@ if "CHAT_REALTIME_V1" not in t and "nexus-chat-rt" not in t:
       }
     };
   }, [refreshPlatform]);"""
-    applied = False
     for marker in markers:
         if marker in t:
             t = t.replace(marker, marker + chat_rt)
             print("realtime ok")
-            applied = True
             break
-    if not applied:
+    else:
         print("realtime marker miss")
 
-# Optimistic create
 if "OPTIMISTIC_CHAT_V1" not in t:
     old_c = """      await refreshPlatform();
       return data as ChatConversation;"""
@@ -144,3 +125,7 @@ if "OPTIMISTIC_CHAT_V1" not in t:
 
 p.write_text(t)
 print("done", len(t), "has RT", "CHAT_REALTIME_V1" in t or "nexus-chat-rt" in t)
+if ")).limit" in t:
+    print("WARN still has )).limit")
+else:
+    print("clean parens")
