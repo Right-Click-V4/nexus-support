@@ -84,6 +84,7 @@ jobs:
           run_py scripts/patch_chat_realtime.py
           run_py scripts/patch_chat_order_ui.py
           run_py scripts/patch_livechat_claim_ui_v2.py
+          run_py scripts/patch_claim_owner_controls.py
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || { echo FAIL_PORTAL; exit 1; }
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || { echo FAIL_PLATFORM; exit 1; }
