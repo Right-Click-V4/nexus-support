@@ -29,6 +29,7 @@ t = t.replace("const tick = window.setInterval(pull, 500);", "const tick = windo
 t = t.replace("}, 700);", "}, 8000);")
 
 # --- narrow select('*') on heavy tables ---
+# IMPORTANT: chat_messages must stay ascending:true for Messenger order
 replacements = [
     (
         "supabase.from('knowledge_articles').select('*').order('created_at', { ascending: false })",
@@ -36,15 +37,19 @@ replacements = [
     ),
     (
         "supabase.from('chat_conversations').select('*').order('updated_at', { ascending: false })",
-        "supabase.from('chat_conversations').select('id,customer_name,customer_email,status,preview,unread,updated_at,created_at,assignee_id,archived_at').order('updated_at', { ascending: false }).limit(60)",
+        "supabase.from('chat_conversations').select('id,customer_name,customer_email,status,preview,unread,updated_at,created_at,agent_id,assignee_id,ticket_id,branch,archived_at').order('updated_at', { ascending: false }).limit(60)",
     ),
     (
         "supabase.from('chat_messages').select('*').order('created_at', { ascending: true })",
-        "supabase.from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: false }).limit(200)",
+        "supabase.from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: true }).limit(200)",
+    ),
+    (
+        "supabase.from('chat_messages').select('*').order('created_at', { ascending: false })",
+        "supabase.from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: true }).limit(200)",
     ),
     (
         "supabase.from('automations').select('*')",
-        "supabase.from('automations').select('id,name,enabled,active,trigger,condition_field,condition_op,condition_value,action,action_value,actions,description').limit(80)",
+        "supabase.from('automations').select('id,name,enabled,active,trigger,condition_field,condition_op,condition_value,action,action_value,description').limit(80)",
     ),
     (
         "supabase.from('canned_responses').select('*')",
@@ -74,6 +79,11 @@ replacements = [
 for a, b in replacements:
     if a in t:
         t = t.replace(a, b)
+
+# Safety: never leave actions column
+t = t.replace("action,action_value,actions,description", "action,action_value,description")
+# Safety: never leave broken paren
+t = t.replace(")).limit(", ").limit(")
 
 if t != orig:
     p.write_text(t, encoding="utf-8")

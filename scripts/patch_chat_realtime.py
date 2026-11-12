@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Add chat realtime + ascending message order + light optimistic updates to PlatformContext."""
+"""Add chat realtime + ascending message order + light optimistic updates to PlatformContext.
+Runs AFTER slow_polls so it must fix any order/paren issues left by that script.
+"""
 from pathlib import Path
 import re
 
@@ -9,17 +11,42 @@ if not p.exists() or p.stat().st_size < 5000:
     raise SystemExit(0)
 t = p.read_text()
 
+# Fix any broken paren from previous patches: )).limit -> ).limit
+t2, n = re.subn(r"\)\)\.limit\(", ").limit(", t)
+t = t2
+if n:
+    print("fixed extra paren", n)
+
+# Force chat_messages ascending (Messenger style) regardless of what slow_polls did
+t2, n = re.subn(
+    r"from\('chat_messages'\)\.select\([^)]*\)\.order\('created_at',\s*\{\s*ascending:\s*(?:true|false)\s*\}",
+    "from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: true })",
+    t,
+)
+t = t2
+print("db order ascending", n)
+
+# Also ensure .limit(200) is present after order
+t = re.sub(
+    r"from\('chat_messages'\)\.select\('id,conversation_id,sender,text,body,created_at'\)\.order\('created_at', \{ ascending: true \}\)(?!\.limit)",
+    "from('chat_messages').select('id,conversation_id,sender,text,body,created_at').order('created_at', { ascending: true }).limit(200)",
+    t,
+)
+
+# Strip non-existent automations.actions column
+t = t.replace(
+    "action,action_value,actions,description",
+    "action,action_value,description",
+)
+
+# Messenger-style sort in byConv
 if "Messenger-style" not in t:
-    old = """      const messages = (msgs.data || []) as ChatMessage[];
-      const byConv: Record<string, ChatMessage[]> = {};
-      for (const m of messages) {
+    old = """      for (const m of messages) {
         const cid = (m as ChatMessage & { conversation_id?: string }).conversation_id || '';
         if (!byConv[cid]) byConv[cid] = [];
         byConv[cid].push(m);
       }"""
-    new = """      const messages = (msgs.data || []) as ChatMessage[];
-      const byConv: Record<string, ChatMessage[]> = {};
-      for (const m of messages) {
+    new = """      for (const m of messages) {
         const cid = (m as ChatMessage & { conversation_id?: string }).conversation_id || '';
         if (!byConv[cid]) byConv[cid] = [];
         byConv[cid].push(m);
@@ -38,25 +65,17 @@ if "Messenger-style" not in t:
     else:
         print("sort pattern miss")
 
-t2, n = re.subn(
-    r"from\('chat_messages'\)\.select\([^)]+\)\.order\('created_at',\s*\{\s*ascending:\s*false\s*\}",
-    "from('chat_messages').select('*').order('created_at', { ascending: true })",
-    t,
-    count=1,
-)
-t = t2
-print("db order", n)
-
-if "CHAT_REALTIME_V1" not in t:
+# CHAT_REALTIME_V1
+if "CHAT_REALTIME_V1" not in t and "nexus-chat-rt" not in t:
     markers = [
         """  useEffect(() => {
     if (!isSupabaseConfigured) return;
-    const id = window.setInterval(() => { void refreshPlatform(); }, 3000);
+    const id = window.setInterval(() => { void refreshPlatform(); }, 180000);
     return () => window.clearInterval(id);
   }, [refreshPlatform]);""",
         """  useEffect(() => {
     if (!isSupabaseConfigured) return;
-    const id = window.setInterval(() => { void refreshPlatform(); }, 180000);
+    const id = window.setInterval(() => { void refreshPlatform(); }, 3000);
     return () => window.clearInterval(id);
   }, [refreshPlatform]);""",
     ]
@@ -107,8 +126,8 @@ if "CHAT_REALTIME_V1" not in t:
     if not applied:
         print("realtime marker miss")
 
-# Light optimistic: after successful insert, also setConversations immediately
-if "OPTIMISTIC_CHAT_V1" not in t and "await refreshPlatform();" in t:
+# Optimistic create
+if "OPTIMISTIC_CHAT_V1" not in t:
     old_c = """      await refreshPlatform();
       return data as ChatConversation;"""
     new_c = """      // OPTIMISTIC_CHAT_V1
@@ -124,4 +143,4 @@ if "OPTIMISTIC_CHAT_V1" not in t and "await refreshPlatform();" in t:
         print("optimistic create ok")
 
 p.write_text(t)
-print("done", len(t), "has RT", "CHAT_REALTIME_V1" in t)
+print("done", len(t), "has RT", "CHAT_REALTIME_V1" in t or "nexus-chat-rt" in t)
