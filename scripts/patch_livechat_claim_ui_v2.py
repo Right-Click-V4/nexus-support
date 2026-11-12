@@ -27,7 +27,7 @@ if lp.exists() and lp.stat().st_size > 5000:
         flags=re.S,
     )
 
-    SINGLE_CLAIM = '''                      {/* CLAIM_UI_V2 - single badge set */}
+    SINGLE_CLAIM = """                      {/* CLAIM_UI_V2 - single badge set */}
                       {currentAgent && !(selected as { agent_id?: string }).agent_id ? (
                         <button
                           type="button"
@@ -55,7 +55,7 @@ if lp.exists() and lp.stat().st_size > 5000:
                           </button>
                         </>
                       ) : null}
-'''
+"""
 
     if "CLAIM_UI_V2" not in t:
         needle = "{(selected.status || '').toLowerCase() !== 'archived' && (selected.status || '').toLowerCase() !== 'ended' ? (\n                    <>\n"
@@ -65,97 +65,47 @@ if lp.exists() and lp.stat().st_size > 5000:
         else:
             print("claim needle miss")
 
-    broken = """                      {currentAgent && !(selected as { agent_id?: string }).agent_id ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={async () => {
-                            try {
-                              setBusy(true);
-                              await claimChat(selected.id, currentAgent.id);
-                              setMsg('Chat claimed');
-                            } catch (e) {
-                              setMsg(e instanceof Error ? e.message : 'Claim failed');
-                            } finally {
-                              setBusy(false);
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 text-xs font-medium bg-violet-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-violet-500"
-                        >
-                          Claim
-                        </button>
-                      ) : currentAgent && (selected as { agent_id?: string }).agent_id === currentAgent.id ? (
-                        ) : (selected as { agent_id?: string }).agent_id ? (
-                        ) : null}
-"""
-    if broken in t:
-        t = t.replace(broken, "")
-        print("removed broken second claim block")
-    else:
-        t2, n = re.subn(
-            r'\{currentAgent && !\(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*<button\s+type="button"\s+disabled=\{busy\}[\s\S]*?Claim\s*</button>\s*\) : currentAgent && \(selected as \{ agent_id\?: string \}\)\.agent_id === currentAgent\.id \? \(\s*\) : \(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*\) : null\}\s*',
-            "",
-            t,
-            count=1,
-        )
-        if n:
-            t = t2
-            print("removed broken second claim via regex")
+    t2, n = re.subn(
+        r'\{currentAgent && !\(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*<button\s+type="button"\s+disabled=\{busy\}[\s\S]*?Claim\s*</button>\s*\) : currentAgent && \(selected as \{ agent_id\?: string \}\)\.agent_id === currentAgent\.id \? \(\s*\) : \(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*\) : null\}\s*',
+        "",
+        t,
+        count=1,
+    )
+    if n:
+        t = t2
+        print("removed broken second claim via regex")
 
-    old_banner = (
-        '                  <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">\n'
-        '                    {(() => {\n'
-        '                      const claimed = resolveChatAgent(selected as { agent_id?: string }, agents || []);\n'
-        "                      return claimed ? `Claimed by ${claimed.name} \u00b7 ` : '';\n"
-        '                    })()}\n'
-        '                    {selected.customer_email}\n'
-        "                    {selected.branch ? ` \u00b7 Branch: ${selected.branch}` : ''}\n"
-        "                    {selected.ticket_id ? ` \u00b7 Ticket: ${selected.ticket_id}` : ''}\n"
-        '                  </div>'
-    )
-    new_banner = (
-        '                  <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">\n'
-        '                    {selected.customer_email}\n'
-        "                    {selected.branch ? ` \u00b7 Branch: ${selected.branch}` : ''}\n"
-        '                  </div>\n'
-        '                  {/* CLAIMED_BANNER_V2 */}\n'
-        '                  <div className="mt-1.5 inline-flex flex-wrap items-center gap-2 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-violet-600/30 text-violet-50 border border-violet-400/50 shadow-sm">\n'
-        '                    {(() => {\n'
-        '                      const claimed = resolveChatAgent(selected as { agent_id?: string }, agents || []);\n'
-        "                      return claimed ? `Claimed by ${claimed.name}` : 'Unclaimed';\n"
-        '                    })()}\n'
-        "                    {selected.ticket_id ? ` \u00b7 Ticket: ${selected.ticket_id}` : ''}\n"
-        '                  </div>'
-    )
-    if "CLAIMED_BANNER_V2" not in t and old_banner in t:
-        t = t.replace(old_banner, new_banner)
-        print("claimed banner exact")
-    elif "CLAIMED_BANNER_V2" not in t:
+    if "CLAIMED_BANNER_V2" not in t:
         t2, n = re.subn(
-            r'<div className="text-\[11px\] text-slate-500 dark:text-zinc-400 truncate">\s*\{\(\(\) => \{\s*const claimed = resolveChatAgent[\s\S]*?selected\.ticket_id \? ` . Ticket: \$\{selected\.ticket_id\}` : \'\'\\}\s*</div>',
-            new_banner,
+            r'<div className="text-\[11px\] text-slate-500 dark:text-zinc-400 truncate">\s*\{\(\(\) => \{\s*const claimed = resolveChatAgent[\s\S]*?selected\.ticket_id \? ` \u00b7 Ticket: \$\{selected\.ticket_id\}` : \'\'\\}\s*</div>',
+            '''<div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
+                    {selected.customer_email}
+                    {selected.branch ? ` \u00b7 Branch: ${selected.branch}` : ''}
+                  </div>
+                  {/* CLAIMED_BANNER_V2 */}
+                  <div className="mt-1.5 inline-flex flex-wrap items-center gap-2 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-violet-600/30 text-violet-50 border border-violet-400/50 shadow-sm">
+                    {(() => {
+                      const claimed = resolveChatAgent(selected as { agent_id?: string }, agents || []);
+                      return claimed ? `Claimed by ${claimed.name}` : 'Unclaimed';
+                    })()}
+                    {selected.ticket_id ? ` \u00b7 Ticket: ${selected.ticket_id}` : ''}
+                  </div>''',
             t,
             count=1,
         )
         if n:
             t = t2
             print("claimed banner regex")
+        else:
+            print("claimed banner miss")
 
     while t.count(">Yours</span>") > 1:
-        t = t.replace(
-            '<span className="text-[11px] text-emerald-400 px-1 font-medium">Yours</span>',
+        t = re.sub(
+            r'<span className="text-\[11px\] text-emerald-400[^"]*">Yours</span>',
             "",
-            1,
+            t,
+            count=1,
         )
-        if t.count(">Yours</span>") > 1:
-            t = re.sub(
-                r'<span className="text-\[11px\] text-emerald-400[^"]*">Yours</span>',
-                "",
-                t,
-                count=1,
-            )
-        else:
-            break
     print("Yours remaining", t.count(">Yours</span>"))
 
     lp.write_text(t)
@@ -168,108 +118,96 @@ if pp.exists() and pp.stat().st_size > 3000:
     t = pp.read_text()
 
     if "CUSTOMER_CHAT_BANNER_V2" not in t:
-        hold_banner = (
-            '        {isOnHold && !chatEnded && (\n'
-            '          <div className="px-4 py-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300 border-b border-amber-500/20">\n'
-            '            Chat is on hold \u2014 an agent will be with you shortly.\n'
-            '          </div>\n'
-            '        )}'
-        )
-        new_banners = (
-            '        {/* CUSTOMER_CHAT_BANNER_V2 */}\n'
-            '        {conversation && (\n'
-            '          <div className="px-4 py-2.5 text-xs font-medium bg-violet-600/20 text-violet-100 border-b border-violet-400/30 flex flex-wrap items-center gap-x-3 gap-y-1">\n'
-            '            {conversation.ticket_id ? (\n'
-            '              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-500/40 text-white font-semibold">\n'
-            '                Ticket: {conversation.ticket_id}\n'
-            '              </span>\n'
-            '            ) : null}\n'
-            '            <span>\n'
-            "              {(conversation as { agent_id?: string }).agent_id\n"
-            "                ? `Agent: ${agents.find((a) => a.id === (conversation as { agent_id?: string }).agent_id)?.name || 'Support'}`\n"
-            "                : 'Waiting for an agent\u2026'}\n"
-            '            </span>\n'
-            '            {conversation.customer_name ? <span>\u00b7 You: {conversation.customer_name}</span> : null}\n'
-            '          </div>\n'
-            '        )}\n'
-            '        {isOnHold && !chatEnded && (\n'
-            '          <div className="px-4 py-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300 border-b border-amber-500/20">\n'
-            '            Chat is on hold \u2014 an agent will be with you shortly.\n'
-            '          </div>\n'
-            '        )}'
-        )
-        if hold_banner in t:
-            t = t.replace(hold_banner, new_banners)
+        hold = """        {isOnHold && !chatEnded && (
+          <div className="px-4 py-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300 border-b border-amber-500/20">
+            Chat is on hold \u2014 an agent will be with you shortly.
+          </div>
+        )}"""
+        new_b = """        {/* CUSTOMER_CHAT_BANNER_V2 */}
+        {conversation && (
+          <div className="px-4 py-2.5 text-xs font-medium bg-violet-600/20 text-violet-100 border-b border-violet-400/30 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {conversation.ticket_id ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-500/40 text-white font-semibold">
+                Ticket: {conversation.ticket_id}
+              </span>
+            ) : null}
+            <span>
+              {(conversation as { agent_id?: string }).agent_id
+                ? `Agent: ${agents.find((a) => a.id === (conversation as { agent_id?: string }).agent_id)?.name || 'Support'}`
+                : 'Waiting for an agent\u2026'}
+            </span>
+            {conversation.customer_name ? <span>\u00b7 You: {conversation.customer_name}</span> : null}
+          </div>
+        )}
+        {isOnHold && !chatEnded && (
+          <div className="px-4 py-2 text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300 border-b border-amber-500/20">
+            Chat is on hold \u2014 an agent will be with you shortly.
+          </div>
+        )}"""
+        if hold in t:
+            t = t.replace(hold, new_b)
             print("customer banner ok")
         else:
             print("customer banner needle miss")
 
     if "BUBBLE_AVATAR_V2" not in t:
-        old_map = (
-            "          {messages.map((m) => {\n"
-            "            const mine = m.sender === 'customer';\n"
-            "            const parsed = parseChatAttachment(m.text || m.body || '');\n"
-            "            const att = parsed.att;\n"
-            "            const displayText = (parsed.text || m.text || m.body || '').trim();\n"
-            "            return (\n"
-            "              <div key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>
-"
-            "                <div className={clsx(\n"
-            "                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm',\n"
-            "                  mine ? 'bg-violet-600 text-white' : 'bg-white/80 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10',\n"
-            "                )}>\n"
-        )
-        new_map = (
-            "          {messages.map((m) => {\n"
-            "            const mine = m.sender === 'customer';\n"
-            "            const parsed = parseChatAttachment(m.text || m.body || '');\n"
-            "            const att = parsed.att;\n"
-            "            const displayText = (parsed.text || m.text || m.body || '').trim();\n"
-            "            // BUBBLE_AVATAR_V2\n"
-            "            const agentForMsg = agents.find((a) => a.id === ((m as { agent_id?: string }).agent_id || (conversation as { agent_id?: string } | undefined)?.agent_id));\n"
-            "            const displayName = mine\n"
-            "              ? (conversation?.customer_name || name || 'You')\n"
-            "              : (agentForMsg?.name || (m as { agent_name?: string }).agent_name || 'Support');\n"
-            "            const initials = displayName.split(/\\s+/).map((p: string) => p[0]).join('').slice(0, 2).toUpperCase() || (mine ? 'C' : 'A');\n"
-            "            return (\n"
-            "              <div key={m.id} className={clsx('flex items-end gap-2', mine ? 'justify-end' : 'justify-start')}>
-"
-            "                {!mine && (\n"
-            "                  <div className=\"shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden ring-2 ring-white/10\">\n"
-            "                    {agentForMsg?.avatar_url ? (\n"
-            "                      <img src={agentForMsg.avatar_url} alt=\"\" className=\"w-full h-full object-cover\" />\n"
-            "                    ) : initials}\n"
-            "                  </div>\n"
-            "                )}\n"
-            "                <div className={clsx(\n"
-            "                  'max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow-sm',\n"
-            "                  mine ? 'bg-violet-600 text-white rounded-br-md' : 'bg-white/80 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10 rounded-bl-md',\n"
-            "                )}>\n"
-            "                  <div className={clsx('text-[10px] font-semibold mb-0.5', mine ? 'opacity-80' : 'text-violet-600 dark:text-violet-300')}>\n"
-            "                    {displayName}\n"
-            "                  </div>\n"
-        )
+        old_map = """          {messages.map((m) => {
+            const mine = m.sender === 'customer';
+            const parsed = parseChatAttachment(m.text || m.body || '');
+            const att = parsed.att;
+            const displayText = (parsed.text || m.text || m.body || '').trim();
+            return (
+              <div key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>
+                <div className={clsx(
+                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
+                  mine ? 'bg-violet-600 text-white' : 'bg-white/80 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10',
+                )}>
+"""
+        new_map = """          {messages.map((m) => {
+            const mine = m.sender === 'customer';
+            const parsed = parseChatAttachment(m.text || m.body || '');
+            const att = parsed.att;
+            const displayText = (parsed.text || m.text || m.body || '').trim();
+            // BUBBLE_AVATAR_V2
+            const agentForMsg = agents.find((a) => a.id === ((m as { agent_id?: string }).agent_id || (conversation as { agent_id?: string } | undefined)?.agent_id));
+            const displayName = mine
+              ? (conversation?.customer_name || name || 'You')
+              : (agentForMsg?.name || (m as { agent_name?: string }).agent_name || 'Support');
+            const initials = displayName.split(/\\s+/).map((p: string) => p[0]).join('').slice(0, 2).toUpperCase() || (mine ? 'C' : 'A');
+            return (
+              <div key={m.id} className={clsx('flex items-end gap-2', mine ? 'justify-end' : 'justify-start')}>
+                {!mine && (
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden ring-2 ring-white/10">
+                    {agentForMsg?.avatar_url ? (
+                      <img src={agentForMsg.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : initials}
+                  </div>
+                )}
+                <div className={clsx(
+                  'max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow-sm',
+                  mine ? 'bg-violet-600 text-white rounded-br-md' : 'bg-white/80 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 border border-zinc-200/60 dark:border-white/10 rounded-bl-md',
+                )}>
+                  <div className={clsx('text-[10px] font-semibold mb-0.5', mine ? 'opacity-80' : 'text-violet-600 dark:text-violet-300')}>
+                    {displayName}
+                  </div>
+"""
         if old_map in t:
             t = t.replace(old_map, new_map)
-            old_close = (
-                "                </div>\n"
-                "              </div>\n"
-                "            );\n"
-                "          })}\n"
-                "          <div ref={bottomRef} />"
-            )
-            new_close = (
-                "                </div>\n"
-                "                {mine && (\n"
-                "                  <div className=\"shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white/10\">\n"
-                "                    {(conversation?.customer_name || name || 'C').split(/\\s+/).map((p: string) => p[0]).join('').slice(0, 2).toUpperCase() || 'C'}\n"
-                "                  </div>\n"
-                "                )}\n"
-                "              </div>\n"
-                "            );\n"
-                "          })}\n"
-                "          <div ref={bottomRef} />"
-            )
+            old_close = """                </div>
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />"""
+            new_close = """                </div>
+                {mine && (
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white/10">
+                    {(conversation?.customer_name || name || 'C').split(/\\s+/).map((p: string) => p[0]).join('').slice(0, 2).toUpperCase() || 'C'}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />"""
             if old_close in t:
                 t = t.replace(old_close, new_close, 1)
             print("bubble avatars ok")
