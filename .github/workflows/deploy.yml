@@ -90,6 +90,7 @@ jobs:
           run_py scripts/patch_assist_broadcast_v4.py
           run_py scripts/patch_assist_accept_sync_v5.py
           run_py scripts/patch_assist_approve_unlock_v6.py
+          run_py scripts/patch_assist_via_messages_v7.py
           run_py scripts/patch_msg_agent_id.py
           run_py scripts/patch_avatar_cross_browser.py
           run_py scripts/patch_fix_auto_assignee.py
