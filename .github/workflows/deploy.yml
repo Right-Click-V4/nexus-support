@@ -76,7 +76,7 @@ jobs:
 
           run_py scripts/restore_livechat_blob.py
 
-          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_chat_realtime patch_chat_order_ui patch_hold_nuclear patch_portal_signout_dialog patch_login_star_motion; do
+          for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_chat_realtime patch_chat_order_ui patch_hold_nuclear patch_portal_signout_dialog patch_login_star_motion patch_portal_logo; do
             run_py "scripts/${s}.py"
           done
 
@@ -86,6 +86,9 @@ jobs:
           run_py scripts/patch_livechat_claim_ui_v2.py
           run_py scripts/patch_claim_owner_controls.py
           run_py scripts/patch_assist_modal_v3.py
+          run_py scripts/patch_livechat_nonowner_lock.py
+          run_py scripts/patch_msg_agent_id.py
+          run_py scripts/patch_fix_auto_assignee.py
           run_py scripts/patch_assert_approved_v2.py
           run_py scripts/patch_approve_sync_profiles.py
 
@@ -94,6 +97,7 @@ jobs:
           test $(wc -c < src/components/LiveChatPage.tsx) -gt 5000 && echo OK_LIVECHAT || { echo FAIL_LIVECHAT; exit 1; }
           test $(wc -c < src/components/PortalLiveChatView.tsx) -gt 5000 && echo OK_PORTAL_LC || { echo FAIL_PORTAL_LC; exit 1; }
           grep -q "CHAT_REALTIME_V1\|Messenger-style" src/context/PlatformContext.tsx && echo OK_CHAT_RT || { echo FAIL_CHAT_RT; exit 1; }
+          grep -q "AUTO_ASSIGNEE_FIX_V1\|ticket.assignee_id ?" src/context/TicketContext.tsx && echo OK_ASSIGNEE || echo WARN_ASSIGNEE
 
       - name: Generate git changelog draft
         run: |
