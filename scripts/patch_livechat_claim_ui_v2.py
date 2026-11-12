@@ -226,7 +226,38 @@ if pp.exists() and pp.stat().st_size > 3000:
                 t = t.replace(old_close, new_close, 1)
             print("bubble avatars ok")
 
-    if "usePlatform" in t:
+    # agents may already come from useTickets() — never double-declare
+    if "const { agents } = useTickets()" in t or "agents } = useTickets()" in t:
+        t2, n = re.subn(
+            r"const \{([^}]*),\s*agents,\s*([^}]*)\} = usePlatform\(\)",
+            r"const {\1, \2} = usePlatform()",
+            t,
+            count=1,
+        )
+        if n:
+            t = t2
+            print("removed duplicate agents from usePlatform")
+        else:
+            t2, n = re.subn(
+                r"const \{\s*agents,\s*([^}]*)\} = usePlatform\(\)",
+                r"const {\1} = usePlatform()",
+                t,
+                count=1,
+            )
+            if n:
+                t = t2
+                print("removed leading agents from usePlatform")
+            else:
+                t2, n = re.subn(
+                    r"const \{([^}]*),\s*agents\s*\} = usePlatform\(\)",
+                    r"const {\1} = usePlatform()",
+                    t,
+                    count=1,
+                )
+                if n:
+                    t = t2
+                    print("removed trailing agents from usePlatform")
+    elif "usePlatform" in t:
         win = t[max(0, t.find("usePlatform") - 120) : t.find("usePlatform") + 160]
         if "agents" not in win:
             t2 = re.sub(r"(const \{[^}]*)(createChat)", r"\1agents, \2", t, count=1)
