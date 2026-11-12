@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Single claim UI (no double Yours), Request to assist, prominent Claimed-by,
-customer-side avatars+names+ticket banner. Runs last so it wins."""
+"""Single claim UI, Request to assist, Claimed-by banner, customer avatars. Fast, no ReDoS."""
 from pathlib import Path
 import re
 
@@ -8,51 +7,24 @@ lp = Path("src/components/LiveChatPage.tsx")
 if lp.exists() and lp.stat().st_size > 5000:
     t = lp.read_text()
 
-    patterns = [
-        r"\{currentAgent && !\(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*<button[^>]*>\s*Claim\s*</button>\s*\) : currentAgent && \(selected as \{ agent_id\?: string \}\)\.agent_id === currentAgent\.id \? \(\s*<span[^>]*>Yours</span>\s*\) : \(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*<span[^>]*>Claimed</span>\s*\) : null\}\s*",
-        r"\{currentAgent && \(selected as \{ agent_id\?: string \}\)\.agent_id !== currentAgent\.id \? \(\s*<button[^>]*>\s*Claim\s*</button>\s*\) : currentAgent && \(selected as \{ agent_id\?: string \}\)\.agent_id === currentAgent\.id \? \(\s*<span[^>]*>Yours</span>\s*\) : null\}\s*",
-        r'<span className="text-\[11px\] text-emerald-400[^"]*">Yours</span>\s*',
-        r'<span className="text-\[11px\] text-violet-200[^"]*">Claimed</span>\s*',
-    ]
-    for pat in patterns:
-        t2, n = re.subn(pat, "", t, flags=re.S)
-        if n:
-            print("stripped claim block", n)
-            t = t2
+    for s in [
+        '<span className="text-[11px] text-emerald-400 px-1 font-medium">Yours</span>',
+        '<span className="text-[11px] text-emerald-400 px-1.5 py-1 font-medium rounded-lg bg-emerald-500/15 border border-emerald-400/30">Yours</span>',
+        '<span className="text-[11px] text-violet-200 px-1.5 py-1 font-medium rounded-lg bg-violet-500/15 border border-violet-400/30">Claimed</span>',
+    ]:
+        if s in t:
+            t = t.replace(s, "")
+            print("stripped span")
 
-    t = re.sub(
-        r"\{currentAgent && \(selected as \{ agent_id\?: string \}\)\.agent_id === currentAgent\.id \? \(\s*<span[^>]*>Yours</span>\s*\) : null\}\s*",
-        "",
-        t,
-        flags=re.S,
-    )
-
-    SINGLE_CLAIM = """                      {/* CLAIM_UI_V2 - single badge set */}
+    SINGLE_CLAIM = """                      {/* CLAIM_UI_V2 */}
                       {currentAgent && !(selected as { agent_id?: string }).agent_id ? (
-                        <button
-                          type="button"
-                          onClick={() => void claimChat(selected.id, currentAgent.id).then(() => setMsg('Chat claimed')).catch((e) => setMsg(e instanceof Error ? e.message : 'Claim failed'))}
-                          className="inline-flex items-center gap-1 text-xs font-semibold bg-violet-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-violet-500"
-                          title="Claim this chat"
-                        >
-                          Claim
-                        </button>
+                        <button type="button" onClick={() => void claimChat(selected.id, currentAgent.id).then(() => setMsg('Chat claimed')).catch((e) => setMsg(e instanceof Error ? e.message : 'Claim failed'))} className="inline-flex items-center gap-1 text-xs font-semibold bg-violet-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-violet-500" title="Claim this chat">Claim</button>
                       ) : currentAgent && (selected as { agent_id?: string }).agent_id === currentAgent.id ? (
                         <span className="text-[11px] font-semibold text-emerald-300 px-2 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40">Yours</span>
                       ) : currentAgent && (selected as { agent_id?: string }).agent_id ? (
                         <>
                           <span className="text-[11px] font-semibold text-violet-200 px-2 py-1 rounded-lg bg-violet-500/20 border border-violet-400/40">Claimed</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              try { (window as any).__nexusAssist = { ...(window as any).__nexusAssist, [selected.id]: true }; } catch { /* */ }
-                              setMsg('Assist mode on - you can send messages. Original claimer stays assigned.');
-                            }}
-                            className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-600/90 text-white px-2.5 py-1.5 rounded-lg hover:bg-amber-500"
-                            title="Join this chat as assisting agent"
-                          >
-                            Request to assist
-                          </button>
+                          <button type="button" onClick={() => { try { (window as any).__nexusAssist = { ...(window as any).__nexusAssist, [selected.id]: true }; } catch {} setMsg('Assist mode on - you can send messages.'); }} className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-600/90 text-white px-2.5 py-1.5 rounded-lg hover:bg-amber-500" title="Join as assisting agent">Request to assist</button>
                         </>
                       ) : null}
 """
@@ -65,20 +37,50 @@ if lp.exists() and lp.stat().st_size > 5000:
         else:
             print("claim needle miss")
 
-    t2, n = re.subn(
-        r'\{currentAgent && !\(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*<button\s+type="button"\s+disabled=\{busy\}[\s\S]*?Claim\s*</button>\s*\) : currentAgent && \(selected as \{ agent_id\?: string \}\)\.agent_id === currentAgent\.id \? \(\s*\) : \(selected as \{ agent_id\?: string \}\)\.agent_id \? \(\s*\) : null\}\s*',
-        "",
-        t,
-        count=1,
-    )
-    if n:
-        t = t2
-        print("removed broken second claim via regex")
+    if "disabled={busy}" in t and t.count("claimChat(selected.id") > 1:
+        lines = t.splitlines(keepends=True)
+        out = []
+        i = 0
+        removed = 0
+        while i < len(lines):
+            line = lines[i]
+            if (
+                removed < 1
+                and "disabled={busy}" in line
+                and i + 1 < len(lines)
+                and any("claimChat(selected.id" in lines[j] for j in range(i, min(i + 15, len(lines))))
+                and "CLAIM_UI_V2" not in "".join(lines[max(0, i - 5) : i + 1])
+            ):
+                depth = 0
+                started = False
+                j = i
+                while j < len(lines) and j < i + 40:
+                    if "{" in lines[j]:
+                        depth += lines[j].count("{")
+                        started = True
+                    if "}" in lines[j]:
+                        depth -= lines[j].count("}")
+                    if started and depth <= 0 and "null}" in lines[j]:
+                        j += 1
+                        break
+                    j += 1
+                print("skipped duplicate claim lines", j - i)
+                removed += 1
+                i = j
+                continue
+            out.append(line)
+            i += 1
+        t = "".join(out)
 
-    if "CLAIMED_BANNER_V2" not in t:
-        t2, n = re.subn(
-            r'<div className="text-\[11px\] text-slate-500 dark:text-zinc-400 truncate">\s*\{\(\(\) => \{\s*const claimed = resolveChatAgent[\s\S]*?selected\.ticket_id \? ` \u00b7 Ticket: \$\{selected\.ticket_id\}` : \'\'\\}\s*</div>',
-            '''<div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
+    if "CLAIMED_BANNER_V2" not in t and "resolveChatAgent(selected" in t:
+        marker = "const claimed = resolveChatAgent(selected as { agent_id?: string }, agents || []);"
+        if marker in t:
+            idx = t.find(marker)
+            start = t.rfind('<div className="text-[11px]', 0, idx)
+            end = t.find("</div>", idx)
+            if start != -1 and end != -1 and end - start < 800:
+                end = end + len("</div>")
+                new_banner = """<div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
                     {selected.customer_email}
                     {selected.branch ? ` \u00b7 Branch: ${selected.branch}` : ''}
                   </div>
@@ -89,23 +91,20 @@ if lp.exists() and lp.stat().st_size > 5000:
                       return claimed ? `Claimed by ${claimed.name}` : 'Unclaimed';
                     })()}
                     {selected.ticket_id ? ` \u00b7 Ticket: ${selected.ticket_id}` : ''}
-                  </div>''',
-            t,
-            count=1,
-        )
-        if n:
-            t = t2
-            print("claimed banner regex")
-        else:
-            print("claimed banner miss")
+                  </div>"""
+                t = t[:start] + new_banner + t[end:]
+                print("claimed banner ok")
+            else:
+                print("banner window miss")
 
     while t.count(">Yours</span>") > 1:
-        t = re.sub(
-            r'<span className="text-\[11px\] text-emerald-400[^"]*">Yours</span>',
-            "",
-            t,
-            count=1,
-        )
+        pos = t.find(">Yours</span>")
+        span_start = t.rfind("<span", 0, pos)
+        span_end = pos + len(">Yours</span>")
+        if span_start != -1:
+            t = t[:span_start] + t[span_end:]
+        else:
+            break
     print("Yours remaining", t.count(">Yours</span>"))
 
     lp.write_text(t)
@@ -214,15 +213,16 @@ if pp.exists() and pp.stat().st_size > 3000:
         else:
             print("bubble map pattern miss")
 
-    if "usePlatform" in t and "agents" not in t[max(0, t.find("usePlatform") - 100) : t.find("usePlatform") + 150]:
-        t2 = re.sub(r"(const \{[^}]*)(createChat)", r"\1agents, \2", t, count=1)
-        if t2 != t:
-            t = t2
-            print("injected agents into usePlatform")
+    if "usePlatform" in t:
+        window = t[max(0, t.find("usePlatform") - 100) : t.find("usePlatform") + 150]
+        if "agents" not in window:
+            t2 = re.sub(r"(const \{[^}]*)(createChat)", r"\1agents, \2", t, count=1)
+            if t2 != t:
+                t = t2
+                print("injected agents")
 
     if "End / new chat" in t:
-        t = t.replace(
-            """          <button
+        old_end = """          <button
             type="button"
             disabled={ending}
             onClick={() => {
@@ -232,22 +232,19 @@ if pp.exists() and pp.stat().st_size > 3000:
             className="text-xs text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 disabled:opacity-50"
           >
             {ending ? 'Ending\u2026' : chatEnded ? 'Start new chat' : 'End / new chat'}
-          </button>""",
-            """          {chatEnded ? (
-            <button
-              type="button"
-              onClick={startNewChat}
-              className="text-xs font-semibold text-violet-300 hover:text-violet-200"
-            >
+          </button>"""
+        new_end = """          {chatEnded ? (
+            <button type="button" onClick={startNewChat} className="text-xs font-semibold text-violet-300 hover:text-violet-200">
               Start new chat
             </button>
-          ) : null}""",
-        )
-        print("removed customer end button")
+          ) : null}"""
+        if old_end in t:
+            t = t.replace(old_end, new_end)
+            print("removed customer end")
 
     pp.write_text(t)
     print("PortalLiveChatView updated", len(t))
 else:
-    print("skip PortalLiveChatView")
+    print("skip Portal")
 
 print("patch_livechat_claim_ui_v2 done")
