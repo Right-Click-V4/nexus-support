@@ -24,8 +24,8 @@ TARGETS = [
     ("tc", "src/context/TicketContext.tsx", 15000, "export function useTickets", "c3b543f"),
     ("plv", "src/components/PortalLiveChatView.tsx", 5000, "export default", "24910bd"),
     ("lcp", "src/components/LiveChatPage.tsx", 5000, "export default", "24910bd"),
-    ("login_scene", "src/components/LoginScene.tsx", 8000, "CosmicFallBackground", "def5916"),
-    ("login_page", "src/components/LoginPage.tsx", 8000, "CosmicFallBackground", "e889ef3"),
+    ("login_scene", "src/components/LoginScene.tsx", 8000, "CosmicFallBackground", "c8069525971217bf2560c2b01a8b38bb6b590dee"),
+    ("login_page", "src/components/LoginPage.tsx", 8000, "CosmicFallBackground", "98403daa804373de7b00baeb57fdfd95acaa3ce5"),
 ]
 
 
