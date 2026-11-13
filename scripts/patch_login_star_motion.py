@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-"""Ensure LoginScene StarCanvas has fall/drift/sparkle motion + scattered positions."""
+"""Login StarCanvas: ONLY slow pure top\u2192bottom stars. No drift, no sideways, no dust modes."""
 from pathlib import Path
 import re
 
 p = Path("src/components/LoginScene.tsx")
-if not p.exists():
-    raise SystemExit(0)
-s = p.read_text()
-if "mode === 'fall'" in s and "43758.5453" in s and "StarCanvas" in s:
-    print("star motion+scatter already present")
+if not p.exists() or p.stat().st_size < 2000:
     raise SystemExit(0)
 
-new_star = r'''/** Single canvas starfield — 320 stars, mixed fall / drift / sparkle (GPU-friendly). */
-function StarCanvas({ count = 320 }: { count?: number }) {
+s = p.read_text()
+
+new_star = r'''/** Single canvas starfield \u2014 slow pure top\u2192bottom only (no sideways / random paths). */
+function StarCanvas({ count = 180 }: { count?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -26,7 +24,6 @@ function StarCanvas({ count = 320 }: { count?: number }) {
     let h = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    type Mode = 'fall' | 'drift' | 'sparkle' | 'slow';
     type Star = {
       x: number;
       y: number;
@@ -34,23 +31,12 @@ function StarCanvas({ count = 320 }: { count?: number }) {
       base: number;
       tw: number;
       phase: number;
-      vx: number;
-      vy: number;
-      mode: Mode;
+      speed: number;
       color: string;
-      glow: boolean;
     };
 
-    const palette = ['#a78bfa', '#c4b5fd', '#67e8f9', '#e9d5ff', '#f9a8d4', '#ffffff', '#f0abfc', '#a5f3fc', '#ddd6fe'];
+    const palette = ['#a78bfa', '#c4b5fd', '#e9d5ff', '#ffffff', '#f0abfc', '#ddd6fe', '#f5d0fe'];
     let stars: Star[] = [];
-
-    const pickMode = (i: number): Mode => {
-      const m = i % 10;
-      if (m <= 3) return 'fall';
-      if (m <= 6) return 'drift';
-      if (m <= 8) return 'slow';
-      return 'sparkle';
-    };
 
     const resize = () => {
       const parent = canvas.parentElement;
@@ -63,49 +49,26 @@ function StarCanvas({ count = 320 }: { count?: number }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       stars = Array.from({ length: count }, (_, i) => {
-        const layer = i % 5;
-        const mode = pickMode(i);
+        const layer = i % 4;
         const r =
           layer === 0
-            ? 0.45 + (i % 3) * 0.1
+            ? 0.4 + (i % 3) * 0.1
             : layer === 1
-              ? 0.7 + (i % 3) * 0.14
+              ? 0.65 + (i % 3) * 0.12
               : layer === 2
-                ? 1.05 + (i % 4) * 0.18
-                : layer === 3
-                  ? 1.45 + (i % 3) * 0.22
-                  : 1.9 + (i % 4) * 0.28;
-
-        let vx = 0;
-        let vy = 0;
-        if (mode === 'fall') {
-          vx = ((i % 7) - 3) * 0.004;
-          vy = 0.035 + (layer + 1) * 0.018 + (i % 5) * 0.006;
-        } else if (mode === 'drift') {
-          vx = (((i * 17) % 11) - 5) * 0.012;
-          vy = (((i * 13) % 9) - 4) * 0.01;
-        } else if (mode === 'slow') {
-          vx = (((i * 3) % 5) - 2) * 0.003;
-          vy = 0.008 + (i % 4) * 0.003;
-        }
-
-        // Scrambled positions — avoid visible diagonal/grid bands
-        const hx = Math.sin(i * 127.1 + layer * 311.7) * 43758.5453;
-        const hy = Math.sin(i * 269.5 + layer * 183.3) * 23421.6312;
-        const rx = hx - Math.floor(hx);
-        const ry = hy - Math.floor(hy);
+                ? 0.95 + (i % 4) * 0.15
+                : 1.35 + (i % 3) * 0.2;
+        const speed =
+          layer === 0 ? 0.006 : layer === 1 ? 0.01 : layer === 2 ? 0.015 : 0.022;
         return {
-          x: rx * w,
-          y: ry * h,
+          x: (((i * 47 + 13 + layer * 19) % 1000) / 1000) * w,
+          y: (((i * 59 + 7 + layer * 23) % 1000) / 1000) * h,
           r,
-          base: 0.18 + layer * 0.11 + (i % 4) * 0.04,
-          tw: 1.8 + (i % 9) * 0.45,
+          base: 0.12 + layer * 0.1 + (i % 4) * 0.03,
+          tw: 3.2 + (i % 7) * 0.7,
           phase: (i * 0.41) % (Math.PI * 2),
-          vx,
-          vy,
-          mode,
+          speed,
           color: palette[i % palette.length],
-          glow: layer >= 3 || mode === 'sparkle',
         };
       });
     };
@@ -120,52 +83,16 @@ function StarCanvas({ count = 320 }: { count?: number }) {
       if (document.visibilityState === 'hidden') return;
       const dt = Math.min(40, now - last);
       last = now;
-      const t = dt * 0.06;
-
       ctx.clearRect(0, 0, w, h);
-
       for (const s of stars) {
-        if (s.mode === 'drift') {
-          s.vx += Math.sin(now * 0.0007 + s.phase) * 0.002 * t;
-          s.vy += Math.cos(now * 0.0009 + s.phase * 1.3) * 0.002 * t;
-          const sp = Math.hypot(s.vx, s.vy);
-          if (sp > 0.12) {
-            s.vx = (s.vx / sp) * 0.12;
-            s.vy = (s.vy / sp) * 0.12;
-          }
+        // Pure vertical \u2014 no s.x change while falling
+        s.y += s.speed * dt * 0.012;
+        if (s.y > h + 4) {
+          s.y = -4;
+          s.x = Math.random() * w;
         }
-
-        s.x += s.vx * dt;
-        s.y += s.vy * dt;
-
-        if (s.mode === 'fall' || s.mode === 'slow') {
-          if (s.y > h + 6) {
-            s.y = -6;
-            s.x = Math.random() * w;
-          }
-          if (s.x < -8) s.x = w + 6;
-          if (s.x > w + 8) s.x = -6;
-        } else if (s.mode === 'drift') {
-          if (s.x < -10) s.x = w + 8;
-          if (s.x > w + 10) s.x = -8;
-          if (s.y < -10) s.y = h + 8;
-          if (s.y > h + 10) s.y = -8;
-        }
-
-        const pulse =
-          s.mode === 'sparkle'
-            ? 0.25 + 0.75 * Math.abs(Math.sin(now * 0.004 * (1 / s.tw) + s.phase))
-            : 0.5 + 0.5 * Math.sin(now * 0.0012 * (1 / s.tw) * 5 + s.phase);
+        const pulse = 0.55 + 0.45 * Math.sin(now * 0.001 * (1 / s.tw) * 5 + s.phase);
         const alpha = Math.max(0.06, Math.min(1, s.base * pulse));
-
-        if (s.glow && s.r > 1.2) {
-          ctx.beginPath();
-          ctx.fillStyle = s.color;
-          ctx.globalAlpha = alpha * 0.25;
-          ctx.arc(s.x, s.y, s.r * 2.4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
         ctx.beginPath();
         ctx.fillStyle = s.color;
         ctx.globalAlpha = alpha;
@@ -194,12 +121,24 @@ function StarCanvas({ count = 320 }: { count?: number }) {
 '''
 
 m = re.search(
-    r'(?:/\*\* Single canvas starfield[\s\S]*?\*/\n)?function StarCanvas[\s\S]*?\n(?=export function CosmicFallBackground)',
+    r'(?:/\*\*[^*]*\*/\n)?(?:// STARS_V5_PURE\n)?function StarCanvas[\s\S]*?\n(?=export function CosmicFallBackground)',
     s,
 )
 if not m:
     print("StarCanvas block not found")
     raise SystemExit(0)
 s = s[: m.start()] + new_star + s[m.end() :]
+
+# Remove dust particle layers (look like random fast dots)
+s = re.sub(
+    r'\s*<div className="login-dust[^"]*"\s*/>\s*',
+    "\n",
+    s,
+)
+
+s = s.replace('<StarCanvas count={320} />', '<StarCanvas count={180} />')
+s = s.replace('<StarCanvas count={280} />', '<StarCanvas count={180} />')
+s = s.replace('<StarCanvas count={220} />', '<StarCanvas count={180} />')
+
 p.write_text(s)
-print("star motion+scatter patched", p.stat().st_size)
+print("pure slow stars + dust removed", len(s), "braces", s.count("{") - s.count("}"))
