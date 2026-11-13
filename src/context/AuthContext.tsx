@@ -1,7 +1,7 @@
 /* auth-profile-update-v1 */
 /* login-speed-auth-v1 */
 /* supabase-paused-hint-v1 */
-/* ROLE_RESOLVE_V2 */
+/* ROLE_RESOLVE_V3_AGENT_TAB */
 /* SYNC_CUSTOMER_BRANCH_V2 */
 /* signup-approve-branch-v1 */
 import {
@@ -37,6 +37,8 @@ type AuthContextValue = {
   updateProfile?: (data: Record<string, unknown>) => Promise<void>;
   updatePassword?: (password: string) => Promise<void>;
   updateEmail?: (email: string) => Promise<void>;
+  error?: string | null;
+  clearError?: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -73,25 +75,36 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
     (user.user_metadata as Record<string, unknown> | undefined)?.role ||
       (user.user_metadata as Record<string, unknown> | undefined)?.account_role,
   );
-  if (!supabase) return fromMeta;
+  if (!supabase) {
+    if (expectedRole && !hasExplicitMeta) return expectedRole;
+    return fromMeta;
+  }
+
+  const email = (user.email || '').trim().toLowerCase();
 
   try {
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('role, is_admin')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (prof?.is_admin || prof?.role === 'admin') return 'admin';
+    let prof: { role?: string | null; is_admin?: boolean | null } | null = null;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('role, is_admin')
+        .eq('id', user.id)
+        .maybeSingle();
+      prof = data as typeof prof;
+    } catch {
+      /* profiles optional */
+    }
+    if (prof?.is_admin || String(prof?.role || '').toLowerCase() === 'admin') return 'admin';
 
     try {
       const { data: agentRow } = await supabase
         .from('agents')
-        .select('id, role, is_admin')
+        .select('id, role, is_admin, email, user_id')
         .eq('user_id', user.id)
         .maybeSingle();
       if (agentRow) {
         if ((agentRow as { is_admin?: boolean }).is_admin) return 'admin';
-        const ar = String((agentRow as { role?: string }).role || 'agent');
+        const ar = String((agentRow as { role?: string }).role || 'agent').toLowerCase();
         if (ar === 'admin') return 'admin';
         return 'agent';
       }
@@ -99,34 +112,56 @@ async function resolveRole(user: User, expectedRole?: 'agent' | 'customer'): Pro
       /* agents table may not exist */
     }
 
-    try {
-      const email = (user.email || '').toLowerCase();
-      if (email) {
+    if (email) {
+      try {
         const { data: byEmail } = await supabase
           .from('agents')
-          .select('id, role, is_admin')
-          .eq('email', email)
+          .select('id, role, is_admin, email, user_id')
+          .ilike('email', email)
           .maybeSingle();
         if (byEmail) {
+          try {
+            if (!(byEmail as { user_id?: string | null }).user_id) {
+              await supabase.from('agents').update({ user_id: user.id }).eq('id', (byEmail as { id: string }).id);
+            }
+          } catch {
+            /* non-fatal */
+          }
           if ((byEmail as { is_admin?: boolean }).is_admin) return 'admin';
+          const ar = String((byEmail as { role?: string }).role || 'agent').toLowerCase();
+          if (ar === 'admin') return 'admin';
           return 'agent';
         }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
 
-    if (prof?.role === 'agent' || prof?.role === 'customer') {
-      if (
-        expectedRole === 'agent' &&
-        prof.role === 'customer' &&
-        hasExplicitMeta &&
-        (fromMeta === 'agent' || fromMeta === 'admin')
-      ) {
-        return fromMeta === 'admin' ? 'admin' : 'agent';
+    const profRole = String(prof?.role || '').toLowerCase();
+    if (profRole === 'agent') return 'agent';
+
+    // Tab-aware: do not let a stale profiles.role=customer block agent/admin login
+    if (expectedRole === 'agent') {
+      if (fromMeta === 'admin') return 'admin';
+      if (fromMeta === 'agent') return 'agent';
+      if (profRole === 'customer' && hasExplicitMeta && fromMeta === 'customer') {
+        return 'customer';
       }
-      return prof.role as AccountRole;
+      if (!hasExplicitMeta || fromMeta === 'agent' || fromMeta === 'admin') {
+        return expectedRole;
+      }
     }
+
+    if (expectedRole === 'customer') {
+      if (fromMeta === 'customer') return 'customer';
+      if (profRole === 'customer') return 'customer';
+      if (fromMeta === 'agent' || fromMeta === 'admin' || profRole === 'agent') {
+        return fromMeta === 'admin' || profRole === 'admin' ? 'admin' : 'agent';
+      }
+      if (!hasExplicitMeta) return 'customer';
+    }
+
+    if (profRole === 'customer') return 'customer';
   } catch {
     /* fall through */
   }
@@ -179,7 +214,7 @@ async function assertApproved(user: User, role: AccountRole): Promise<void> {
         const byEmail = await supabase
           .from('agents')
           .select('approval_status')
-          .eq('email', email)
+          .ilike('email', email)
           .maybeSingle();
         row = byEmail.data as typeof row;
       }
@@ -313,7 +348,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await supabase.auth.signOut();
           throw e;
         }
-        // On timeout, still block if profiles says pending — soft continue otherwise
       }
       if (expectedRole === 'customer' && role === 'customer') {
         try {
@@ -331,6 +365,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: data.user.id,
             role: role === 'admin' ? 'admin' : 'agent',
             email: data.user.email,
+          });
+        } catch {
+          /* non-fatal */
+        }
+        try {
+          await supabase.auth.updateUser({
+            data: { role: role === 'admin' ? 'admin' : 'agent', account_role: role === 'admin' ? 'admin' : 'agent' },
           });
         } catch {
           /* non-fatal */
@@ -526,24 +567,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextUser);
     setSession(sess.session);
     try {
-      const email = (nextUser?.email || '').trim().toLowerCase();
-      if (email && payload.branch !== undefined) {
+      const em = (nextUser?.email || '').trim().toLowerCase();
+      if (em && payload.branch !== undefined) {
         const name =
           String(payload.full_name || payload.name || nextUser?.user_metadata?.full_name || '').trim() ||
-          email.split('@')[0];
+          em.split('@')[0];
         let branchVal = String(payload.branch || '').trim().toUpperCase() || null;
         if (branchVal && branchVal.endsWith(' BRANCH')) {
           branchVal = branchVal.slice(0, -7).trim() || null;
         }
-        const row = {
-          name,
-          email,
-          branch: branchVal,
-        };
+        const row = { name, email: em, branch: branchVal };
         const { data: existing } = await supabase
           .from('customers')
           .select('id')
-          .ilike('email', email)
+          .ilike('email', em)
           .maybeSingle();
         if (existing?.id) {
           const { error: upErr } = await supabase
@@ -554,9 +591,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           const { error: insErr } = await supabase.from('customers').insert(row);
           if (insErr) {
-            const { error: upsErr } = await supabase
-              .from('customers')
-              .upsert(row, { onConflict: 'email' });
+            const { error: upsErr } = await supabase.from('customers').upsert(row, { onConflict: 'email' });
             if (upsErr) console.warn('customer branch insert', insErr.message, upsErr.message);
           }
         }
@@ -582,7 +617,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       session,
       user,
-      loading: loading || authBusy,
+      loading,
       authBusy,
       accountRole,
       configError,
