@@ -37,7 +37,6 @@ jobs:
             fi
           }
 
-          # Must succeed — stubs break the Vite build
           python3 scripts/restore_core_blobs.py
 
           restore_if_stub() {
@@ -74,7 +73,7 @@ jobs:
 
           run_py scripts/patch_release_notes_persist.py
 
-          for s in slow_polls patch_login_ui_v1 patch_login_stars_trail_v2 patch_login_trail_v3 patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_chat_realtime patch_chat_order_ui patch_hold_nuclear patch_portal_signout_dialog patch_login_star_motion patch_portal_logo; do
+          for s in slow_polls patch_login_ui_v1 patch_login_stars_trail_v2 patch_login_trail_v3 patch_login_trail_v4 patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_chat_realtime patch_chat_order_ui patch_hold_nuclear patch_portal_signout_dialog patch_login_star_motion patch_portal_logo; do
             run_py "scripts/${s}.py"
           done
 
