@@ -1,10 +1,29 @@
 #!/usr/bin/env python3
-"""Approve/request assist via chat system messages so unlock uses working message realtime."""
+"""Approve/request assist via chat system messages so unlock uses working message realtime.
+
+V7b: inject INSIDE respondAssist/requestAssist (brace-matched), not after they close.
+"""
 from pathlib import Path
 
 MARKER_REQ = "__ASSIST_REQ__:"
 MARKER_OK = "__ASSIST_OK__:"
 MARKER_NO = "__ASSIST_NO__:"
+
+
+def fn_close(text: str, start: int) -> int:
+    i = text.find("{", start)
+    if i < 0:
+        return -1
+    depth = 0
+    for j in range(i, len(text)):
+        if text[j] == "{":
+            depth += 1
+        elif text[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return j
+    return -1
+
 
 pc = Path("src/context/PlatformContext.tsx")
 if not pc.exists() or pc.stat().st_size < 5000:
@@ -17,12 +36,8 @@ else:
         if start < 0:
             print("respondAssist not found")
         else:
-            end_cand = t.find("\n  const claimChat", start)
-            if end_cand < 0:
-                end_cand = t.find("\n  const setChatStatus", start)
-            if end_cand < 0:
-                end_cand = t.find("\n  const archiveChat", start)
-            if end_cand < 0:
+            close = fn_close(t, start)
+            if close < 0:
                 print("end of respondAssist miss")
             else:
                 inject = f"""
@@ -68,15 +83,18 @@ else:
       console.warn('assist sysmsg', e);
     }}
 """
-                t = t[:end_cand] + inject + t[end_cand:]
+                # insert just before closing brace of respondAssist
+                t = t[:close] + inject + t[close:]
                 print("respondAssist sysmsg injected")
 
         marker2 = "const requestAssist = async (conversationId: string, agentId: string)"
         start2 = t.find(marker2)
-        end2 = t.find("const respondAssist = async", start2)
-        if start2 > 0 and end2 > start2 and "ASSIST_MSG_REQ_V7" not in t[start2:end2]:
-            inject_req = f"""
-    // ASSIST_MSG_REQ_V7
+        if start2 > 0 and "ASSIST_REQ_MSG_V7" not in t:
+            close2 = fn_close(t, start2)
+            # ensure we don't land inside respondAssist if order flipped
+            if close2 > start2:
+                inject2 = f"""
+    // ASSIST_REQ_MSG_V7
     try {{
       const text = '{MARKER_REQ}' + agentId;
       const sysMsg = {{
@@ -91,7 +109,7 @@ else:
           if (c.id !== conversationId) return c;
           const msgs = [...(c.messages || [])];
           if (!msgs.some((m) => m.text === text)) msgs.push(sysMsg);
-          return {{ ...c, messages: msgs }};
+          return {{ ...c, messages: msgs, updated_at: sysMsg.created_at }};
         }}),
       );
       if (supabase) {{
@@ -103,21 +121,22 @@ else:
             author: 'system',
           }});
         }} catch (e) {{
-          console.warn('assist req msg', e);
+          console.warn('assist req msg insert', e);
         }}
       }}
-    }} catch {{}}
+    }} catch (e) {{
+      console.warn('assist req sysmsg', e);
+    }}
 """
-            t = t[:end2] + inject_req + t[end2:]
-            print("requestAssist sysmsg injected")
+                t = t[:close2] + inject2 + t[close2:]
+                print("requestAssist sysmsg injected")
 
-        pc.write_text(t)
-        print("PC", len(t))
-    else:
-        print("PC skip", "ASSIST_MSG_V7" in t)
+    pc.write_text(t)
+    print("PC", len(t))
 
+# --- LiveChatPage: parse assist system messages + filter from UI ---
 lp = Path("src/components/LiveChatPage.tsx")
-if not lp.exists() or lp.stat().st_size < 5000:
+if not lp.exists() or lp.stat().st_size < 3000:
     print("skip LC")
     raise SystemExit(0)
 
@@ -125,27 +144,32 @@ t = lp.read_text()
 
 if "ASSIST_PARSE_MSG_V7" not in t:
     effect = """
-  // ASSIST_PARSE_MSG_V7 — apply assist flags from system messages (cross-browser)
+  // ASSIST_PARSE_MSG_V7 — unlock from system chat messages (works when broadcast misses)
   useEffect(() => {
-    if (!selectedId || !selected?.messages?.length) return;
-    let changed = false;
+    if (!selectedId || !selected?.messages) return;
     try {
-      const key = 'nexus-chat-assist-' + selectedId;
-      const raw = localStorage.getItem(key);
-      const data = raw ? JSON.parse(raw) : { assistants: [] as string[], requests: [] as string[] };
-      data.assistants = data.assistants || [];
-      data.requests = data.requests || [];
+      const key = `nexus-assist-local:${selectedId}`;
+      let data: { assistants: string[]; requests: string[] } = { assistants: [], requests: [] };
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) data = { ...data, ...JSON.parse(raw) };
+      } catch {}
+      let changed = false;
       for (const m of selected.messages) {
         const text = String(m.text || '');
         if (text.startsWith('__ASSIST_OK__:')) {
           const aid = text.slice('__ASSIST_OK__:'.length).trim();
-          if (aid && !data.assistants.includes(aid)) { data.assistants.push(aid); changed = true; }
-          data.requests = data.requests.filter((id: string) => id !== aid);
+          if (aid && !data.assistants.includes(aid)) {
+            data.assistants.push(aid);
+            data.requests = data.requests.filter((id) => id !== aid);
+            changed = true;
+          }
         } else if (text.startsWith('__ASSIST_NO__:')) {
           const aid = text.slice('__ASSIST_NO__:'.length).trim();
-          data.requests = data.requests.filter((id: string) => id !== aid);
-          data.assistants = data.assistants.filter((id: string) => id !== aid);
-          changed = true;
+          if (aid) {
+            data.requests = data.requests.filter((id) => id !== aid);
+            changed = true;
+          }
         } else if (text.startsWith('__ASSIST_REQ__:')) {
           const aid = text.slice('__ASSIST_REQ__:'.length).trim();
           if (aid && !data.requests.includes(aid) && !data.assistants.includes(aid)) {
