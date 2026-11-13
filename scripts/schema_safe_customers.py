@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep CUSTOMER_COLS including avatar_url when present (AVATAR_SYNC_V1)."""
+"""Force CUSTOMER_COLS to include avatar_url (AVATAR_SYNC)."""
 from pathlib import Path
 import re
 
@@ -9,21 +9,13 @@ if not p.exists():
     raise SystemExit(0)
 s = p.read_text()
 s2 = re.sub(
-    r"const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at'; // SCHEMA_SAFE_NO_AVATAR",
+    r"const CUSTOMER_COLS = '[^']*';[^\n]*",
     "const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at, avatar_url'; // AVATAR_SYNC_V1",
     s,
+    count=1,
 )
-if "avatar_url" not in s2 and "CUSTOMER_COLS" in s2:
-    s2 = re.sub(
-        r"const CUSTOMER_COLS = '[^']*';[^\n]*",
-        "const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at, avatar_url'; // AVATAR_SYNC_V1",
-        s2,
-        count=1,
-    )
-if s2 != s:
-    p.write_text(s2)
-    print("CUSTOMER_COLS avatar-aware")
-else:
-    print("CUSTOMER_COLS ok")
-cols = next((ln for ln in Path("src/context/TicketContext.tsx").read_text().splitlines() if "CUSTOMER_COLS" in ln), "?")
+p.write_text(s2)
+cols = next((ln for ln in s2.splitlines() if "CUSTOMER_COLS" in ln), "?")
 print("FINAL", cols)
+if "avatar_url" not in cols:
+    raise SystemExit("avatar_url missing from CUSTOMER_COLS")
