@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Login StarCanvas: ONLY slow pure top\u2192bottom stars. No drift, no sideways, no dust modes."""
+"""Login StarCanvas: slow but VISIBLE pure top\u2192bottom stars only. No sideways drift."""
 from pathlib import Path
 import re
 
@@ -9,8 +9,8 @@ if not p.exists() or p.stat().st_size < 2000:
 
 s = p.read_text()
 
-new_star = r'''/** Single canvas starfield \u2014 slow pure top\u2192bottom only (no sideways / random paths). */
-function StarCanvas({ count = 180 }: { count?: number }) {
+new_star = r'''/** Single canvas starfield \u2014 slow pure top\u2192bottom (visible drift, no sideways). */
+function StarCanvas({ count = 220 }: { count?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ function StarCanvas({ count = 180 }: { count?: number }) {
       color: string;
     };
 
-    const palette = ['#a78bfa', '#c4b5fd', '#e9d5ff', '#ffffff', '#f0abfc', '#ddd6fe', '#f5d0fe'];
+    const palette = ['#a78bfa', '#c4b5fd', '#e9d5ff', '#ffffff', '#f0abfc', '#ddd6fe', '#f5d0fe', '#a5b4fc'];
     let stars: Star[] = [];
 
     const resize = () => {
@@ -52,19 +52,20 @@ function StarCanvas({ count = 180 }: { count?: number }) {
         const layer = i % 4;
         const r =
           layer === 0
-            ? 0.4 + (i % 3) * 0.1
+            ? 0.45 + (i % 3) * 0.12
             : layer === 1
-              ? 0.65 + (i % 3) * 0.12
+              ? 0.7 + (i % 3) * 0.15
               : layer === 2
-                ? 0.95 + (i % 4) * 0.15
-                : 1.35 + (i % 3) * 0.2;
+                ? 1.05 + (i % 4) * 0.18
+                : 1.5 + (i % 3) * 0.25;
+        // px per ms \u2014 crosses ~1080px screen in ~25\u201355s (slow but obvious)
         const speed =
-          layer === 0 ? 0.006 : layer === 1 ? 0.01 : layer === 2 ? 0.015 : 0.022;
+          layer === 0 ? 0.014 : layer === 1 ? 0.022 : layer === 2 ? 0.032 : 0.045;
         return {
           x: (((i * 47 + 13 + layer * 19) % 1000) / 1000) * w,
           y: (((i * 59 + 7 + layer * 23) % 1000) / 1000) * h,
           r,
-          base: 0.12 + layer * 0.1 + (i % 4) * 0.03,
+          base: 0.25 + layer * 0.12 + (i % 4) * 0.05,
           tw: 3.2 + (i % 7) * 0.7,
           phase: (i * 0.41) % (Math.PI * 2),
           speed,
@@ -84,19 +85,19 @@ function StarCanvas({ count = 180 }: { count?: number }) {
       const dt = Math.min(40, now - last);
       last = now;
       ctx.clearRect(0, 0, w, h);
-      for (const s of stars) {
-        // Pure vertical \u2014 no s.x change while falling
-        s.y += s.speed * dt * 0.012;
-        if (s.y > h + 4) {
-          s.y = -4;
-          s.x = Math.random() * w;
+      for (const st of stars) {
+        // Pure vertical only
+        st.y += st.speed * dt;
+        if (st.y > h + 4) {
+          st.y = -4;
+          st.x = Math.random() * w;
         }
-        const pulse = 0.55 + 0.45 * Math.sin(now * 0.001 * (1 / s.tw) * 5 + s.phase);
-        const alpha = Math.max(0.06, Math.min(1, s.base * pulse));
+        const pulse = 0.55 + 0.45 * Math.sin(now * 0.001 * (1 / st.tw) * 5 + st.phase);
+        const alpha = Math.max(0.1, Math.min(1, st.base * pulse));
         ctx.beginPath();
-        ctx.fillStyle = s.color;
+        ctx.fillStyle = st.color;
         ctx.globalAlpha = alpha;
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -129,16 +130,11 @@ if not m:
     raise SystemExit(0)
 s = s[: m.start()] + new_star + s[m.end() :]
 
-# Remove dust particle layers (look like random fast dots)
-s = re.sub(
-    r'\s*<div className="login-dust[^"]*"\s*/>\s*',
-    "\n",
-    s,
-)
+s = re.sub(r'\s*<div className="login-dust[^"]*"\s*/>\s*', "\n", s)
 
-s = s.replace('<StarCanvas count={320} />', '<StarCanvas count={180} />')
-s = s.replace('<StarCanvas count={280} />', '<StarCanvas count={180} />')
-s = s.replace('<StarCanvas count={220} />', '<StarCanvas count={180} />')
+s = s.replace('<StarCanvas count={320} />', '<StarCanvas count={220} />')
+s = s.replace('<StarCanvas count={280} />', '<StarCanvas count={220} />')
+s = s.replace('<StarCanvas count={180} />', '<StarCanvas count={220} />')
 
 p.write_text(s)
-print("pure slow stars + dust removed", len(s), "braces", s.count("{") - s.count("}"))
+print("visible slow stars", len(s), "braces", s.count("{") - s.count("}"))
