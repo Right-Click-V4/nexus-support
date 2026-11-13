@@ -89,9 +89,11 @@ jobs:
           run_py scripts/patch_assist_via_messages_v7.py
           run_py scripts/patch_msg_agent_id.py
           run_py scripts/patch_avatar_cross_browser.py
-          run_py scripts/patch_fix_auto_assignee.py
+          run_py scripts/patch_ticket_auto_assignee.py
           run_py scripts/patch_assert_approved_v2.py
           run_py scripts/patch_approve_sync_profiles.py
+          run_py scripts/patch_postlogin_once.py
+          run_py scripts/patch_users_dedupe_approve.py
           run_py scripts/patch_hotfix_v2.py
 
           run_py scripts/schema_safe_customers.py
