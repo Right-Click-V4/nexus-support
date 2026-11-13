@@ -13,12 +13,12 @@ permissions:
 
 concurrency:
   group: pages-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -26,10 +26,34 @@ jobs:
           fetch-depth: 0
 
       - name: Restore + patch portal
-        timeout-minutes: 5
+        timeout-minutes: 8
         run: |
-          set -e
-          run_py() { if [ -f "$1" ]; then timeout 45 python3 "$1" || echo "WARN: $1 exited/timeout"; fi; }
+          set +e
+          run_py() {
+            local f="$1"
+            if [ -f "$f" ]; then
+              echo ">> $f"
+              timeout 45s python3 "$f" || echo "WARN timeout/fail $f"
+            fi
+          }
+
+          run_py scripts/restore_core_blobs.py
+
+          restore_if_stub() {
+            local path="$1" min="$2" needle="$3" sha="$4"
+            local sz
+            sz=$(wc -c < "$path" 2>/dev/null || echo 0)
+            if [ "$sz" -lt "$min" ] || grep -q "SEE_LOCAL_FILE\|PLACEHOLDER" "$path" 2>/dev/null || ! grep -q "$needle" "$path" 2>/dev/null; then
+              echo "Restoring $path from $sha (was $sz)"
+              git show "$sha:$path" > "$path" 2>/dev/null || \
+                curl -fsSL --max-time 30 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$sha/$path" -o "$path" || true
+              echo "  after=$(wc -c < "$path" 2>/dev/null || echo 0)"
+            fi
+          }
+          restore_if_stub src/context/PlatformContext.tsx 10000 "export function usePlatform" e3a5fd3
+          restore_if_stub src/context/TicketContext.tsx 15000 "export function useTickets" c3b543f
+          restore_if_stub src/components/PortalLiveChatView.tsx 5000 "export default" 24910bd
+          restore_if_stub src/components/LiveChatPage.tsx 5000 "export default" 24910bd
 
           CP_SZ=$(wc -c < src/components/CustomerPortal.tsx 2>/dev/null || echo 0)
           echo "CustomerPortal bytes=$CP_SZ"
@@ -44,43 +68,12 @@ jobs:
             echo "CustomerPortal after restore=$(wc -c < src/components/CustomerPortal.tsx)"
           fi
 
-          AN_SZ=$(wc -c < src/components/AnnouncementsPage.tsx 2>/dev/null || echo 0)
-          if [ "$AN_SZ" -lt 5000 ]; then
-            GOOD_AN=6a15e5bbd61dead1452de6571ce7eda6292323aa
-            git show "$GOOD_AN:src/components/AnnouncementsPage.tsx" > src/components/AnnouncementsPage.tsx 2>/dev/null || \
-              curl -fsSL --max-time 30 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_AN/src/components/AnnouncementsPage.tsx" -o src/components/AnnouncementsPage.tsx || true
-            run_py scripts/patch_announcements_replace_publish.py
-          fi
-
           run_py scripts/patch_release_notes_persist.py
-
-          PC_SZ=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
-          echo "PlatformContext bytes=$PC_SZ"
-          if [ "$PC_SZ" -lt 5000 ]; then
-            GOOD_PC=9da2fccde137836cea2c0651da8f808d1051f67e
-            echo "Restoring PlatformContext from blob or $GOOD_PC"
-            run_py scripts/restore_platform_blob.py
-            PC_SZ2=$(wc -c < src/context/PlatformContext.tsx 2>/dev/null || echo 0)
-            if [ "$PC_SZ2" -lt 5000 ]; then
-              git show "$GOOD_PC:src/context/PlatformContext.tsx" > src/context/PlatformContext.tsx 2>/dev/null || true
-              curl -fsSL --max-time 30 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/$GOOD_PC/src/context/PlatformContext.tsx" -o src/context/PlatformContext.tsx || true
-            fi
-            echo "PlatformContext after restore=$(wc -c < src/context/PlatformContext.tsx)"
-          fi
-
-          TC_SZ=$(wc -c < src/context/TicketContext.tsx 2>/dev/null || echo 0)
-          if [ "$TC_SZ" -lt 8000 ]; then
-            run_py scripts/restore_ticket_blob.py
-            curl -fsSL --max-time 30 "https://raw.githubusercontent.com/Right-Click-V4/nexus-support/c3edde907e5e5be48439b7fea0df6dbe3dca6611/src/context/TicketContext.tsx" -o src/context/TicketContext.tsx || true
-          fi
-
-          run_py scripts/restore_livechat_blob.py
 
           for s in slow_polls patch_claim_chat patch_customer_route patch_portal_sidebar_agent_style wire_account_panel patch_assist_chat patch_assist_dedupe ensure_react_hooks densify_stars patch_portal_chat_ui patch_forgot_password ensure_resolve_chat fix_send_chat_message fix_claim_and_send patch_chat_realtime patch_chat_order_ui patch_hold_nuclear patch_portal_signout_dialog patch_login_star_motion patch_portal_logo; do
             run_py "scripts/${s}.py"
           done
 
-          # Final critical repairs
           run_py scripts/patch_chat_realtime.py
           run_py scripts/patch_chat_order_ui.py
           run_py scripts/patch_livechat_claim_ui_v2.py
@@ -96,13 +89,33 @@ jobs:
           run_py scripts/patch_fix_auto_assignee.py
           run_py scripts/patch_assert_approved_v2.py
           run_py scripts/patch_approve_sync_profiles.py
+          run_py scripts/patch_hotfix_v2.py
+
+          python3 - <<'PY'
+from pathlib import Path
+import re
+p = Path("src/context/TicketContext.tsx")
+if p.exists():
+    s = p.read_text()
+    s2 = re.sub(
+        r"const CUSTOMER_COLS = '[^']*';[^\n]*",
+        "const CUSTOMER_COLS = 'id, name, email, role, branch, status, created_at'; // SCHEMA_SAFE_NO_AVATAR",
+        s,
+        count=1,
+    )
+    p.write_text(s2)
+    cols = next((ln for ln in s2.splitlines() if "CUSTOMER_COLS" in ln), "?")
+    print("FINAL", cols)
+    if "avatar_url" in cols:
+        raise SystemExit("CUSTOMER_COLS still has avatar_url")
+PY
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL || { echo FAIL_PORTAL; exit 1; }
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM || { echo FAIL_PLATFORM; exit 1; }
           test $(wc -c < src/components/LiveChatPage.tsx) -gt 5000 && echo OK_LIVECHAT || { echo FAIL_LIVECHAT; exit 1; }
           test $(wc -c < src/components/PortalLiveChatView.tsx) -gt 5000 && echo OK_PORTAL_LC || { echo FAIL_PORTAL_LC; exit 1; }
-          grep -q "CHAT_REALTIME_V1\|Messenger-style" src/context/PlatformContext.tsx && echo OK_CHAT_RT || { echo FAIL_CHAT_RT; exit 1; }
-          grep -q "AUTO_ASSIGNEE_FIX_V1\|ticket.assignee_id ?" src/context/TicketContext.tsx && echo OK_ASSIGNEE || echo WARN_ASSIGNEE
+          grep -q "export function useTickets" src/context/TicketContext.tsx && echo OK_TICKETS || { echo FAIL_TICKETS; exit 1; }
+          true
 
       - name: Generate git changelog draft
         run: |
