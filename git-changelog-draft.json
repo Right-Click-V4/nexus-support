@@ -1,0 +1,252 @@
+{
+  "generated_at": "2026-11-13T07:05:46.416028+00:00",
+  "branch": "main",
+  "head": "be95e78",
+  "suggested": {
+    "version": "2026.11.13",
+    "title": "Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for User\u2026",
+    "notes": "\u2022 Fixed: Sidebar agent name; Active Now status colors + custom text/emoji\n\u2022 Fixed: Full hotfix+schema+avatar_sync so Users/Live Chat load customer photos\n\u2022 Fixed: Restore patch_hotfix_v2 with avatar_url in CUSTOMER_COLS\n\u2022 Fixed: Force CUSTOMER_COLS avatar_url after hotfix; robust updateProfile DB write\n\u2022 New: Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for Users + Live Chat\n\u2022 New: Sync avatars to customers/profiles for Users tab + Live Chat\n\u2022 New: Remove button + clean duplicates; branch edit only for customers; customer branch required\n\u2022 Maintenance: Run postlogin-once + users dedupe/approve patches"
+  },
+  "history": [
+    {
+      "id": "draft-2026-11-13-be95e78",
+      "version": "2026.11.13",
+      "title": "Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for User\u2026",
+      "notes": "\u2022 Fixed: Sidebar agent name; Active Now status colors + custom text/emoji\n\u2022 Fixed: Full hotfix+schema+avatar_sync so Users/Live Chat load customer photos\n\u2022 Fixed: Restore patch_hotfix_v2 with avatar_url in CUSTOMER_COLS\n\u2022 Fixed: Force CUSTOMER_COLS avatar_url after hotfix; robust updateProfile DB write\n\u2022 New: Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for Users + Live Chat\n\u2022 New: Sync avatars to customers/profiles for Users tab + Live Chat\n\u2022 New: Remove button + clean duplicates; branch edit only for customers; customer branch required\n\u2022 Maintenance: Run postlogin-once + users dedupe/approve patches",
+      "customer_lines": [
+        "Fixed: Sidebar agent name; Active Now status colors + custom text/emoji",
+        "Fixed: Full hotfix+schema+avatar_sync so Users/Live Chat load customer photos",
+        "Fixed: Restore patch_hotfix_v2 with avatar_url in CUSTOMER_COLS",
+        "Fixed: Force CUSTOMER_COLS avatar_url after hotfix; robust updateProfile DB write",
+        "New: Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for Users + Live Chat",
+        "New: Sync avatars to customers/profiles for Users tab + Live Chat",
+        "New: Remove button + clean duplicates; branch edit only for customers; customer branch required",
+        "Maintenance: Run postlogin-once + users dedupe/approve patches"
+      ],
+      "date": "2026-11-13",
+      "head": "be95e78",
+      "commit_count": 34
+    },
+    {
+      "id": "draft-2026-11-12-99fbff0",
+      "version": "2026.11.12",
+      "title": "Unlock assist via system chat messages (works cross-browser)",
+      "notes": "\u2022 Fixed: Unlock assist via system chat messages (works cross-browser)\n\u2022 Fixed: Approve clears pending + waits for Realtime SUBSCRIBED before broadcast\n\u2022 Fixed: Unlock assisting agent after claimer Approves (broadcast + localStorage sync)\n\u2022 Maintenance: Assist realtime broadcast + cross-browser avatars\n\u2022 Fixed: Persist agent avatars to DB so other agents/customers see photos\n\u2022 Fixed: Cross-browser assist popup via Supabase Realtime broadcast\n\u2022 Maintenance: Ticket autoAssignee fix, non-owner lock, msg agent_id, portal X logo\n\u2022 Fixed: Store agent_id on chat messages for correct avatars",
+      "customer_lines": [
+        "Fixed: Unlock assist via system chat messages (works cross-browser)",
+        "Fixed: Approve clears pending + waits for Realtime SUBSCRIBED before broadcast",
+        "Fixed: Unlock assisting agent after claimer Approves (broadcast + localStorage sync)",
+        "Maintenance: Assist realtime broadcast + cross-browser avatars",
+        "Fixed: Persist agent avatars to DB so other agents/customers see photos",
+        "Fixed: Cross-browser assist popup via Supabase Realtime broadcast",
+        "Maintenance: Ticket autoAssignee fix, non-owner lock, msg agent_id, portal X logo",
+        "Fixed: Store agent_id on chat messages for correct avatars"
+      ],
+      "date": "2026-11-12",
+      "head": "99fbff0",
+      "commit_count": 42
+    },
+    {
+      "id": "draft-2026-11-11-badc7b7",
+      "version": "2026.11.11",
+      "title": "Scramble star positions to break diagonal bands",
+      "notes": "\u2022 Fixed: Scramble star positions to break diagonal bands\n\u2022 Fixed: Keep post-login flag until ceremony ends \u2014 no BootLoader flash on sign-in\n\u2022 Fixed: Customer Portal login shows Post-Login screen only (no BootLoader flash)\n\u2022 Maintenance: Run patch_login_star_motion for galaxy starfield animation",
+      "customer_lines": [
+        "Fixed: Scramble star positions to break diagonal bands",
+        "Fixed: Keep post-login flag until ceremony ends \u2014 no BootLoader flash on sign-in",
+        "Fixed: Customer Portal login shows Post-Login screen only (no BootLoader flash)",
+        "Maintenance: Run patch_login_star_motion for galaxy starfield animation"
+      ],
+      "date": "2026-11-11",
+      "head": "badc7b7",
+      "commit_count": 4
+    }
+  ],
+  "commits": [
+    {
+      "subject": "fix: sidebar agent name; Active Now status colors + custom text/emoji",
+      "sha": "be95e78",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T15:05:35+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix(avatar): full hotfix+schema+avatar_sync so Users/LiveChat load customer photos",
+      "sha": "f19e1c7",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:51:23+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: restore patch_hotfix_v2 with avatar_url in CUSTOMER_COLS",
+      "sha": "76444c4",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:50:34+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix(avatar): force CUSTOMER_COLS avatar_url after hotfix; robust updateProfile DB write",
+      "sha": "a6ed2cb",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:50:01+08:00",
+      "body": ""
+    },
+    {
+      "subject": "feat: patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for Users + Live Chat",
+      "sha": "ee007ed",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:39:26+08:00",
+      "body": ""
+    },
+    {
+      "subject": "feat: sync avatars to customers/profiles for Users tab + Live Chat",
+      "sha": "9a6467e",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:38:47+08:00",
+      "body": ""
+    },
+    {
+      "subject": "feat(users): Remove button + clean duplicates; branch edit only for customers; customer branch required",
+      "sha": "089c5d3",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:30:13+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run postlogin-once + users dedupe/approve patches",
+      "sha": "86561fd",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:05:31+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: real users dedupe + approve + signup upsert script",
+      "sha": "6c50c40",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:05:12+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: users dedupe + approve syncs profiles + signup upsert + login trusts customers table",
+      "sha": "8bdb172",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:04:31+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: single post-login cycle; dedupe users by email; approve syncs profiles so login works",
+      "sha": "d45acc8",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T14:04:22+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix(login): star fall speed actually visible (slow pure top\u2192bottom, ~25\u201355s cross)",
+      "sha": "105d2a7",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:52:57+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix(login): pure slow top\u2192bottom stars only \u2014 remove drift/sparkle/dust particles",
+      "sha": "1935fd6",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:47:02+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: safe CSS exact replaces for stars/dust pure vertical drift (v5b)",
+      "sha": "fc2f666",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:41:12+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ui(login): slightly longer trail; stars+dust pure slow top\u2192bottom only",
+      "sha": "6856699",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:39:36+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_login_trail_v4 (short tapered trail + particles)",
+      "sha": "426fbed",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:28:39+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ui(login): shorter tapered pilot trail + spark particles (thick near pilot, thin tip)",
+      "sha": "38c4804",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:28:18+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_login_trail_v3 (energy comet trail + warp shrink)",
+      "sha": "d0cb156",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:20:53+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ui(login): energy-comet pilot trail (thick violet/fuchsia); shrink on warp, grow after",
+      "sha": "4579277",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T13:20:30+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ui(login): slow pure top\u2192bottom stars; continuous pilot trail when paused; richer comet wake",
+      "sha": "40bdd39",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T10:36:10+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: fix deploy.yml YAML (move CUSTOMER_COLS fix to schema_safe_customers.py)",
+      "sha": "8304cf8",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T10:06:18+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_login_ui_v1 during deploy (stars/planets/branch)",
+      "sha": "b78a8d9",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T10:04:55+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: login UI patch (slower stars, no planets, agent no branch) + restore SHAs + deploy",
+      "sha": "97e3836",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T10:04:31+08:00",
+      "body": ""
+    },
+    {
+      "subject": "chore: add login_scene + login_page restore blobs (stars/branch UI)",
+      "sha": "08fc3e9",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T10:03:26+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: login blobs + restore_core_blobs (slower stars, no planets, agent no branch field)",
+      "sha": "21c9f3c",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-13T10:02:57+08:00",
+      "body": ""
+    }
+  ],
+  "customer_lines": [
+    "Fixed: Sidebar agent name; Active Now status colors + custom text/emoji",
+    "Fixed: Full hotfix+schema+avatar_sync so Users/Live Chat load customer photos",
+    "Fixed: Restore patch_hotfix_v2 with avatar_url in CUSTOMER_COLS",
+    "Fixed: Force CUSTOMER_COLS avatar_url after hotfix; robust updateProfile DB write",
+    "New: Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for Users + Live Chat",
+    "New: Sync avatars to customers/profiles for Users tab + Live Chat",
+    "New: Remove button + clean duplicates; branch edit only for customers; customer branch required",
+    "Maintenance: Run postlogin-once + users dedupe/approve patches"
+  ]
+}
