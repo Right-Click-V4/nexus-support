@@ -1,0 +1,256 @@
+{
+  "generated_at": "2026-11-15T07:06:11.808525+00:00",
+  "branch": "main",
+  "head": "b35475d",
+  "suggested": {
+    "version": "2026.11.15",
+    "title": "Full overview presence patch (custom green, customers online, MetricBar)",
+    "notes": "\u2022 Maintenance: Run patch_overview_presence_v1 (customers online + status green)\n\u2022 New: Full overview presence patch (custom green, customers online, MetricBar)\n\u2022 New: Custom status green; customers online count; MetricBar presence sync\n\u2022 Maintenance: Run patch_livechat_inbox_polish_v1 after inbox\n\u2022 Fixed: Inbox shine, max 10, Back button; online agents require fresh heartbeat\n\u2022 Maintenance: Run patch_livechat_inbox_v1 (Ongoing/Ended inbox)\n\u2022 New: Customer Live Chat inbox (Ongoing / Ended per conversation)\n\u2022 Maintenance: Run patch_ticket_detail_modal_v1 (glass ticket popup)"
+  },
+  "history": [
+    {
+      "id": "draft-2026-11-15-b35475d",
+      "version": "2026.11.15",
+      "title": "Full overview presence patch (custom green, customers online, MetricBar)",
+      "notes": "\u2022 Maintenance: Run patch_overview_presence_v1 (customers online + status green)\n\u2022 New: Full overview presence patch (custom green, customers online, MetricBar)\n\u2022 New: Custom status green; customers online count; MetricBar presence sync\n\u2022 Maintenance: Run patch_livechat_inbox_polish_v1 after inbox\n\u2022 Fixed: Inbox shine, max 10, Back button; online agents require fresh heartbeat\n\u2022 Maintenance: Run patch_livechat_inbox_v1 (Ongoing/Ended inbox)\n\u2022 New: Customer Live Chat inbox (Ongoing / Ended per conversation)\n\u2022 Maintenance: Run patch_ticket_detail_modal_v1 (glass ticket popup)",
+      "customer_lines": [
+        "Maintenance: Run patch_overview_presence_v1 (customers online + status green)",
+        "New: Full overview presence patch (custom green, customers online, MetricBar)",
+        "New: Custom status green; customers online count; MetricBar presence sync",
+        "Maintenance: Run patch_livechat_inbox_polish_v1 after inbox",
+        "Fixed: Inbox shine, max 10, Back button; online agents require fresh heartbeat",
+        "Maintenance: Run patch_livechat_inbox_v1 (Ongoing/Ended inbox)",
+        "New: Customer Live Chat inbox (Ongoing / Ended per conversation)",
+        "Maintenance: Run patch_ticket_detail_modal_v1 (glass ticket popup)"
+      ],
+      "date": "2026-11-15",
+      "head": "b35475d",
+      "commit_count": 30
+    },
+    {
+      "id": "draft-2026-11-13-be95e78",
+      "version": "2026.11.13",
+      "title": "Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for User\u2026",
+      "notes": "\u2022 Fixed: Sidebar agent name; Active Now status colors + custom text/emoji\n\u2022 Fixed: Full hotfix+schema+avatar_sync so Users/Live Chat load customer photos\n\u2022 Fixed: Restore patch_hotfix_v2 with avatar_url in CUSTOMER_COLS\n\u2022 Fixed: Force CUSTOMER_COLS avatar_url after hotfix; robust updateProfile DB write\n\u2022 New: Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for Users + Live Chat\n\u2022 New: Sync avatars to customers/profiles for Users tab + Live Chat\n\u2022 New: Remove button + clean duplicates; branch edit only for customers; customer branch required\n\u2022 Maintenance: Run postlogin-once + users dedupe/approve patches",
+      "customer_lines": [
+        "Fixed: Sidebar agent name; Active Now status colors + custom text/emoji",
+        "Fixed: Full hotfix+schema+avatar_sync so Users/Live Chat load customer photos",
+        "Fixed: Restore patch_hotfix_v2 with avatar_url in CUSTOMER_COLS",
+        "Fixed: Force CUSTOMER_COLS avatar_url after hotfix; robust updateProfile DB write",
+        "New: Patch_avatar_sync_v1 \u2014 persist avatars to customers/profiles for Users + Live Chat",
+        "New: Sync avatars to customers/profiles for Users tab + Live Chat",
+        "New: Remove button + clean duplicates; branch edit only for customers; customer branch required",
+        "Maintenance: Run postlogin-once + users dedupe/approve patches"
+      ],
+      "date": "2026-11-13",
+      "head": "be95e78",
+      "commit_count": 34
+    },
+    {
+      "id": "draft-2026-11-12-99fbff0",
+      "version": "2026.11.12",
+      "title": "Unlock assist via system chat messages (works cross-browser)",
+      "notes": "\u2022 Fixed: Unlock assist via system chat messages (works cross-browser)\n\u2022 Fixed: Approve clears pending + waits for Realtime SUBSCRIBED before broadcast\n\u2022 Fixed: Unlock assisting agent after claimer Approves (broadcast + localStorage sync)\n\u2022 Maintenance: Assist realtime broadcast + cross-browser avatars\n\u2022 Fixed: Persist agent avatars to DB so other agents/customers see photos\n\u2022 Fixed: Cross-browser assist popup via Supabase Realtime broadcast\n\u2022 Maintenance: Ticket autoAssignee fix, non-owner lock, msg agent_id, portal X logo\n\u2022 Fixed: Store agent_id on chat messages for correct avatars",
+      "customer_lines": [
+        "Fixed: Unlock assist via system chat messages (works cross-browser)",
+        "Fixed: Approve clears pending + waits for Realtime SUBSCRIBED before broadcast",
+        "Fixed: Unlock assisting agent after claimer Approves (broadcast + localStorage sync)",
+        "Maintenance: Assist realtime broadcast + cross-browser avatars",
+        "Fixed: Persist agent avatars to DB so other agents/customers see photos",
+        "Fixed: Cross-browser assist popup via Supabase Realtime broadcast",
+        "Maintenance: Ticket autoAssignee fix, non-owner lock, msg agent_id, portal X logo",
+        "Fixed: Store agent_id on chat messages for correct avatars"
+      ],
+      "date": "2026-11-12",
+      "head": "99fbff0",
+      "commit_count": 16
+    }
+  ],
+  "commits": [
+    {
+      "subject": "ci: run patch_overview_presence_v1 (customers online + status green)",
+      "sha": "b35475d",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T15:05:53+08:00",
+      "body": ""
+    },
+    {
+      "subject": "feat: full overview presence patch (custom green, customers online, MetricBar)",
+      "sha": "344038e",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T15:05:13+08:00",
+      "body": ""
+    },
+    {
+      "subject": "feat: custom status green; customers online count; MetricBar presence sync",
+      "sha": "18dc2e0",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T15:04:26+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_livechat_inbox_polish_v1 after inbox",
+      "sha": "d76898e",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T14:35:27+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: inbox shine, max 10, Back button; online agents require fresh heartbeat",
+      "sha": "fced664",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T14:34:41+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_livechat_inbox_v1 (Ongoing/Ended inbox)",
+      "sha": "022e30c",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T14:16:56+08:00",
+      "body": ""
+    },
+    {
+      "subject": "feat: Customer Live Chat inbox (Ongoing / Ended per conversation)",
+      "sha": "4a4bf62",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T14:16:24+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_ticket_detail_modal_v1 (glass ticket popup)",
+      "sha": "ab1d2dd",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:55:29+08:00",
+      "body": ""
+    },
+    {
+      "subject": "feat: ticket detail as glass popup modal (theme-aware, solid text)",
+      "sha": "03e27b2",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:54:59+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_build_safety_v1 last before OK checks",
+      "sha": "3b0b29f",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:43:26+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: last-mile build safety (Root double, LoginScene \\n, PLC disabled)",
+      "sha": "6f1b503",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:43:00+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: AgentOrLogin replace without doubling export function Root",
+      "sha": "47a0579",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:42:43+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: agent hooks patch self-contained (no missing getJustLoggedInRole import)",
+      "sha": "19a0930",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:18:10+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_agent_hooks_v1 after portal login (fix React #310 agent 404)",
+      "sha": "08d2be2",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:17:51+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: AgentOrLogin hooks before returns (React #310 agent workspace 404)",
+      "sha": "d8ccc53",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T13:17:23+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: repair patch_portal_login_chat_v1 (unterminated f-string)",
+      "sha": "61ce5c7",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:53:40+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: repair patch_branches_stats_v1 (avoid re.sub backref escape error)",
+      "sha": "af17c44",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:53:10+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: repair patch_livechat_ticket_optional_v1 (brace-safe, no stray })",
+      "sha": "9e72e01",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:52:33+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_branches_stats_v1 (canonical branches + period filters)",
+      "sha": "7e95df8",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:45:37+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: sync Branches tab with Live Chat list + day/week/month/year ticket filters",
+      "sha": "b86ace8",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:45:15+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_livechat_ticket_optional_v1 (optional ticket, required branch, resolved popup)",
+      "sha": "7946b0a",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:32:35+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: Live Chat ticket optional, branch required, resolved/closed popup with agent+date",
+      "sha": "236b21d",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:32:10+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: run patch_livechat_ticket_status_v1 (block Resolved/Closed tickets in Live Chat)",
+      "sha": "1e5820c",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:25:29+08:00",
+      "body": ""
+    },
+    {
+      "subject": "fix: block Live Chat for Resolved/Closed tickets (only Open/Pending/On-Hold)",
+      "sha": "b470745",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:25:04+08:00",
+      "body": ""
+    },
+    {
+      "subject": "ci: restore PortalLiveChat + run portal_login_chat fix (no agent flash, ended banner)",
+      "sha": "ff7ce34",
+      "author": "divinerayscalbayog-tech",
+      "date": "2026-11-15T11:14:20+08:00",
+      "body": ""
+    }
+  ],
+  "customer_lines": [
+    "Maintenance: Run patch_overview_presence_v1 (customers online + status green)",
+    "New: Full overview presence patch (custom green, customers online, MetricBar)",
+    "New: Custom status green; customers online count; MetricBar presence sync",
+    "Maintenance: Run patch_livechat_inbox_polish_v1 after inbox",
+    "Fixed: Inbox shine, max 10, Back button; online agents require fresh heartbeat",
+    "Maintenance: Run patch_livechat_inbox_v1 (Ongoing/Ended inbox)",
+    "New: Customer Live Chat inbox (Ongoing / Ended per conversation)",
+    "Maintenance: Run patch_ticket_detail_modal_v1 (glass ticket popup)"
+  ]
+}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 · Nexus Ops</title>
+    <script>
+      (function () {
+        var path = location.pathname || '/';
+        if (path.indexOf('/nexus-support') === 0) {
+          location.replace('/nexus-support/#404');
+          return;
+        }
+        var base = path.replace(/\/404\.html$/, '/');
+        if (!base.endsWith('/')) base += '/';
+        location.replace(base + '#404');
+      })();
+    </script>
+  </head>
+  <body style="background:#070414;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0">
+    <p>Redirecting…</p>
+  </body>
+</html>
