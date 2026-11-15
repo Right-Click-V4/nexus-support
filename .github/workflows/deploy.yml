@@ -103,6 +103,7 @@ jobs:
           run_py scripts/patch_custom_status_label_v1.py
           run_py scripts/patch_portal_login_chat_v1.py
           run_py scripts/patch_livechat_ticket_status_v1.py
+          run_py scripts/patch_livechat_ticket_optional_v1.py
 
           test $(wc -c < src/components/CustomerPortal.tsx) -gt 50000 && echo OK_PORTAL
           test $(wc -c < src/context/PlatformContext.tsx) -gt 5000 && echo OK_PLATFORM
@@ -114,7 +115,7 @@ jobs:
           grep -q "avatar_url" src/context/TicketContext.tsx && echo OK_AVATAR_COLS
           grep -q "ACTIVE_STATUS_COLORS_V1\|status_message" src/components/PortalLiveChatView.tsx && echo OK_STATUS_COLORS
           grep -q "agentStatusMessage" src/components/Sidebar.tsx && echo OK_SIDEBAR_CUSTOM
-          grep -q "TICKET_STATUS_CHAT_V1" src/components/PortalLiveChat.tsx && echo OK_TICKET_STATUS_CHAT
+          grep -q "TICKET_OPTIONAL_BRANCH_REQUIRED_V1\|This ticket is already" src/components/PortalLiveChat.tsx && echo OK_TICKET_OPTIONAL_MODAL
           grep -q "pendingCustomer\|NO_AGENT_FLASH\|ROUTE_BEFORE_SIGNIN" src/SystemAppCore.tsx src/components/LoginPage.tsx 2>/dev/null && echo OK_NO_AGENT_FLASH || true
 
       - name: Generate git changelog draft
