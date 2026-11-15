@@ -9,11 +9,17 @@ if not core.exists() or core.stat().st_size < 2000:
     raise SystemExit(0)
 
 t = core.read_text()
-if 'AGENT_HOOKS_SAFE_V1' in t:
-    print('already')
+
+# Repair prior broken double Root from older patch versions
+if 'export function Rootexport function Root' in t:
+    t = t.replace('export function Rootexport function Root', 'export function Root', 1)
+    print('fixed doubled Root')
+
+if 'AGENT_HOOKS_SAFE_V1' in t and 'Rootexport' not in t and t.count('{') == t.count('}'):
+    core.write_text(t)
+    print('already ok')
     raise SystemExit(0)
 
-# Self-contained role helper (no import dependency)
 new_aol = """function AgentOrLogin() {
   // AGENT_HOOKS_SAFE_V1 - all hooks before any return (fixes React #310)
   const { user, loading: authLoading, accountRole } = useAuth();
@@ -67,10 +73,13 @@ new_aol = """function AgentOrLogin() {
 }
 """
 
-m = re.search(r'function AgentOrLogin\(\) \{[\s\S]*?\n\}\n\nexport function Root', t)
+m = re.search(
+    r'function AgentOrLogin\(\) \{[\s\S]*?\n\}(?=\n\nexport function Root|\nexport function Root)',
+    t,
+)
 if m:
-    t = t[: m.start()] + new_aol + '\nexport function Root' + t[m.end() - len('export function Root') :]
-    print('AgentOrLogin replaced')
+    t = t[: m.start()] + new_aol + t[m.end() :]
+    print('AgentOrLogin replaced (lookahead)')
 else:
     m2 = re.search(r'function AgentOrLogin\(\) \{[\s\S]*?\n\}', t)
     if m2:
@@ -80,9 +89,15 @@ else:
         print('AgentOrLogin pattern miss')
         raise SystemExit(1)
 
+if 'export function Rootexport function Root' in t:
+    t = t.replace('export function Rootexport function Root', 'export function Root', 1)
+    print('fixed doubled Root again')
+
 bal = t.count('{') - t.count('}')
 core.write_text(t)
 print('braces', bal)
 if bal != 0:
     raise SystemExit('brace imbalance ' + str(bal))
+if 'Rootexport' in t:
+    raise SystemExit('still doubled Root')
 print('patch_agent_hooks_v1 done')
