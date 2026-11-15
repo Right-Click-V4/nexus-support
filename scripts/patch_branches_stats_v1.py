@@ -96,44 +96,47 @@ else:
             )
             print('helpers')
 
-        new_load = """function loadBranches(): Branch[] {
-  // BRANCH_PERIOD_FILTER_V1 — seed canonical list matching Live Chat dropdown
-  let list: Branch[] = [];
-  try {
-    const raw = localStorage.getItem(BRANCH_LS);
-    if (raw) list = JSON.parse(raw) as Branch[];
-  } catch { /* ignore */ }
-  if (!Array.isArray(list) || list.length === 0) {
-    list = INITIAL_BRANCHES.map((b) => ({ ...b, members: b.members || [] }));
-  }
-  const byKey = new Map<string, Branch>();
-  for (const b of list) {
-    const k = branchKey(b.name);
-    if (!k) continue;
-    const canon = CANONICAL_BRANCH_NAMES.find((c) => branchKey(c) === k);
-    byKey.set(k, {
-      ...b,
-      name: canon || String(b.name).replace(/\\s+BRANCH$/i, '').trim() || b.name,
-      members: b.members || [],
-    });
-  }
-  for (const name of CANONICAL_BRANCH_NAMES) {
-    const k = branchKey(name);
-    if (!byKey.has(k)) {
-      byKey.set(k, {
-        id: `b-${k.toLowerCase()}`,
-        name,
-        email: `${name.toLowerCase().replace(/\\s+/g, '-')}@company.com`,
-        members: [],
-      });
-    }
-  }
-  const merged = Array.from(byKey.values()).sort((a, b) => a.name.localeCompare(b.name));
-  try { localStorage.setItem(BRANCH_LS, JSON.stringify(merged)); } catch { /* ignore */ }
-  return merged;
-}"""
-        if re.search(r'function loadBranches\(\): Branch\[] \{[\s\S]*?\n\}', s):
-            s = re.sub(r'function loadBranches\(\): Branch\[] \{[\s\S]*?\n\}', new_load, s, count=1)
+        new_load = (
+            "function loadBranches(): Branch[] {\n"
+            "  // BRANCH_PERIOD_FILTER_V1 — seed canonical list matching Live Chat dropdown\n"
+            "  let list: Branch[] = [];\n"
+            "  try {\n"
+            "    const raw = localStorage.getItem(BRANCH_LS);\n"
+            "    if (raw) list = JSON.parse(raw) as Branch[];\n"
+            "  } catch { /* ignore */ }\n"
+            "  if (!Array.isArray(list) || list.length === 0) {\n"
+            "    list = INITIAL_BRANCHES.map((b) => ({ ...b, members: b.members || [] }));\n"
+            "  }\n"
+            "  const byKey = new Map<string, Branch>();\n"
+            "  for (const b of list) {\n"
+            "    const k = branchKey(b.name);\n"
+            "    if (!k) continue;\n"
+            "    const canon = CANONICAL_BRANCH_NAMES.find((c) => branchKey(c) === k);\n"
+            "    byKey.set(k, {\n"
+            "      ...b,\n"
+            "      name: canon || String(b.name).replace(/\\s+BRANCH$/i, '').trim() || b.name,\n"
+            "      members: b.members || [],\n"
+            "    });\n"
+            "  }\n"
+            "  for (const name of CANONICAL_BRANCH_NAMES) {\n"
+            "    const k = branchKey(name);\n"
+            "    if (!byKey.has(k)) {\n"
+            "      byKey.set(k, {\n"
+            "        id: `b-${k.toLowerCase()}`,\n"
+            "        name,\n"
+            "        email: `${name.toLowerCase().replace(/\\s+/g, '-')}@company.com`,\n"
+            "        members: [],\n"
+            "      });\n"
+            "    }\n"
+            "  }\n"
+            "  const merged = Array.from(byKey.values()).sort((a, b) => a.name.localeCompare(b.name));\n"
+            "  try { localStorage.setItem(BRANCH_LS, JSON.stringify(merged)); } catch { /* ignore */ }\n"
+            "  return merged;\n"
+            "}"
+        )
+        m_load = re.search(r'function loadBranches\(\): Branch\[] \{[\s\S]*?\n\}', s)
+        if m_load:
+            s = s[: m_load.start()] + new_load + s[m_load.end() :]
             print('loadBranches')
 
         if 'periodFilter' not in s:
@@ -177,7 +180,7 @@ else:
     });
     return m;
   }, [tickets, allBranches, periodFilter]);"""
-            s = s[:m.start()] + new_stats + s[m.end():]
+            s = s[: m.start()] + new_stats + s[m.end() :]
             print('stats period')
 
         s = s.replace(
@@ -195,30 +198,30 @@ else:
         )
 
         if 'setPeriodFilter' in s and "['day', 'Day']" not in s:
-            ui = """
-        <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 p-0.5 bg-white dark:bg-zinc-900/80">
-          {([
-            ['day', 'Day'],
-            ['week', 'Week'],
-            ['month', 'Month'],
-            ['year', 'Year'],
-            ['all', 'All'],
-          ] as const).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setPeriodFilter(id)}
-              className={
-                periodFilter === id
-                  ? 'px-2.5 py-1.5 text-xs font-semibold rounded-md bg-violet-600 text-white'
-                  : 'px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5'
-              }
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-"""
+            ui = (
+                "\n        <div className=\"flex items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 p-0.5 bg-white dark:bg-zinc-900/80\">\n"
+                "          {([\n"
+                "            ['day', 'Day'],\n"
+                "            ['week', 'Week'],\n"
+                "            ['month', 'Month'],\n"
+                "            ['year', 'Year'],\n"
+                "            ['all', 'All'],\n"
+                "          ] as const).map(([id, label]) => (\n"
+                "            <button\n"
+                "              key={id}\n"
+                "              type=\"button\"\n"
+                "              onClick={() => setPeriodFilter(id)}\n"
+                "              className={\n"
+                "                periodFilter === id\n"
+                "                  ? 'px-2.5 py-1.5 text-xs font-semibold rounded-md bg-violet-600 text-white'\n"
+                "                  : 'px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/5'\n"
+                "              }\n"
+                "            >\n"
+                "              {label}\n"
+                "            </button>\n"
+                "          ))}\n"
+                "        </div>\n"
+            )
             s = s.replace(
                 '<div className="flex items-center gap-3">\n          <div className="text-sm text-slate-500 dark:text-zinc-400">{filtered.length} workplaces</div>',
                 '<div className="flex items-center gap-3 flex-wrap">' + ui + '\n          <div className="text-sm text-slate-500 dark:text-zinc-400">{filtered.length} workplaces · tickets: {periodFilter === \'all\' ? \'all time\' : periodFilter}</div>',
