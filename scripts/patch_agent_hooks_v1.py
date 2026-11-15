@@ -13,16 +13,7 @@ if 'AGENT_HOOKS_SAFE_V1' in t:
     print('already')
     raise SystemExit(0)
 
-if 'getJustLoggedInRole' not in t:
-    if "from './components/PostLoginLoader'" in t:
-        t = t.replace(
-            "import { BootLoader, PostLoginShell } from './components/PostLoginLoader';",
-            "import { BootLoader, PostLoginShell, getJustLoggedInRole } from './components/PostLoginLoader';",
-            1,
-        )
-    else:
-        t = "import { getJustLoggedInRole } from './components/PostLoginLoader';\n" + t
-
+# Self-contained role helper (no import dependency)
 new_aol = """function AgentOrLogin() {
   // AGENT_HOOKS_SAFE_V1 - all hooks before any return (fixes React #310)
   const { user, loading: authLoading, accountRole } = useAuth();
@@ -32,8 +23,13 @@ new_aol = """function AgentOrLogin() {
     return () => window.clearTimeout(t);
   }, []);
   useEffect(() => {
-    const role =
-      (typeof getJustLoggedInRole === 'function' ? getJustLoggedInRole() : null) || accountRole;
+    let stored: string | null = null;
+    try {
+      stored = sessionStorage.getItem('nexus_post_login_role');
+    } catch {
+      /* ignore */
+    }
+    const role = stored === 'customer' || stored === 'agent' ? stored : accountRole;
     if (user && (role === 'customer' || accountRole === 'customer')) {
       const h = (window.location.hash || '').replace(/^#\\/?/, '').toLowerCase();
       if (h !== 'portal' && !h.startsWith('portal/')) {
@@ -52,9 +48,14 @@ new_aol = """function AgentOrLogin() {
   if (!user) {
     return <LoginPage />;
   }
+  let storedRole: string | null = null;
+  try {
+    storedRole = sessionStorage.getItem('nexus_post_login_role');
+  } catch {
+    /* ignore */
+  }
   const pendingCustomer =
-    accountRole === 'customer' ||
-    (typeof getJustLoggedInRole === 'function' && getJustLoggedInRole() === 'customer');
+    accountRole === 'customer' || storedRole === 'customer';
   if (pendingCustomer) {
     return <BootLoader label="Opening customer portal..." />;
   }
