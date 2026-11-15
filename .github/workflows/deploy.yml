@@ -106,6 +106,7 @@ jobs:
           run_py scripts/patch_livechat_ticket_status_v1.py
           run_py scripts/patch_livechat_ticket_optional_v1.py
           run_py scripts/patch_livechat_inbox_v1.py
+          run_py scripts/patch_livechat_inbox_polish_v1.py
           run_py scripts/patch_branches_stats_v1.py
           run_py scripts/patch_ticket_detail_modal_v1.py
           run_py scripts/patch_build_safety_v1.py
@@ -129,6 +130,7 @@ jobs:
           grep -q "agentStatusMessage" src/components/Sidebar.tsx && echo OK_SIDEBAR_CUSTOM
           grep -q "TICKET_OPTIONAL_BRANCH_REQUIRED_V1\|This ticket is already" src/components/PortalLiveChat.tsx && echo OK_TICKET_OPTIONAL_MODAL
           grep -q "LIVECHAT_INBOX_V1\|Live Chat Inbox" src/components/PortalLiveChat.tsx && echo OK_LIVECHAT_INBOX
+          grep -q "computeOnlineAgents\|LIVECHAT_INBOX_POLISH_V1" src/components/PortalLiveChat.tsx && echo OK_INBOX_POLISH
           grep -q "BRANCH_PERIOD_FILTER_V1\|Catbalogan" src/components/CustomersPage.tsx && echo OK_BRANCHES_STATS
           grep -q "AGENT_HOOKS_SAFE_V1" src/SystemAppCore.tsx && echo OK_AGENT_HOOKS
           ! grep -q "Rootexport function Root" src/SystemAppCore.tsx && echo OK_NO_DOUBLE_ROOT
